@@ -11,6 +11,7 @@ final class ListaDeCompras {
     var localNome: String?
     var localLatitude: Double?
     var localLongitude: Double?
+    var totalPago: Double?
     @Relationship(deleteRule: .cascade, inverse: \Item.lista) var itens: [Item] = []
 
     init(nome: String, dataMercado: Date? = nil, criadaEm: Date = .now,
@@ -25,7 +26,8 @@ final class ListaDeCompras {
         self.localLongitude = localLongitude
     }
 
-    var total: Double { itens.reduce(0) { $0 + $1.total } }
+    var totalCalculado: Double { itens.reduce(0) { $0 + $1.total } }
+    var total: Double { totalPago ?? totalCalculado }
 
     var mesAno: String {
         let ref = finalizadaEm ?? criadaEm
