@@ -6,7 +6,13 @@ struct CompreisApp: App {
     let container: ModelContainer
 
     init() {
-        container = try! ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+        do {
+            container = try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+        } catch {
+            let storeURL = URL.applicationSupportDirectory.appending(path: "default.store")
+            try? FileManager.default.removeItem(at: storeURL)
+            container = try! ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+        }
     }
 
     var body: some Scene {
