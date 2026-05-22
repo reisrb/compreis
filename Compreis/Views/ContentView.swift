@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var showAdd = false
     @State private var editingItem: Item?
     @State private var showFinalizar = false
+    @State private var showDetalhes = false
 
     private var itens: [Item] { lista.itens.sorted { $0.nome < $1.nome } }
 
@@ -30,12 +31,19 @@ struct ContentView: View {
         .navigationTitle(lista.nome)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            if !itens.isEmpty && !lista.finalizada {
-                ToolbarItem(placement: .topBarLeading) { EditButton() }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Finalizar") { showFinalizar = true }
-                        .foregroundStyle(AppTheme.accent)
-                        .fontWeight(.heavy)
+            ToolbarItem(placement: .topBarLeading) {
+                if !itens.isEmpty && !lista.finalizada { EditButton() }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 16) {
+                    Button { showDetalhes = true } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    if !itens.isEmpty && !lista.finalizada {
+                        Button("Finalizar") { showFinalizar = true }
+                            .foregroundStyle(AppTheme.accent)
+                            .fontWeight(.heavy)
+                    }
                 }
             }
         }
@@ -77,6 +85,9 @@ struct ContentView: View {
                 item.quantidade = quantidade
                 salvarHistorico(nome: nome, preco: preco, unidade: unidade)
             }
+        }
+        .sheet(isPresented: $showDetalhes) {
+            ListaDetailView(lista: lista)
         }
         .sheet(isPresented: $showFinalizar) {
             FinalizarView(lista: lista) { copiar in
