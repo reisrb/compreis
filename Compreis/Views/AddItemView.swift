@@ -12,9 +12,12 @@ struct AddItemView: View {
     @State private var precoText: String = ""
     @State private var unidade: Unidade = .unidade
     @State private var quantidadeInt: Int = 1
-    @State private var pesoDisplay: String = "0,000"  // formatado para exibição
-    @State private var pesoGramas: Int = 0            // valor real em gramas
+    @State private var pesoDisplay: String = "0,000"
+    @State private var pesoGramas: Int = 0
     @State private var sugestoes: [ProdutoHistorico] = []
+    @State private var mlResultados: [MLProduto] = []
+    @State private var mlBuscando = false
+    @State private var mlTask: Task<Void, Never>?
 
     private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
 
@@ -24,16 +27,17 @@ struct AddItemView: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "tag")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(AppTheme.accent)
                             .frame(width: 20)
                         TextField("Nome do produto", text: $nome)
-                            .onChange(of: nome) { _, novo in buscarSugestoes(novo) }
+                            .onChange(of: nome) { _, novo in
+                                buscarSugestoes(novo)
+                                agendarBuscaML(novo)
+                            }
                     }
                     if !sugestoes.isEmpty {
                         ForEach(sugestoes) { s in
-                            Button {
-                                aplicarSugestao(s)
-                            } label: {
+                            Button { aplicarSugestao(s) } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(s.nome).foregroundStyle(.primary)
@@ -42,38 +46,73 @@ struct AddItemView: View {
                                     }
                                     Spacer()
                                     Image(systemName: "arrow.up.left")
-                                        .font(.caption).foregroundStyle(.green)
+                                        .font(.caption).foregroundStyle(AppTheme.accent)
                                 }
                             }
                         }
                     }
-                } header: { Text("Produto") }
+                    if mlBuscando {
+                        HStack(spacing: 8) {
+                            ProgressView().scaleEffect(0.8)
+                            Text("Buscando no Mercado Livre…")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    if !mlResultados.isEmpty {
+                        ForEach(mlResultados) { p in
+                            Button { aplicarML(p) } label: {
+                                HStack(spacing: 10) {
+                                    AsyncImage(url: p.thumbnail) { img in
+                                        img.resizable().scaledToFill()
+                                    } placeholder: {
+                                        Color.secondary.opacity(0.15)
+                                    }
+                                    .frame(width: 36, height: 36)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(p.titulo)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(2)
+                                        Text(p.preco.brl)
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundStyle(AppTheme.accent)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "arrow.up.left")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                } header: { RockSectionHeader(title: "Produto") }
 
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "brazilianrealsign")
-                            .foregroundStyle(.green).frame(width: 20)
+                            .foregroundStyle(AppTheme.accent).frame(width: 20)
                         TextField("0,00", text: $precoText)
                             .keyboardType(.decimalPad)
                     }
                     HStack(spacing: 12) {
                         Image(systemName: "scalemass")
-                            .foregroundStyle(.green).frame(width: 20)
+                            .foregroundStyle(AppTheme.accent).frame(width: 20)
                         Picker("Unidade", selection: $unidade) {
                             ForEach(Unidade.allCases, id: \.self) { u in
                                 Text(u.rawValue == "un" ? "Por unidade" : "Por kg").tag(u)
                             }
                         }
                         .pickerStyle(.menu)
-                        .tint(.green)
+                        .tint(AppTheme.accent)
                     }
-                } header: { Text("Preço") }
+                } header: { RockSectionHeader(title: "Preço") }
 
                 Section {
                     if unidade == .kg {
                         HStack(spacing: 12) {
                             Image(systemName: "scalemass.fill")
-                                .foregroundStyle(.green).frame(width: 20)
+                                .foregroundStyle(AppTheme.accent).frame(width: 20)
                             TextField("0,000", text: $pesoDisplay)
                                 .keyboardType(.numberPad)
                                 .monospacedDigit()
@@ -124,7 +163,7 @@ struct AddItemView: View {
                             let qtd = unidade == .kg ? pesoValor : Double(quantidadeInt)
                             Text((preco * qtd).brl)
                                 .font(.body.weight(.bold).monospacedDigit())
-                                .foregroundStyle(.green)
+                                .foregroundStyle(AppTheme.accent)
                         }
                     }
                 }
@@ -138,7 +177,7 @@ struct AddItemView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Salvar") { save() }
                         .disabled(!isValid)
-                        .tint(.green)
+                        .tint(AppTheme.accent)
                 }
             }
             .onAppear { populate() }
@@ -182,6 +221,31 @@ struct AddItemView: View {
         quantidadeInt = 1
         pesoGramas = 0
         pesoDisplay = "0,000"
+        sugestoes = []
+    }
+
+    private func agendarBuscaML(_ texto: String) {
+        mlTask?.cancel()
+        mlResultados = []
+        guard texto.count >= 3 else { mlBuscando = false; return }
+        mlTask = Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { mlBuscando = true }
+            let resultados = await MLService.buscar(texto)
+            await MainActor.run {
+                mlResultados = resultados
+                mlBuscando = false
+            }
+        }
+    }
+
+    private func aplicarML(_ p: MLProduto) {
+        nome = p.titulo
+        precoText = String(format: "%.2f", p.preco).replacingOccurrences(of: ".", with: ",")
+        unidade = .unidade
+        quantidadeInt = 1
+        mlResultados = []
         sugestoes = []
     }
 
