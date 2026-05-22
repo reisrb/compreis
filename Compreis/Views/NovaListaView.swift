@@ -2,7 +2,7 @@ import SwiftUI
 import MapKit
 
 @MainActor
-final class SearchCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
+final class SearchCompleter: NSObject, ObservableObject, @preconcurrency MKLocalSearchCompleterDelegate {
     @Published var completions: [MKLocalSearchCompletion] = []
     private let completer = MKLocalSearchCompleter()
 
@@ -19,13 +19,12 @@ final class SearchCompleter: NSObject, ObservableObject, MKLocalSearchCompleterD
 
     func clear() { completions = [] }
 
-    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        let results = Array(completer.results.prefix(5))
-        Task { @MainActor [weak self] in self?.completions = results }
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        completions = Array(completer.results.prefix(5))
     }
 
-    nonisolated func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        Task { @MainActor [weak self] in self?.completions = [] }
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        completions = []
     }
 }
 
