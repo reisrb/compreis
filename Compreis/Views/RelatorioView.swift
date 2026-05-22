@@ -44,8 +44,8 @@ struct RelatorioView: View {
                                    icone: "calendar", cor: .orange)
                         let mediaCompra = listas.reduce(0) { $0 + $1.total } / Double(listas.count)
                         MetricaRow(titulo: "Média por compra", valor: mediaCompra.brl,
-                                   icone: "cart", cor: .green)
-                    } header: { Text("Visão geral") }
+                                   icone: "cart", cor: AppTheme.accent)
+                    } header: { RockSectionHeader(title: "Visão geral") }
 
                     ForEach(porMes, id: \.mes) { grupo in
                         Section {
@@ -53,14 +53,14 @@ struct RelatorioView: View {
                                 ListaFinalizadaRow(lista: lista)
                             }
                             HStack {
-                                Text("Total do mês").font(.subheadline.weight(.semibold))
+                                Text("Total do mês").font(.subheadline.weight(.heavy))
                                 Spacer()
                                 Text(grupo.listas.reduce(0) { $0 + $1.total }.brl)
-                                    .font(.subheadline.weight(.bold).monospacedDigit())
-                                    .foregroundStyle(.green)
+                                    .font(.subheadline.weight(.heavy).monospacedDigit())
+                                    .foregroundStyle(AppTheme.accent)
                             }
                             .padding(.vertical, 2)
-                        } header: { Text(grupo.mes) }
+                        } header: { RockSectionHeader(title: grupo.mes) }
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -72,7 +72,7 @@ struct RelatorioView: View {
                 }
             }
         }
-        .tint(.green)
+        .tint(AppTheme.accent)
         .sheet(isPresented: $showExemplos) {
             ExemplosSheet()
         }
@@ -80,16 +80,18 @@ struct RelatorioView: View {
 
     private var exemplosButton: some View {
         Button("Exemplos") { showExemplos = true }
-            .foregroundStyle(.green)
+            .foregroundStyle(AppTheme.accent)
+            .fontWeight(.semibold)
     }
 
     private var emptyState: some View {
         VStack(spacing: 16) {
             Image(systemName: "chart.bar")
                 .font(.system(size: 64))
-                .foregroundStyle(.green.opacity(0.4))
+                .foregroundStyle(AppTheme.accent.opacity(0.4))
+                .rockGlow(radius: 12)
             Text("Sem compras finalizadas")
-                .font(.title2.weight(.semibold))
+                .font(.title2.weight(.heavy))
             Text("Finalize uma compra para ver o relatório")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -113,7 +115,7 @@ private struct ExemplosSheet: View {
             ExemploLista(nome: "Semana 1", data: "05/05 · 09:30", itens: 14, total: 187.40),
             ExemploLista(nome: "Churrasco", data: "17/05 · 11:00", itens: 8, total: 243.90),
             ExemploLista(nome: "Semana 4", data: "26/05 · 08:45", itens: 11, total: 162.15),
-        ], cor: .green),
+        ], cor: AppTheme.accent),
         (nome: "Abril 2025", listas: [
             ExemploLista(nome: "Semana 1", data: "07/04 · 10:15", itens: 16, total: 201.30),
             ExemploLista(nome: "Semana 3", data: "21/04 · 09:00", itens: 9, total: 134.70),
@@ -152,7 +154,7 @@ private struct ExemplosSheet: View {
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)
 
-                    MetricaRow(titulo: "Média por compra", valor: "R$ 238,66", icone: "cart", cor: .green)
+                    MetricaRow(titulo: "Média por compra", valor: "R$ 238,66", icone: "cart", cor: AppTheme.accent)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 14)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
@@ -205,7 +207,7 @@ private struct ExemplosSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fechar") { dismiss() }
-                        .tint(.green)
+                        .tint(AppTheme.accent)
                 }
             }
         }
@@ -224,14 +226,17 @@ private struct MetricaRow: View {
                 Circle()
                     .fill(cor.opacity(0.15))
                     .frame(width: 36, height: 36)
+                    .overlay(Circle().strokeBorder(cor.opacity(0.25), lineWidth: 0.75))
                 Image(systemName: icone)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(cor)
             }
-            Text(titulo).foregroundStyle(.primary)
+            Text(titulo)
+                .font(.body.weight(.medium))
+                .foregroundStyle(.primary)
             Spacer()
             Text(valor)
-                .font(.body.weight(.semibold).monospacedDigit())
+                .font(.body.weight(.heavy).monospacedDigit())
                 .foregroundStyle(cor)
         }
     }
@@ -256,8 +261,8 @@ private struct ListaFinalizadaRow: View {
             }
             Spacer()
             Text(lista.total.brl)
-                .font(.body.weight(.semibold).monospacedDigit())
-                .foregroundStyle(.primary)
+                .font(.body.weight(.heavy).monospacedDigit())
+                .foregroundStyle(AppTheme.accent)
         }
         .padding(.vertical, 2)
     }

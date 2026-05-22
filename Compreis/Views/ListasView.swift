@@ -20,15 +20,13 @@ struct ListasView: View {
                 } else {
                     List {
                         if !ativas.isEmpty {
-                            Section("Em aberto") {
+                            Section {
                                 ForEach(ativas) { lista in
                                     NavigationLink(destination: ContentView(lista: lista)) {
                                         ListaRow(lista: lista)
                                     }
                                     .swipeActions(edge: .leading) {
-                                        Button {
-                                            showingDetail = lista
-                                        } label: {
+                                        Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
@@ -37,18 +35,18 @@ struct ListasView: View {
                                 .onDelete { offsets in
                                     offsets.map { ativas[$0] }.forEach { context.delete($0) }
                                 }
+                            } header: {
+                                RockSectionHeader(title: "Em aberto")
                             }
                         }
                         if !finalizadas.isEmpty {
-                            Section("Finalizadas") {
+                            Section {
                                 ForEach(finalizadas) { lista in
                                     NavigationLink(destination: ContentView(lista: lista)) {
                                         ListaRow(lista: lista)
                                     }
                                     .swipeActions(edge: .leading) {
-                                        Button {
-                                            showingDetail = lista
-                                        } label: {
+                                        Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
@@ -57,6 +55,8 @@ struct ListasView: View {
                                 .onDelete { offsets in
                                     offsets.map { finalizadas[$0] }.forEach { context.delete($0) }
                                 }
+                            } header: {
+                                RockSectionHeader(title: "Finalizadas")
                             }
                         }
                     }
@@ -67,16 +67,14 @@ struct ListasView: View {
             .safeAreaInset(edge: .bottom) {
                 HStack {
                     Spacer()
-                    Button {
-                        showNova = true
-                    } label: {
+                    Button { showNova = true } label: {
                         Image(systemName: "plus")
-                            .font(.title2.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 56, height: 56)
-                            .background(.green)
+                            .font(.title2.weight(.heavy))
+                            .foregroundStyle(.black)
+                            .frame(width: 58, height: 58)
+                            .background(AppTheme.accent)
                             .clipShape(Circle())
-                            .shadow(color: .green.opacity(0.4), radius: 8, x: 0, y: 4)
+                            .rockGlow(radius: 10)
                     }
                     .padding(.trailing, 24)
                     .padding(.vertical, 16)
@@ -84,13 +82,9 @@ struct ListasView: View {
             }
             .sheet(isPresented: $showNova) {
                 NovaListaView { nome, data, localNome, lat, lon in
-                    let nova = ListaDeCompras(
-                        nome: nome,
-                        dataMercado: data,
-                        localNome: localNome,
-                        localLatitude: lat,
-                        localLongitude: lon
-                    )
+                    let nova = ListaDeCompras(nome: nome, dataMercado: data,
+                                             localNome: localNome,
+                                             localLatitude: lat, localLongitude: lon)
                     context.insert(nova)
                 }
             }
@@ -98,16 +92,17 @@ struct ListasView: View {
                 ListaDetailView(lista: lista)
             }
         }
-        .tint(.green)
+        .tint(AppTheme.accent)
     }
 
     private var emptyState: some View {
         VStack(spacing: 16) {
             Image(systemName: "cart")
                 .font(.system(size: 64))
-                .foregroundStyle(.green.opacity(0.4))
+                .foregroundStyle(AppTheme.accent.opacity(0.4))
+                .rockGlow(radius: 12)
             Text("Nenhuma lista")
-                .font(.title2.weight(.semibold))
+                .font(.title2.weight(.heavy))
             Text("Toque em + para criar uma lista")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -130,21 +125,26 @@ private struct ListaRow: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(lista.finalizada ? Color.secondary.opacity(0.15) : Color.green.opacity(0.15))
+                    .fill(lista.finalizada
+                          ? Color.secondary.opacity(0.12)
+                          : AppTheme.accentSubtle)
                     .frame(width: 42, height: 42)
+                    .overlay(Circle().strokeBorder(
+                        lista.finalizada ? Color.clear : AppTheme.accentBorder,
+                        lineWidth: 0.75))
                 Image(systemName: lista.finalizada ? "checkmark.circle" : "cart")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(lista.finalizada ? Color.gray : Color.green)
+                    .foregroundStyle(lista.finalizada ? Color.gray : AppTheme.accent)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 4) {
                     Text(lista.nome)
-                        .font(.body.weight(.semibold))
+                        .font(.body.weight(.bold))
                     if lista.localNome != nil {
                         Image(systemName: "mappin.circle.fill")
                             .font(.caption)
-                            .foregroundStyle(.green.opacity(0.7))
+                            .foregroundStyle(AppTheme.accent.opacity(0.7))
                     }
                 }
                 HStack(spacing: 6) {
@@ -162,8 +162,8 @@ private struct ListaRow: View {
 
             if !lista.itens.isEmpty {
                 Text(lista.total.brl)
-                    .font(.callout.weight(.bold).monospacedDigit())
-                    .foregroundStyle(lista.finalizada ? Color.gray : Color.green)
+                    .font(.callout.weight(.heavy).monospacedDigit())
+                    .foregroundStyle(lista.finalizada ? Color.secondary : AppTheme.accent)
             }
         }
         .padding(.vertical, 4)

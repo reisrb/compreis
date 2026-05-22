@@ -34,8 +34,8 @@ struct ContentView: View {
                 ToolbarItem(placement: .topBarLeading) { EditButton() }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Finalizar") { showFinalizar = true }
-                        .foregroundStyle(.green)
-                        .fontWeight(.semibold)
+                        .foregroundStyle(AppTheme.accent)
+                        .fontWeight(.heavy)
                 }
             }
         }
@@ -49,12 +49,12 @@ struct ContentView: View {
                             showAdd = true
                         } label: {
                             Image(systemName: "plus")
-                                .font(.title2.weight(.semibold))
-                                .foregroundStyle(.white)
+                                .font(.title2.weight(.heavy))
+                                .foregroundStyle(.black)
                                 .frame(width: 56, height: 56)
-                                .background(.green)
+                                .background(AppTheme.accent)
                                 .clipShape(Circle())
-                                .shadow(color: .green.opacity(0.4), radius: 8, x: 0, y: 4)
+                                .rockGlow(radius: 10)
                         }
                         .padding(.trailing, 24)
                         .padding(.vertical, 16)
@@ -98,9 +98,10 @@ struct ContentView: View {
         VStack(spacing: 16) {
             Image(systemName: "cart")
                 .font(.system(size: 64))
-                .foregroundStyle(.green.opacity(0.4))
+                .foregroundStyle(AppTheme.accent.opacity(0.4))
+                .rockGlow(radius: 12)
             Text("Lista vazia")
-                .font(.title2.weight(.semibold))
+                .font(.title2.weight(.heavy))
             Text("Toque em + para adicionar produtos")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -119,8 +120,9 @@ struct ContentView: View {
             }
             Spacer()
             Text(lista.total.brl)
-                .font(.title2.weight(.bold).monospacedDigit())
-                .foregroundStyle(.green)
+                .font(.title2.weight(.heavy).monospacedDigit())
+                .foregroundStyle(AppTheme.accent)
+                .rockGlow(radius: 6)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
