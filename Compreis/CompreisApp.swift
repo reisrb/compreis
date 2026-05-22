@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct ListaDeComprasApp: App {
+struct CompreisApp: App {
     let container: ModelContainer
 
     init() {
