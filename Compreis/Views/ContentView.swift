@@ -39,36 +39,24 @@ struct ContentView: View {
                     Button { showDetalhes = true } label: {
                         Image(systemName: "info.circle")
                     }
-                    if !itens.isEmpty && !lista.finalizada {
-                        Button("Finalizar") { showFinalizar = true }
-                            .foregroundStyle(AppTheme.accent)
-                            .fontWeight(.heavy)
+                    if !lista.finalizada {
+                        Button {
+                            showAdd = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.body.weight(.heavy))
+                                .foregroundStyle(.black)
+                                .frame(width: 32, height: 32)
+                                .background(AppTheme.accent)
+                                .clipShape(Circle())
+                                .rockGlow(radius: 6)
+                        }
                     }
                 }
             }
         }
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 0) {
-                if !itens.isEmpty { totalFooter }
-                if !lista.finalizada {
-                    HStack {
-                        Spacer()
-                        Button {
-                            showAdd = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.title2.weight(.heavy))
-                                .foregroundStyle(.black)
-                                .frame(width: 56, height: 56)
-                                .background(AppTheme.accent)
-                                .clipShape(Circle())
-                                .rockGlow(radius: 10)
-                        }
-                        .padding(.trailing, 24)
-                        .padding(.vertical, 16)
-                    }
-                }
-            }
+            if !itens.isEmpty { totalFooter }
         }
         .sheet(isPresented: $showAdd) {
             AddItemView { nome, preco, unidade, quantidade in
@@ -134,6 +122,17 @@ struct ContentView: View {
                 .font(.title2.weight(.heavy).monospacedDigit())
                 .foregroundStyle(AppTheme.accent)
                 .rockGlow(radius: 6)
+            if !lista.finalizada {
+                Button("Finalizar") { showFinalizar = true }
+                    .font(.subheadline.weight(.heavy))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(AppTheme.accent)
+                    .clipShape(Capsule())
+                    .rockGlow(radius: 6)
+                    .padding(.leading, 12)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
