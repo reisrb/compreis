@@ -42,6 +42,7 @@ struct NovaListaView: View {
     @State private var localLat: Double?
     @State private var localLon: Double?
     @StateObject private var completer = SearchCompleter()
+    @State private var showMapPicker = false
 
     var body: some View {
         NavigationStack {
@@ -80,7 +81,7 @@ struct NovaListaView: View {
                                 span: MKCoordinateSpan(latitudeDelta: 0.004, longitudeDelta: 0.004)
                             ))) {
                                 Marker(pinned, coordinate: coord)
-                                    .tint(.green)
+                                    .tint(AppTheme.accent)
                             }
                             .frame(height: 160)
                             .listRowInsets(EdgeInsets())
@@ -88,7 +89,7 @@ struct NovaListaView: View {
 
                             HStack {
                                 Image(systemName: "mappin.circle.fill")
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(AppTheme.accent)
                                 Text(pinned)
                                     .font(.subheadline)
                                 Spacer()
@@ -102,6 +103,13 @@ struct NovaListaView: View {
                                 .buttonStyle(.plain)
                             }
                         } else {
+                            Button {
+                                showMapPicker = true
+                            } label: {
+                                Label("Escolher no mapa", systemImage: "map")
+                                    .font(.subheadline)
+                                    .foregroundStyle(AppTheme.accent)
+                            }
                             HStack(spacing: 12) {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundStyle(.secondary)
@@ -134,6 +142,13 @@ struct NovaListaView: View {
             }
             .navigationTitle("Nova lista")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showMapPicker) {
+                MapPickerView { nome, lat, lon in
+                    localNome = nome; localLat = lat; localLon = lon
+                    localQuery = nome; completer.clear()
+                    usarLocal = true
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }

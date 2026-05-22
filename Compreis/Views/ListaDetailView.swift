@@ -14,6 +14,7 @@ struct ListaDetailView: View {
     @State private var localLat: Double?
     @State private var localLon: Double?
     @StateObject private var completer = SearchCompleter()
+    @State private var showMapPicker = false
 
     var body: some View {
         NavigationStack {
@@ -86,6 +87,13 @@ struct ListaDetailView: View {
                                 .buttonStyle(.plain)
                             }
                         } else {
+                            Button {
+                                showMapPicker = true
+                            } label: {
+                                Label("Escolher no mapa", systemImage: "map")
+                                    .font(.subheadline)
+                                    .foregroundStyle(AppTheme.accent)
+                            }
                             HStack(spacing: 12) {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundStyle(.secondary)
@@ -116,6 +124,13 @@ struct ListaDetailView: View {
             }
             .navigationTitle("Detalhes")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showMapPicker) {
+                MapPickerView { nome, lat, lon in
+                    localNome = nome; localLat = lat; localLon = lon
+                    localQuery = nome; completer.clear()
+                    usarLocal = true
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
