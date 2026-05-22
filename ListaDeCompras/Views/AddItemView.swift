@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct AddItemView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
 
     var item: Item?
     var onSave: (String, Double, Unidade, Double) -> Void
@@ -11,6 +13,7 @@ struct AddItemView: View {
     @State private var unidade: Unidade = .unidade
     @State private var quantidadeText: String = "1"
     @State private var quantidadeInt: Int = 1
+    @State private var sugestoes: [ProdutoHistorico] = []
 
     var body: some View {
         NavigationStack {
@@ -21,6 +24,28 @@ struct AddItemView: View {
                             .foregroundStyle(.green)
                             .frame(width: 20)
                         TextField("Nome do produto", text: $nome)
+                            .onChange(of: nome) { _, novo in buscarSugestoes(novo) }
+                    }
+                    if !sugestoes.isEmpty {
+                        ForEach(sugestoes) { s in
+                            Button {
+                                aplicarSugestao(s)
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(s.nome)
+                                            .foregroundStyle(.primary)
+                                        Text("\(s.preco.brl) / \(s.unidade.rawValue)")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "arrow.up.left")
+                                        .font(.caption)
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                        }
                     }
                 } header: {
                     Text("Produto")
@@ -142,6 +167,25 @@ struct AddItemView: View {
         } else {
             quantidadeText = String(item.quantidade)
         }
+    }
+
+    private func buscarSugestoes(_ texto: String) {
+        guard texto.count >= 2 else { sugestoes = []; return }
+        let fetch = FetchDescriptor<ProdutoHistorico>()
+        let todos = (try? context.fetch(fetch)) ?? []
+        sugestoes = todos
+            .filter { $0.nome.localizedCaseInsensitiveContains(texto) }
+            .sorted { $0.nome < $1.nome }
+            .prefix(4)
+            .map { $0 }
+    }
+
+    private func aplicarSugestao(_ s: ProdutoHistorico) {
+        nome = s.nome
+        precoText = String(s.preco)
+        unidade = s.unidade
+        quantidadeInt = 1
+        sugestoes = []
     }
 
     private func save() {

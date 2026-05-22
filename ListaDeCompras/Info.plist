@@ -11,7 +11,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Compreis</string>
+	<key>CFBundleDisplayName</key>
+	<string>Compreis</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>

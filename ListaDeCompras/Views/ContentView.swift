@@ -27,7 +27,7 @@ struct ContentView: View {
                     .listStyle(.insetGrouped)
                 }
             }
-            .navigationTitle("Lista de Compras")
+            .navigationTitle("Compreis")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -52,6 +52,7 @@ struct ContentView: View {
             .sheet(isPresented: $showAdd) {
                 AddItemView { nome, preco, unidade, quantidade in
                     context.insert(Item(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade))
+                    salvarHistorico(nome: nome, preco: preco, unidade: unidade)
                 }
             }
             .sheet(item: $editingItem) { item in
@@ -60,6 +61,7 @@ struct ContentView: View {
                     item.preco = preco
                     item.unidade = unidade
                     item.quantidade = quantidade
+                    salvarHistorico(nome: nome, preco: preco, unidade: unidade)
                 }
             }
         }
@@ -105,5 +107,18 @@ struct ContentView: View {
 
     private func delete(at offsets: IndexSet) {
         for i in offsets { context.delete(items[i]) }
+    }
+
+    private func salvarHistorico(nome: String, preco: Double, unidade: Unidade) {
+        let nomeLower = nome.lowercased()
+        let fetch = FetchDescriptor<ProdutoHistorico>(
+            predicate: #Predicate { $0.nome.localizedStandardContains(nomeLower) }
+        )
+        if let existente = try? context.fetch(fetch).first(where: { $0.nome.lowercased() == nomeLower }) {
+            existente.preco = preco
+            existente.unidadeRaw = unidade.rawValue
+        } else {
+            context.insert(ProdutoHistorico(nome: nome, preco: preco, unidade: unidade))
+        }
     }
 }
