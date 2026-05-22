@@ -29,6 +29,7 @@ struct ListasView: View {
                                         Button(role: .destructive) { context.delete(lista) } label: {
                                             Label("Excluir", systemImage: "trash")
                                         }
+                                        .tint(.red)
                                         Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
                                         }
@@ -49,6 +50,7 @@ struct ListasView: View {
                                         Button(role: .destructive) { context.delete(lista) } label: {
                                             Label("Excluir", systemImage: "trash")
                                         }
+                                        .tint(.red)
                                         Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
                                         }
