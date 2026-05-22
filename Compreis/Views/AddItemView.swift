@@ -11,9 +11,31 @@ struct AddItemView: View {
     @State private var nome: String = ""
     @State private var precoText: String = ""
     @State private var unidade: Unidade = .unidade
-    @State private var quantidadeText: String = "1"
     @State private var quantidadeInt: Int = 1
+    @State private var pesoDigitos: String = ""   // dígitos brutos do peso em gramas
     @State private var sugestoes: [ProdutoHistorico] = []
+
+    // "5001" → "5,001"  |  "" → "0,000"
+    private var pesoFormatado: String {
+        let n = Int(pesoDigitos) ?? 0
+        return String(format: "%d,%03d", n / 1000, n % 1000)
+    }
+
+    private var pesoValor: Double {
+        Double(Int(pesoDigitos) ?? 0) / 1000.0
+    }
+
+    // Binding que extrai apenas dígitos e converte de volta
+    private var pesoBinding: Binding<String> {
+        Binding(
+            get: { pesoFormatado },
+            set: { newVal in
+                let digits = String(newVal.filter { $0.isNumber }.prefix(7))
+                let n = Int(digits) ?? 0
+                pesoDigitos = n == 0 ? "" : String(n)
+            }
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -33,36 +55,29 @@ struct AddItemView: View {
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(s.nome)
-                                            .foregroundStyle(.primary)
+                                        Text(s.nome).foregroundStyle(.primary)
                                         Text("\(s.preco.brl) / \(s.unidade.rawValue)")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                            .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
                                     Image(systemName: "arrow.up.left")
-                                        .font(.caption)
-                                        .foregroundStyle(.green)
+                                        .font(.caption).foregroundStyle(.green)
                                 }
                             }
                         }
                     }
-                } header: {
-                    Text("Produto")
-                }
+                } header: { Text("Produto") }
 
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "brazilianrealsign")
-                            .foregroundStyle(.green)
-                            .frame(width: 20)
+                            .foregroundStyle(.green).frame(width: 20)
                         TextField("0,00", text: $precoText)
                             .keyboardType(.decimalPad)
                     }
                     HStack(spacing: 12) {
                         Image(systemName: "scalemass")
-                            .foregroundStyle(.green)
-                            .frame(width: 20)
+                            .foregroundStyle(.green).frame(width: 20)
                         Picker("Unidade", selection: $unidade) {
                             ForEach(Unidade.allCases, id: \.self) { u in
                                 Text(u.rawValue == "un" ? "Por unidade" : "Por kg").tag(u)
@@ -71,18 +86,16 @@ struct AddItemView: View {
                         .pickerStyle(.menu)
                         .tint(.green)
                     }
-                } header: {
-                    Text("Preço")
-                }
+                } header: { Text("Preço") }
 
                 Section {
                     if unidade == .kg {
                         HStack(spacing: 12) {
                             Image(systemName: "scalemass.fill")
-                                .foregroundStyle(.green)
-                                .frame(width: 20)
-                            TextField("0,000", text: $quantidadeText)
-                                .keyboardType(.decimalPad)
+                                .foregroundStyle(.green).frame(width: 20)
+                            TextField("0,000", text: pesoBinding)
+                                .keyboardType(.numberPad)
+                                .monospacedDigit()
                         }
                     } else {
                         HStack {
@@ -91,43 +104,33 @@ struct AddItemView: View {
                             } label: {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.title2)
-                                    .foregroundStyle(quantidadeInt > 1 ? .green : .secondary)
+                                    .foregroundStyle(quantidadeInt > 1 ? Color.green : Color.gray)
                             }
                             .buttonStyle(.plain)
-
                             Spacer()
-
                             Text("\(quantidadeInt)")
                                 .font(.title2.weight(.semibold).monospacedDigit())
                                 .frame(minWidth: 40, alignment: .center)
-
                             Spacer()
-
                             Button {
                                 quantidadeInt += 1
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.green)
+                                    .font(.title2).foregroundStyle(Color.green)
                             }
                             .buttonStyle(.plain)
                         }
                         .padding(.vertical, 4)
                     }
-                } header: {
-                    Text(unidade == .kg ? "Peso (kg)" : "Quantidade")
-                }
+                } header: { Text(unidade == .kg ? "Peso (kg)" : "Quantidade") }
 
                 if isValid {
                     Section {
                         HStack {
-                            Text("Total do item")
-                                .foregroundStyle(.secondary)
+                            Text("Total do item").foregroundStyle(.secondary)
                             Spacer()
                             let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
-                            let qtd = unidade == .kg
-                                ? (Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) ?? 1)
-                                : Double(quantidadeInt)
+                            let qtd = unidade == .kg ? pesoValor : Double(quantidadeInt)
                             Text((preco * qtd).brl)
                                 .font(.body.weight(.bold).monospacedDigit())
                                 .foregroundStyle(.green)
@@ -154,7 +157,7 @@ struct AddItemView: View {
     private var isValid: Bool {
         !nome.trimmingCharacters(in: .whitespaces).isEmpty
             && Double(precoText.replacingOccurrences(of: ",", with: ".")) != nil
-            && (unidade == .unidade || Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) != nil)
+            && (unidade == .unidade || pesoValor > 0)
     }
 
     private func populate() {
@@ -165,7 +168,9 @@ struct AddItemView: View {
         if item.unidade == .unidade {
             quantidadeInt = Int(item.quantidade)
         } else {
-            quantidadeText = String(item.quantidade)
+            // converte kg → gramas → dígitos
+            let gramas = Int((item.quantidade * 1000).rounded())
+            pesoDigitos = gramas == 0 ? "" : String(gramas)
         }
     }
 
@@ -185,14 +190,13 @@ struct AddItemView: View {
         precoText = String(s.preco)
         unidade = s.unidade
         quantidadeInt = 1
+        pesoDigitos = ""
         sugestoes = []
     }
 
     private func save() {
         let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
-        let quantidade = unidade == .kg
-            ? (Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) ?? 1)
-            : Double(quantidadeInt)
+        let quantidade = unidade == .kg ? pesoValor : Double(quantidadeInt)
         onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade)
         dismiss()
     }
