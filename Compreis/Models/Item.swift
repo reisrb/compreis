@@ -7,6 +7,7 @@ final class Item {
     var preco: Double
     var unidadeRaw: String
     var quantidade: Double
+    var lista: ListaDeCompras?
 
     var unidade: Unidade {
         get { Unidade(rawValue: unidadeRaw) ?? .unidade }
