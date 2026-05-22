@@ -29,15 +29,6 @@ struct ContentView: View {
             }
             .navigationTitle("Compreis")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAdd = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.green)
-                    }
-                }
                 if !items.isEmpty {
                     ToolbarItem(placement: .topBarLeading) {
                         EditButton()
@@ -45,8 +36,27 @@ struct ContentView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                if !items.isEmpty {
-                    totalFooter
+                VStack(spacing: 0) {
+                    if !items.isEmpty {
+                        totalFooter
+                    }
+                    HStack {
+                        Spacer()
+                        Button {
+                            showAdd = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title2.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 56, height: 56)
+                                .background(.green)
+                                .clipShape(Circle())
+                                .shadow(color: .green.opacity(0.4), radius: 8, x: 0, y: 4)
+                        }
+                        .padding(.trailing, 24)
+                        .padding(.vertical, 16)
+                    }
+                    .background(.clear)
                 }
             }
             .sheet(isPresented: $showAdd) {
@@ -76,7 +86,7 @@ struct ContentView: View {
             Text("Lista vazia")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.primary)
-            Text("Toque em + para adicionar produtos")
+            Text("Toque no botão + para adicionar produtos")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
