@@ -111,29 +111,26 @@ struct ContentView: View {
     }
 
     private var totalFooter: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(itens.count) \(itens.count == 1 ? "item" : "itens")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("Total estimado")
-                    .font(.subheadline.weight(.medium))
-            }
-            Spacer()
-            Text(lista.total.brl)
-                .font(.title2.weight(.heavy).monospacedDigit())
-                .foregroundStyle(AppTheme.accent)
-                .rockGlow(radius: 6)
+        HStack(spacing: 12) {
             if !lista.finalizada {
                 Button("Finalizar") { showFinalizar = true }
                     .font(.subheadline.weight(.heavy))
                     .foregroundStyle(.black)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
                     .background(AppTheme.accent)
                     .clipShape(Capsule())
                     .rockGlow(radius: 6)
-                    .padding(.leading, 12)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(itens.count) \(itens.count == 1 ? "item" : "itens")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(lista.total.brl)
+                    .font(.title2.weight(.heavy).monospacedDigit())
+                    .foregroundStyle(AppTheme.accent)
+                    .rockGlow(radius: 6)
             }
         }
         .padding(.horizontal, 20)
