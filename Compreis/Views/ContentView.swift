@@ -57,7 +57,7 @@ struct ContentView: View {
                         .rockGlow(radius: 8)
                 }
                 .padding(.trailing, 20)
-                .padding(.bottom, itens.isEmpty ? 20 : 78)
+                .padding(.bottom, itens.isEmpty ? 20 : 110)
             }
         }
         .sheet(isPresented: $showAdd) {
