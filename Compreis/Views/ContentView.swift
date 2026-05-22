@@ -39,24 +39,26 @@ struct ContentView: View {
                     Button { showDetalhes = true } label: {
                         Image(systemName: "info.circle")
                     }
-                    if !lista.finalizada {
-                        Button {
-                            showAdd = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.body.weight(.heavy))
-                                .foregroundStyle(.black)
-                                .frame(width: 32, height: 32)
-                                .background(AppTheme.accent)
-                                .clipShape(Circle())
-                                .rockGlow(radius: 6)
-                        }
-                    }
                 }
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if !itens.isEmpty { totalFooter }
+            ZStack(alignment: .topTrailing) {
+                if !itens.isEmpty { totalFooter }
+                if !lista.finalizada {
+                    Button { showAdd = true } label: {
+                        Image(systemName: "plus")
+                            .font(.title3.weight(.heavy))
+                            .foregroundStyle(.black)
+                            .frame(width: 48, height: 48)
+                            .background(AppTheme.accent)
+                            .clipShape(Circle())
+                            .rockGlow(radius: 8)
+                    }
+                    .offset(y: itens.isEmpty ? 0 : -28)
+                    .padding(.trailing, 20)
+                }
+            }
         }
         .sheet(isPresented: $showAdd) {
             AddItemView { nome, preco, unidade, quantidade in
