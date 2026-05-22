@@ -12,8 +12,8 @@ struct CompreisApp: App {
     var body: some Scene {
         WindowGroup {
             TabView {
-                ContentView()
-                    .tabItem { Label("Lista", systemImage: "cart.fill") }
+                ListasView()
+                    .tabItem { Label("Listas", systemImage: "cart.fill") }
                 RelatorioView()
                     .tabItem { Label("Relatório", systemImage: "chart.bar.fill") }
             }

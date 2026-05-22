@@ -3,12 +3,16 @@ import SwiftData
 
 @Model
 final class ListaDeCompras {
+    var nome: String
+    var dataMercado: Date?
     var criadaEm: Date
     var finalizadaEm: Date?
     var finalizada: Bool
     @Relationship(deleteRule: .cascade, inverse: \Item.lista) var itens: [Item] = []
 
-    init(criadaEm: Date = .now) {
+    init(nome: String, dataMercado: Date? = nil, criadaEm: Date = .now) {
+        self.nome = nome
+        self.dataMercado = dataMercado
         self.criadaEm = criadaEm
         self.finalizadaEm = nil
         self.finalizada = false

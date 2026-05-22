@@ -6,6 +6,8 @@ struct RelatorioView: View {
            sort: \ListaDeCompras.finalizadaEm, order: .reverse)
     private var listas: [ListaDeCompras]
 
+    @State private var showExemplos = false
+
     private var ultimos7dias: Double {
         let corte = Calendar.current.date(byAdding: .day, value: -7, to: .now)!
         return listas
@@ -14,19 +16,12 @@ struct RelatorioView: View {
     }
 
     private var porMes: [(mes: String, listas: [ListaDeCompras])] {
-        var grupos: [(mes: String, listas: [ListaDeCompras])] = []
         var mapa: [String: [ListaDeCompras]] = [:]
-        for lista in listas {
-            let chave = lista.mesAno
-            mapa[chave, default: []].append(lista)
-        }
-        let ordenadas = listas.map { $0.mesAno }.reduce(into: [String]()) {
+        for lista in listas { mapa[lista.mesAno, default: []].append(lista) }
+        let ordem = listas.map { $0.mesAno }.reduce(into: [String]()) {
             if !$0.contains($1) { $0.append($1) }
         }
-        for mes in ordenadas {
-            grupos.append((mes: mes, listas: mapa[mes] ?? []))
-        }
-        return grupos
+        return ordem.map { (mes: $0, listas: mapa[$0] ?? []) }
     }
 
     var body: some View {
@@ -34,22 +29,23 @@ struct RelatorioView: View {
             if listas.isEmpty {
                 emptyState
                     .navigationTitle("Relatório")
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            exemplosButton
+                        }
+                    }
             } else {
                 List {
                     Section {
                         MetricaRow(titulo: "Últimos 7 dias", valor: ultimos7dias.brl,
                                    icone: "clock", cor: .blue)
-                        if !listas.isEmpty {
-                            let mediaMensal = porMes.map { $0.listas.reduce(0) { $0 + $1.total } }.reduce(0, +) / Double(max(porMes.count, 1))
-                            MetricaRow(titulo: "Média mensal", valor: mediaMensal.brl,
-                                       icone: "calendar", cor: .orange)
-                            let mediaCompra = listas.reduce(0) { $0 + $1.total } / Double(listas.count)
-                            MetricaRow(titulo: "Média por compra", valor: mediaCompra.brl,
-                                       icone: "cart", cor: .green)
-                        }
-                    } header: {
-                        Text("Visão geral")
-                    }
+                        let mediaMensal = porMes.map { $0.listas.reduce(0) { $0 + $1.total } }.reduce(0, +) / Double(max(porMes.count, 1))
+                        MetricaRow(titulo: "Média mensal", valor: mediaMensal.brl,
+                                   icone: "calendar", cor: .orange)
+                        let mediaCompra = listas.reduce(0) { $0 + $1.total } / Double(listas.count)
+                        MetricaRow(titulo: "Média por compra", valor: mediaCompra.brl,
+                                   icone: "cart", cor: .green)
+                    } header: { Text("Visão geral") }
 
                     ForEach(porMes, id: \.mes) { grupo in
                         Section {
@@ -57,24 +53,34 @@ struct RelatorioView: View {
                                 ListaFinalizadaRow(lista: lista)
                             }
                             HStack {
-                                Text("Total do mês")
-                                    .font(.subheadline.weight(.semibold))
+                                Text("Total do mês").font(.subheadline.weight(.semibold))
                                 Spacer()
                                 Text(grupo.listas.reduce(0) { $0 + $1.total }.brl)
                                     .font(.subheadline.weight(.bold).monospacedDigit())
                                     .foregroundStyle(.green)
                             }
                             .padding(.vertical, 2)
-                        } header: {
-                            Text(grupo.mes)
-                        }
+                        } header: { Text(grupo.mes) }
                     }
                 }
                 .listStyle(.insetGrouped)
                 .navigationTitle("Relatório")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        exemplosButton
+                    }
+                }
             }
         }
         .tint(.green)
+        .sheet(isPresented: $showExemplos) {
+            ExemplosSheet()
+        }
+    }
+
+    private var exemplosButton: some View {
+        Button("Exemplos") { showExemplos = true }
+            .foregroundStyle(.green)
     }
 
     private var emptyState: some View {
@@ -89,6 +95,120 @@ struct RelatorioView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct ExemplosSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private struct ExemploLista {
+        let nome: String
+        let data: String
+        let itens: Int
+        let total: Double
+    }
+
+    private let meses: [(nome: String, listas: [ExemploLista], cor: Color)] = [
+        (nome: "Maio 2025", listas: [
+            ExemploLista(nome: "Semana 1", data: "05/05 · 09:30", itens: 14, total: 187.40),
+            ExemploLista(nome: "Churrasco", data: "17/05 · 11:00", itens: 8, total: 243.90),
+            ExemploLista(nome: "Semana 4", data: "26/05 · 08:45", itens: 11, total: 162.15),
+        ], cor: .green),
+        (nome: "Abril 2025", listas: [
+            ExemploLista(nome: "Semana 1", data: "07/04 · 10:15", itens: 16, total: 201.30),
+            ExemploLista(nome: "Semana 3", data: "21/04 · 09:00", itens: 9, total: 134.70),
+        ], cor: .blue),
+        (nome: "Março 2025", listas: [
+            ExemploLista(nome: "Semana 2", data: "11/03 · 08:30", itens: 18, total: 312.00),
+            ExemploLista(nome: "Aniversário", data: "22/03 · 16:00", itens: 22, total: 489.50),
+            ExemploLista(nome: "Semana 4", data: "28/03 · 09:20", itens: 13, total: 178.90),
+        ], cor: .orange),
+    ]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(spacing: 6) {
+                        Text("Como fica o seu relatório")
+                            .font(.title2.weight(.bold))
+                        Text("Veja como ficará após finalizar algumas compras")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 8)
+                    .padding(.horizontal)
+
+                    MetricaRow(titulo: "Últimos 7 dias", valor: "R$ 162,15", icone: "clock", cor: .blue)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 14)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+
+                    MetricaRow(titulo: "Média mensal", valor: "R$ 655,32", icone: "calendar", cor: .orange)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 14)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+
+                    MetricaRow(titulo: "Média por compra", valor: "R$ 238,66", icone: "cart", cor: .green)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 14)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+
+                    ForEach(meses, id: \.nome) { mes in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(mes.nome)
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 20)
+
+                            VStack(spacing: 0) {
+                                ForEach(mes.listas.indices, id: \.self) { i in
+                                    let lista = mes.listas[i]
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text(lista.nome).font(.subheadline.weight(.semibold))
+                                            Text("\(lista.data) · \(lista.itens) itens")
+                                                .font(.caption).foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text(lista.total.brl)
+                                            .font(.callout.weight(.bold).monospacedDigit())
+                                            .foregroundStyle(mes.cor)
+                                    }
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 12)
+                                    if i < mes.listas.count - 1 { Divider().padding(.leading, 20) }
+                                }
+                                Divider()
+                                HStack {
+                                    Text("Total do mês").font(.subheadline.weight(.semibold))
+                                    Spacer()
+                                    Text(mes.listas.reduce(0) { $0 + $1.total }.brl)
+                                        .font(.subheadline.weight(.bold).monospacedDigit())
+                                        .foregroundStyle(mes.cor)
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                            }
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            .padding(.horizontal)
+                        }
+                    }
+                }
+                .padding(.bottom, 32)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fechar") { dismiss() }
+                        .tint(.green)
+                }
+            }
+        }
     }
 }
 
@@ -108,8 +228,7 @@ private struct MetricaRow: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(cor)
             }
-            Text(titulo)
-                .foregroundStyle(.primary)
+            Text(titulo).foregroundStyle(.primary)
             Spacer()
             Text(valor)
                 .font(.body.weight(.semibold).monospacedDigit())
@@ -131,11 +250,9 @@ private struct ListaFinalizadaRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text(dataFormatada)
-                    .font(.subheadline)
-                Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(lista.nome).font(.subheadline.weight(.semibold))
+                Text("\(dataFormatada) · \(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             Text(lista.total.brl)

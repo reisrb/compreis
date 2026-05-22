@@ -3,51 +3,46 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var context
-    @Query(filter: #Predicate<ListaDeCompras> { !$0.finalizada },
-           sort: \ListaDeCompras.criadaEm, order: .reverse)
-    private var listasAtivas: [ListaDeCompras]
+    @Bindable var lista: ListaDeCompras
 
     @State private var showAdd = false
     @State private var editingItem: Item?
     @State private var showFinalizar = false
 
-    private var lista: ListaDeCompras? { listasAtivas.first }
-    private var itens: [Item] { lista?.itens.sorted { $0.nome < $1.nome } ?? [] }
-    private var total: Double { lista?.total ?? 0 }
+    private var itens: [Item] { lista.itens.sorted { $0.nome < $1.nome } }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if itens.isEmpty {
-                    emptyState
-                } else {
-                    List {
-                        ForEach(itens) { item in
-                            ItemRow(item: item)
-                                .contentShape(Rectangle())
-                                .onTapGesture { editingItem = item }
-                        }
-                        .onDelete(perform: delete)
+        Group {
+            if itens.isEmpty {
+                emptyState
+            } else {
+                List {
+                    ForEach(itens) { item in
+                        ItemRow(item: item)
+                            .contentShape(Rectangle())
+                            .onTapGesture { editingItem = item }
                     }
-                    .listStyle(.insetGrouped)
+                    .onDelete(perform: delete)
+                }
+                .listStyle(.insetGrouped)
+            }
+        }
+        .navigationTitle(lista.nome)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            if !itens.isEmpty && !lista.finalizada {
+                ToolbarItem(placement: .topBarLeading) { EditButton() }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Finalizar") { showFinalizar = true }
+                        .foregroundStyle(.green)
+                        .fontWeight(.semibold)
                 }
             }
-            .navigationTitle("Compreis")
-            .toolbar {
-                if !itens.isEmpty {
-                    ToolbarItem(placement: .topBarLeading) {
-                        EditButton()
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Finalizar") { showFinalizar = true }
-                            .foregroundStyle(.green)
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                VStack(spacing: 0) {
-                    if !itens.isEmpty { totalFooter }
+        }
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 0) {
+                if !itens.isEmpty { totalFooter }
+                if !lista.finalizada {
                     HStack {
                         Spacer()
                         Button {
@@ -64,45 +59,39 @@ struct ContentView: View {
                         .padding(.trailing, 24)
                         .padding(.vertical, 16)
                     }
-                    .background(.clear)
                 }
             }
-            .sheet(isPresented: $showAdd) {
-                AddItemView { nome, preco, unidade, quantidade in
-                    let item = Item(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade)
-                    garantirListaAtiva().itens.append(item)
-                    salvarHistorico(nome: nome, preco: preco, unidade: unidade)
-                }
+        }
+        .sheet(isPresented: $showAdd) {
+            AddItemView { nome, preco, unidade, quantidade in
+                let item = Item(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade)
+                lista.itens.append(item)
+                salvarHistorico(nome: nome, preco: preco, unidade: unidade)
             }
-            .sheet(item: $editingItem) { item in
-                AddItemView(item: item) { nome, preco, unidade, quantidade in
-                    item.nome = nome
-                    item.preco = preco
-                    item.unidade = unidade
-                    item.quantidade = quantidade
-                    salvarHistorico(nome: nome, preco: preco, unidade: unidade)
-                }
+        }
+        .sheet(item: $editingItem) { item in
+            AddItemView(item: item) { nome, preco, unidade, quantidade in
+                item.nome = nome
+                item.preco = preco
+                item.unidade = unidade
+                item.quantidade = quantidade
+                salvarHistorico(nome: nome, preco: preco, unidade: unidade)
             }
-            .sheet(isPresented: $showFinalizar) {
-                if let lista {
-                    FinalizarView(lista: lista) { copiar in
-                        lista.finalizadaEm = .now
-                        lista.finalizada = true
-                        if copiar {
-                            let nova = ListaDeCompras()
-                            context.insert(nova)
-                            for item in lista.itens {
-                                let copia = Item(nome: item.nome, preco: item.preco,
-                                                 unidade: item.unidade, quantidade: item.quantidade)
-                                nova.itens.append(copia)
-                            }
-                        }
+        }
+        .sheet(isPresented: $showFinalizar) {
+            FinalizarView(lista: lista) { copiar in
+                lista.finalizadaEm = .now
+                lista.finalizada = true
+                if copiar {
+                    let nova = ListaDeCompras(nome: lista.nome)
+                    context.insert(nova)
+                    for item in lista.itens {
+                        nova.itens.append(Item(nome: item.nome, preco: item.preco,
+                                               unidade: item.unidade, quantidade: item.quantidade))
                     }
                 }
             }
         }
-        .tint(.green)
-        .onAppear { garantirListaAtiva() }
     }
 
     private var emptyState: some View {
@@ -112,7 +101,7 @@ struct ContentView: View {
                 .foregroundStyle(.green.opacity(0.4))
             Text("Lista vazia")
                 .font(.title2.weight(.semibold))
-            Text("Toque no botão + para adicionar produtos")
+            Text("Toque em + para adicionar produtos")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -129,7 +118,7 @@ struct ContentView: View {
                     .font(.subheadline.weight(.medium))
             }
             Spacer()
-            Text(total.brl)
+            Text(lista.total.brl)
                 .font(.title2.weight(.bold).monospacedDigit())
                 .foregroundStyle(.green)
         }
@@ -137,14 +126,6 @@ struct ContentView: View {
         .padding(.vertical, 14)
         .background(.regularMaterial)
         .overlay(alignment: .top) { Divider() }
-    }
-
-    @discardableResult
-    private func garantirListaAtiva() -> ListaDeCompras {
-        if let lista { return lista }
-        let nova = ListaDeCompras()
-        context.insert(nova)
-        return nova
     }
 
     private func delete(at offsets: IndexSet) {
