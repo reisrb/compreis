@@ -43,21 +43,21 @@ struct ContentView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            ZStack(alignment: .topTrailing) {
-                if !itens.isEmpty { totalFooter }
-                if !lista.finalizada {
-                    Button { showAdd = true } label: {
-                        Image(systemName: "plus")
-                            .font(.title3.weight(.heavy))
-                            .foregroundStyle(.black)
-                            .frame(width: 48, height: 48)
-                            .background(AppTheme.accent)
-                            .clipShape(Circle())
-                            .rockGlow(radius: 8)
-                    }
-                    .offset(y: itens.isEmpty ? 0 : -28)
-                    .padding(.trailing, 20)
+            if !itens.isEmpty { totalFooter }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if !lista.finalizada {
+                Button { showAdd = true } label: {
+                    Image(systemName: "plus")
+                        .font(.title3.weight(.heavy))
+                        .foregroundStyle(.black)
+                        .frame(width: 48, height: 48)
+                        .background(AppTheme.accent)
+                        .clipShape(Circle())
+                        .rockGlow(radius: 8)
                 }
+                .padding(.trailing, 20)
+                .padding(.bottom, itens.isEmpty ? 20 : 78)
             }
         }
         .sheet(isPresented: $showAdd) {
