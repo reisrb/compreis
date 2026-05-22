@@ -10,6 +10,7 @@ struct AddItemView: View {
     @State private var precoText: String = ""
     @State private var unidade: Unidade = .unidade
     @State private var quantidadeText: String = "1"
+    @State private var quantidadeInt: Int = 1
 
     var body: some View {
         NavigationStack {
@@ -50,12 +51,43 @@ struct AddItemView: View {
                 }
 
                 Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: unidade == .kg ? "scalemass.fill" : "number")
-                            .foregroundStyle(.green)
-                            .frame(width: 20)
-                        TextField(unidade == .kg ? "0,000" : "1", text: $quantidadeText)
-                            .keyboardType(.decimalPad)
+                    if unidade == .kg {
+                        HStack(spacing: 12) {
+                            Image(systemName: "scalemass.fill")
+                                .foregroundStyle(.green)
+                                .frame(width: 20)
+                            TextField("0,000", text: $quantidadeText)
+                                .keyboardType(.decimalPad)
+                        }
+                    } else {
+                        HStack {
+                            Button {
+                                if quantidadeInt > 1 { quantidadeInt -= 1 }
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(quantidadeInt > 1 ? .green : .secondary)
+                            }
+                            .buttonStyle(.plain)
+
+                            Spacer()
+
+                            Text("\(quantidadeInt)")
+                                .font(.title2.weight(.semibold).monospacedDigit())
+                                .frame(minWidth: 40, alignment: .center)
+
+                            Spacer()
+
+                            Button {
+                                quantidadeInt += 1
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.green)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 4)
                     }
                 } header: {
                     Text(unidade == .kg ? "Peso (kg)" : "Quantidade")
@@ -68,7 +100,9 @@ struct AddItemView: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                             let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
-                            let qtd = Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) ?? 1
+                            let qtd = unidade == .kg
+                                ? (Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) ?? 1)
+                                : Double(quantidadeInt)
                             Text((preco * qtd).brl)
                                 .font(.body.weight(.bold).monospacedDigit())
                                 .foregroundStyle(.green)
@@ -95,7 +129,7 @@ struct AddItemView: View {
     private var isValid: Bool {
         !nome.trimmingCharacters(in: .whitespaces).isEmpty
             && Double(precoText.replacingOccurrences(of: ",", with: ".")) != nil
-            && Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) != nil
+            && (unidade == .unidade || Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) != nil)
     }
 
     private func populate() {
@@ -103,12 +137,18 @@ struct AddItemView: View {
         nome = item.nome
         precoText = String(item.preco)
         unidade = item.unidade
-        quantidadeText = String(item.quantidade)
+        if item.unidade == .unidade {
+            quantidadeInt = Int(item.quantidade)
+        } else {
+            quantidadeText = String(item.quantidade)
+        }
     }
 
     private func save() {
         let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
-        let quantidade = Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) ?? 1
+        let quantidade = unidade == .kg
+            ? (Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) ?? 1)
+            : Double(quantidadeInt)
         onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade)
         dismiss()
     }
