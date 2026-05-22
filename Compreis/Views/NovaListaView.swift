@@ -73,7 +73,19 @@ struct NovaListaView: View {
                     Toggle("Definir local", isOn: $usarLocal)
                         .tint(.green)
                     if usarLocal {
-                        if let pinned = localNome {
+                        if let pinned = localNome, let lat = localLat, let lon = localLon {
+                            let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                            Map(initialPosition: .region(MKCoordinateRegion(
+                                center: coord,
+                                span: MKCoordinateSpan(latitudeDelta: 0.004, longitudeDelta: 0.004)
+                            ))) {
+                                Marker(pinned, coordinate: coord)
+                                    .tint(.green)
+                            }
+                            .frame(height: 160)
+                            .listRowInsets(EdgeInsets())
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
                             HStack {
                                 Image(systemName: "mappin.circle.fill")
                                     .foregroundStyle(.green)
