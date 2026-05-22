@@ -51,14 +51,14 @@ struct AddItemView: View {
 
                 Section {
                     HStack(spacing: 12) {
-                        Image(systemName: "number")
+                        Image(systemName: unidade == .kg ? "scalemass.fill" : "number")
                             .foregroundStyle(.green)
                             .frame(width: 20)
-                        TextField("1", text: $quantidadeText)
+                        TextField(unidade == .kg ? "0,000" : "1", text: $quantidadeText)
                             .keyboardType(.decimalPad)
                     }
                 } header: {
-                    Text("Quantidade")
+                    Text(unidade == .kg ? "Peso (kg)" : "Quantidade")
                 }
 
                 if isValid {
