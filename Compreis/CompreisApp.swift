@@ -6,12 +6,26 @@ struct CompreisApp: App {
     let container: ModelContainer
 
     init() {
+        container = Self.makeContainer()
+    }
+
+    private static func makeContainer() -> ModelContainer {
         do {
-            container = try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
         } catch {
-            let storeURL = URL.applicationSupportDirectory.appending(path: "default.store")
-            try? FileManager.default.removeItem(at: storeURL)
-            container = try! ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+            wipeStore()
+            do {
+                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+            } catch {
+                fatalError("SwiftData: \(error)")
+            }
+        }
+    }
+
+    private static func wipeStore() {
+        let base = URL.applicationSupportDirectory
+        for suffix in ["", "-shm", "-wal"] {
+            try? FileManager.default.removeItem(at: base.appending(path: "default.store\(suffix)"))
         }
     }
 
