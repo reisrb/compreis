@@ -33,5 +33,7 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Para centrar o mapa na sua localização atual ao escolher o supermercado.</string>
 </dict>
 </plist>
