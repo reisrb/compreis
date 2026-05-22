@@ -12,19 +12,30 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(items) { item in
-                    ItemRow(item: item)
-                        .contentShape(Rectangle())
-                        .onTapGesture { editingItem = item }
+            Group {
+                if items.isEmpty {
+                    emptyState
+                } else {
+                    List {
+                        ForEach(items) { item in
+                            ItemRow(item: item)
+                                .contentShape(Rectangle())
+                                .onTapGesture { editingItem = item }
+                        }
+                        .onDelete(perform: delete)
+                    }
+                    .listStyle(.insetGrouped)
                 }
-                .onDelete(perform: delete)
             }
             .navigationTitle("Lista de Compras")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showAdd = true } label: {
-                        Image(systemName: "plus")
+                    Button {
+                        showAdd = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.green)
                     }
                 }
                 if !items.isEmpty {
@@ -35,15 +46,7 @@ struct ContentView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 if !items.isEmpty {
-                    HStack {
-                        Text("Total")
-                            .font(.headline)
-                        Spacer()
-                        Text(total.brl)
-                            .font(.headline.monospacedDigit())
-                    }
-                    .padding()
-                    .background(.regularMaterial)
+                    totalFooter
                 }
             }
             .sheet(isPresented: $showAdd) {
@@ -59,6 +62,44 @@ struct ContentView: View {
                     item.quantidade = quantidade
                 }
             }
+        }
+        .tint(.green)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "cart")
+                .font(.system(size: 64))
+                .foregroundStyle(.green.opacity(0.4))
+            Text("Lista vazia")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.primary)
+            Text("Toque em + para adicionar produtos")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var totalFooter: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(items.count) \(items.count == 1 ? "item" : "itens")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("Total estimado")
+                    .font(.subheadline.weight(.medium))
+            }
+            Spacer()
+            Text(total.brl)
+                .font(.title2.weight(.bold).monospacedDigit())
+                .foregroundStyle(.green)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(.regularMaterial)
+        .overlay(alignment: .top) {
+            Divider()
         }
     }
 

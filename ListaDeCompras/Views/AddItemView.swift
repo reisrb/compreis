@@ -14,25 +14,66 @@ struct AddItemView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Produto") {
-                    TextField("Nome", text: $nome)
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "tag")
+                            .foregroundStyle(.green)
+                            .frame(width: 20)
+                        TextField("Nome do produto", text: $nome)
+                    }
+                } header: {
+                    Text("Produto")
                 }
-                Section("Preço") {
-                    HStack {
+
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "brazilianrealsign")
+                            .foregroundStyle(.green)
+                            .frame(width: 20)
                         TextField("0,00", text: $precoText)
                             .keyboardType(.decimalPad)
-                        Picker("", selection: $unidade) {
+                    }
+                    HStack(spacing: 12) {
+                        Image(systemName: "scalemass")
+                            .foregroundStyle(.green)
+                            .frame(width: 20)
+                        Picker("Unidade", selection: $unidade) {
                             ForEach(Unidade.allCases, id: \.self) { u in
-                                Text(u.rawValue).tag(u)
+                                Text(u.rawValue == "un" ? "Por unidade" : "Por kg").tag(u)
                             }
                         }
-                        .pickerStyle(.segmented)
-                        .frame(width: 100)
+                        .pickerStyle(.menu)
+                        .tint(.green)
                     }
+                } header: {
+                    Text("Preço")
                 }
-                Section("Quantidade") {
-                    TextField("1", text: $quantidadeText)
-                        .keyboardType(.decimalPad)
+
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "number")
+                            .foregroundStyle(.green)
+                            .frame(width: 20)
+                        TextField("1", text: $quantidadeText)
+                            .keyboardType(.decimalPad)
+                    }
+                } header: {
+                    Text("Quantidade")
+                }
+
+                if isValid {
+                    Section {
+                        HStack {
+                            Text("Total do item")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
+                            let qtd = Double(quantidadeText.replacingOccurrences(of: ",", with: ".")) ?? 1
+                            Text((preco * qtd).brl)
+                                .font(.body.weight(.bold).monospacedDigit())
+                                .foregroundStyle(.green)
+                        }
+                    }
                 }
             }
             .navigationTitle(item == nil ? "Novo item" : "Editar item")
@@ -44,6 +85,7 @@ struct AddItemView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Salvar") { save() }
                         .disabled(!isValid)
+                        .tint(.green)
                 }
             }
             .onAppear { populate() }
