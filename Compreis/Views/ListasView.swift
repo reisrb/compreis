@@ -25,15 +25,15 @@ struct ListasView: View {
                                     NavigationLink(destination: ContentView(lista: lista)) {
                                         ListaRow(lista: lista)
                                     }
-                                    .swipeActions(edge: .leading) {
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) { context.delete(lista) } label: {
+                                            Label("Excluir", systemImage: "trash")
+                                        }
                                         Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
                                     }
-                                }
-                                .onDelete { offsets in
-                                    offsets.map { ativas[$0] }.forEach { context.delete($0) }
                                 }
                             } header: {
                                 RockSectionHeader(title: "Em aberto")
@@ -45,15 +45,15 @@ struct ListasView: View {
                                     NavigationLink(destination: ContentView(lista: lista)) {
                                         ListaRow(lista: lista)
                                     }
-                                    .swipeActions(edge: .leading) {
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) { context.delete(lista) } label: {
+                                            Label("Excluir", systemImage: "trash")
+                                        }
                                         Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
                                     }
-                                }
-                                .onDelete { offsets in
-                                    offsets.map { finalizadas[$0] }.forEach { context.delete($0) }
                                 }
                             } header: {
                                 RockSectionHeader(title: "Finalizadas")
