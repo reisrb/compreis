@@ -1,13 +1,48 @@
 import SwiftUI
+import MapKit
+
+@MainActor
+final class SearchCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
+    @Published var completions: [MKLocalSearchCompletion] = []
+    private let completer = MKLocalSearchCompleter()
+
+    override init() {
+        super.init()
+        completer.delegate = self
+        completer.resultTypes = [.pointOfInterest, .address]
+    }
+
+    func search(_ query: String) {
+        guard !query.isEmpty else { completions = []; return }
+        completer.queryFragment = query
+    }
+
+    func clear() { completions = [] }
+
+    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        let results = Array(completer.results.prefix(5))
+        Task { @MainActor [weak self] in self?.completions = results }
+    }
+
+    nonisolated func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        Task { @MainActor [weak self] in self?.completions = [] }
+    }
+}
 
 struct NovaListaView: View {
     @Environment(\.dismiss) private var dismiss
 
-    var onCreate: (String, Date?) -> Void
+    var onCreate: (String, Date?, String?, Double?, Double?) -> Void
 
     @State private var nome: String = ""
     @State private var usarData = false
     @State private var dataMercado = Date()
+    @State private var usarLocal = false
+    @State private var localQuery = ""
+    @State private var localNome: String?
+    @State private var localLat: Double?
+    @State private var localLon: Double?
+    @StateObject private var completer = SearchCompleter()
 
     var body: some View {
         NavigationStack {
@@ -34,6 +69,57 @@ struct NovaListaView: View {
                 } header: {
                     Text("Quando vai ao mercado")
                 }
+
+                Section {
+                    Toggle("Definir local", isOn: $usarLocal)
+                        .tint(.green)
+                    if usarLocal {
+                        if let pinned = localNome {
+                            HStack {
+                                Image(systemName: "mappin.circle.fill")
+                                    .foregroundStyle(.green)
+                                Text(pinned)
+                                    .font(.subheadline)
+                                Spacer()
+                                Button {
+                                    localNome = nil; localLat = nil; localLon = nil; localQuery = ""
+                                    completer.clear()
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        } else {
+                            HStack(spacing: 12) {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20)
+                                TextField("Buscar supermercado…", text: $localQuery)
+                                    .onChange(of: localQuery) { _, q in completer.search(q) }
+                            }
+                            ForEach(completer.completions, id: \.self) { completion in
+                                Button {
+                                    Task { await resolve(completion) }
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(completion.title)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.primary)
+                                        if !completion.subtitle.isEmpty {
+                                            Text(completion.subtitle)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Local do mercado")
+                }
             }
             .navigationTitle("Nova lista")
             .navigationBarTitleDisplayMode(.inline)
@@ -43,7 +129,13 @@ struct NovaListaView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Criar") {
-                        onCreate(nome.isEmpty ? "Lista" : nome, usarData ? dataMercado : nil)
+                        onCreate(
+                            nome.isEmpty ? "Lista" : nome,
+                            usarData ? dataMercado : nil,
+                            usarLocal ? localNome : nil,
+                            usarLocal ? localLat : nil,
+                            usarLocal ? localLon : nil
+                        )
                         dismiss()
                     }
                     .fontWeight(.semibold)
@@ -51,5 +143,16 @@ struct NovaListaView: View {
                 }
             }
         }
+    }
+
+    private func resolve(_ completion: MKLocalSearchCompletion) async {
+        let req = MKLocalSearch.Request(completion: completion)
+        guard let response = try? await MKLocalSearch(request: req).start(),
+              let item = response.mapItems.first else { return }
+        localNome = item.name ?? completion.title
+        localLat = item.placemark.coordinate.latitude
+        localLon = item.placemark.coordinate.longitude
+        localQuery = item.name ?? completion.title
+        completer.clear()
     }
 }

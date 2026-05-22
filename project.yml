@@ -21,4 +21,5 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.rafaelreis.compreis
         INFOPLIST_FILE: Compreis/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-    dependencies: []
+    dependencies:
+      - sdk: MapKit.framework

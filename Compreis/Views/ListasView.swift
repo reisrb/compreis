@@ -7,6 +7,7 @@ struct ListasView: View {
     private var listas: [ListaDeCompras]
 
     @State private var showNova = false
+    @State private var showingDetail: ListaDeCompras?
 
     private var ativas: [ListaDeCompras] { listas.filter { !$0.finalizada } }
     private var finalizadas: [ListaDeCompras] { listas.filter { $0.finalizada } }
@@ -24,6 +25,14 @@ struct ListasView: View {
                                     NavigationLink(destination: ContentView(lista: lista)) {
                                         ListaRow(lista: lista)
                                     }
+                                    .swipeActions(edge: .leading) {
+                                        Button {
+                                            showingDetail = lista
+                                        } label: {
+                                            Label("Detalhes", systemImage: "info.circle")
+                                        }
+                                        .tint(.blue)
+                                    }
                                 }
                                 .onDelete { offsets in
                                     offsets.map { ativas[$0] }.forEach { context.delete($0) }
@@ -35,6 +44,14 @@ struct ListasView: View {
                                 ForEach(finalizadas) { lista in
                                     NavigationLink(destination: ContentView(lista: lista)) {
                                         ListaRow(lista: lista)
+                                    }
+                                    .swipeActions(edge: .leading) {
+                                        Button {
+                                            showingDetail = lista
+                                        } label: {
+                                            Label("Detalhes", systemImage: "info.circle")
+                                        }
+                                        .tint(.blue)
                                     }
                                 }
                                 .onDelete { offsets in
@@ -66,10 +83,19 @@ struct ListasView: View {
                 }
             }
             .sheet(isPresented: $showNova) {
-                NovaListaView { nome, data in
-                    let nova = ListaDeCompras(nome: nome, dataMercado: data)
+                NovaListaView { nome, data, localNome, lat, lon in
+                    let nova = ListaDeCompras(
+                        nome: nome,
+                        dataMercado: data,
+                        localNome: localNome,
+                        localLatitude: lat,
+                        localLongitude: lon
+                    )
                     context.insert(nova)
                 }
+            }
+            .sheet(item: $showingDetail) { lista in
+                ListaDetailView(lista: lista)
             }
         }
         .tint(.green)
@@ -112,8 +138,15 @@ private struct ListaRow: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(lista.nome)
-                    .font(.body.weight(.semibold))
+                HStack(spacing: 4) {
+                    Text(lista.nome)
+                        .font(.body.weight(.semibold))
+                    if lista.localNome != nil {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.green.opacity(0.7))
+                    }
+                }
                 HStack(spacing: 6) {
                     Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
                         .foregroundStyle(.secondary)
