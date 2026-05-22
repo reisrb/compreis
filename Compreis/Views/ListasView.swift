@@ -108,7 +108,7 @@ private struct ListaRow: View {
                     .frame(width: 42, height: 42)
                 Image(systemName: lista.finalizada ? "checkmark.circle" : "cart")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(lista.finalizada ? .secondary : .green)
+                    .foregroundStyle(lista.finalizada ? Color.gray : Color.green)
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -130,7 +130,7 @@ private struct ListaRow: View {
             if !lista.itens.isEmpty {
                 Text(lista.total.brl)
                     .font(.callout.weight(.bold).monospacedDigit())
-                    .foregroundStyle(lista.finalizada ? .secondary : .green)
+                    .foregroundStyle(lista.finalizada ? Color.gray : Color.green)
             }
         }
         .padding(.vertical, 4)
