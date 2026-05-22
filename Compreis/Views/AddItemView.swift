@@ -12,30 +12,11 @@ struct AddItemView: View {
     @State private var precoText: String = ""
     @State private var unidade: Unidade = .unidade
     @State private var quantidadeInt: Int = 1
-    @State private var pesoDigitos: String = ""   // dígitos brutos do peso em gramas
+    @State private var pesoDisplay: String = "0,000"  // formatado para exibição
+    @State private var pesoGramas: Int = 0            // valor real em gramas
     @State private var sugestoes: [ProdutoHistorico] = []
 
-    // "5001" → "5,001"  |  "" → "0,000"
-    private var pesoFormatado: String {
-        let n = Int(pesoDigitos) ?? 0
-        return String(format: "%d,%03d", n / 1000, n % 1000)
-    }
-
-    private var pesoValor: Double {
-        Double(Int(pesoDigitos) ?? 0) / 1000.0
-    }
-
-    // Binding que extrai apenas dígitos e converte de volta
-    private var pesoBinding: Binding<String> {
-        Binding(
-            get: { pesoFormatado },
-            set: { newVal in
-                let digits = String(newVal.filter { $0.isNumber }.prefix(7))
-                let n = Int(digits) ?? 0
-                pesoDigitos = n == 0 ? "" : String(n)
-            }
-        )
-    }
+    private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
 
     var body: some View {
         NavigationStack {
@@ -93,9 +74,19 @@ struct AddItemView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "scalemass.fill")
                                 .foregroundStyle(.green).frame(width: 20)
-                            TextField("0,000", text: pesoBinding)
+                            TextField("0,000", text: $pesoDisplay)
                                 .keyboardType(.numberPad)
                                 .monospacedDigit()
+                                .onChange(of: pesoDisplay) { _, newVal in
+                                    let digits = String(newVal.filter { $0.isNumber }.prefix(7))
+                                    let n = Int(digits) ?? 0
+                                    pesoGramas = n
+                                    let formatted = String(format: "%d,%03d", n / 1000, n % 1000)
+                                    if pesoDisplay != formatted { pesoDisplay = formatted }
+                                }
+                            Text("kg")
+                                .foregroundStyle(.secondary)
+                                .font(.callout)
                         }
                     } else {
                         HStack {
@@ -122,7 +113,7 @@ struct AddItemView: View {
                         }
                         .padding(.vertical, 4)
                     }
-                } header: { Text(unidade == .kg ? "Peso (kg)" : "Quantidade") }
+                } header: { Text(unidade == .kg ? "Peso — \(pesoGramas)g" : "Quantidade") }
 
                 if isValid {
                     Section {
@@ -168,9 +159,8 @@ struct AddItemView: View {
         if item.unidade == .unidade {
             quantidadeInt = Int(item.quantidade)
         } else {
-            // converte kg → gramas → dígitos
-            let gramas = Int((item.quantidade * 1000).rounded())
-            pesoDigitos = gramas == 0 ? "" : String(gramas)
+            pesoGramas = Int((item.quantidade * 1000).rounded())
+            pesoDisplay = String(format: "%d,%03d", pesoGramas / 1000, pesoGramas % 1000)
         }
     }
 
@@ -190,7 +180,8 @@ struct AddItemView: View {
         precoText = String(s.preco)
         unidade = s.unidade
         quantidadeInt = 1
-        pesoDigitos = ""
+        pesoGramas = 0
+        pesoDisplay = "0,000"
         sugestoes = []
     }
 
