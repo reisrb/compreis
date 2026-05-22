@@ -17,3 +17,6 @@ Pods/
 
 # macOS
 .DS_Store
+
+# XcodeGen — gerado, não versionar
+*.xcodeproj/
