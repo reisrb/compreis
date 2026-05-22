@@ -35,7 +35,7 @@ struct ItemRow: View {
 
             Text(item.total.brl)
                 .font(.callout.weight(.heavy).monospacedDigit())
-                .foregroundStyle(AppTheme.accent)
+                .foregroundStyle(AppTheme.spend)
         }
         .padding(.vertical, 6)
     }

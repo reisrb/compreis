@@ -129,8 +129,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                 Text(lista.total.brl)
                     .font(.title2.weight(.heavy).monospacedDigit())
-                    .foregroundStyle(AppTheme.accent)
-                    .rockGlow(radius: 6)
+                    .foregroundStyle(AppTheme.spend)
             }
         }
         .padding(.horizontal, 20)

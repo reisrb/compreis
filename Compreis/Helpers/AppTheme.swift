@@ -11,6 +11,12 @@ enum AppTheme {
 
     static let accentSubtle = accent.opacity(0.15)
     static let accentBorder = accent.opacity(0.25)
+
+    static let spend = Color(UIColor { t in
+        t.userInterfaceStyle == .dark
+            ? UIColor(red: 1.00, green: 0.45, blue: 0.45, alpha: 1)
+            : UIColor(red: 0.85, green: 0.25, blue: 0.25, alpha: 1)
+    })
 }
 
 extension View {
