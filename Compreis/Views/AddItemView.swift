@@ -236,7 +236,7 @@ struct AddItemView: View {
                 Button("Adicionar mesmo assim") { confirmarSave() }
                 Button("Cancelar", role: .cancel) {}
             } message: {
-                Text(""\(nome.trimmingCharacters(in: .whitespaces))" já está nesta lista.")
+                Text("\"\(nome.trimmingCharacters(in: .whitespaces))\" já está nesta lista.")
             }
             .alert("Produto em uso", isPresented: $showDeleteAlert, presenting: confirmandoDelecao) { hist in
                 Button("Apagar e remover das listas", role: .destructive) {
@@ -254,7 +254,7 @@ struct AddItemView: View {
                 }
             } message: { hist in
                 let n = itensEmUso.count
-                Text(""\(hist.nome)" está em \(n) \(n == 1 ? "item" : "itens") em listas ativas. O que deseja fazer?")
+                Text("\"\(hist.nome)\" está em \(n) \(n == 1 ? "item" : "itens") em listas ativas. O que deseja fazer?")
             }
             .sheet(isPresented: $showRenomearSheet) {
                 RenomearProdutoSheet(
@@ -433,7 +433,7 @@ private struct RenomearProdutoSheet: View {
                 Section {
                     TextField("Novo nome", text: $novoNome)
                         .autocorrectionDisabled()
-                } header: { Text("Renomear "\(nomeAtual)" para") }
+                } header: { Text("Renomear \"\(nomeAtual)\" para") }
 
                 if !sugestoes.isEmpty {
                     Section {
