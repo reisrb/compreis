@@ -11,11 +11,15 @@ struct CompreisApp: App {
 
     private static func makeContainer() -> ModelContainer {
         do {
-            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+            let config = ModelConfiguration(cloudKitDatabase: .automatic)
+            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
+                                      configurations: config)
         } catch {
             wipeStore()
             do {
-                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+                let config = ModelConfiguration(cloudKitDatabase: .automatic)
+                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
+                                          configurations: config)
             } catch {
                 fatalError("SwiftData: \(error)")
             }

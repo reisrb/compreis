@@ -1,9 +1,12 @@
 import SwiftUI
 
 struct PerfilView: View {
+    @Environment(\.modelContext) private var context
     @ObservedObject private var auth = GoogleAuth.shared
     @State private var connecting = false
     @State private var showClientIdSheet = false
+    @State private var exportURL: URL?
+    @State private var showExportError = false
 
     var body: some View {
         NavigationStack {
@@ -20,6 +23,8 @@ struct PerfilView: View {
                             signInCard
                         }
                         setupCard
+                        exportCard
+                        icloudCard
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 32)
@@ -206,6 +211,80 @@ struct PerfilView: View {
             .rockBorder(cornerRadius: 14)
         }
         .foregroundStyle(.red)
+    }
+
+    private var icloudCard: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.blue.opacity(0.12))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "icloud.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color.blue)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("iCloud")
+                        .font(.body.weight(.bold))
+                    Text("Backup automático — sobrevive troca de iPhone")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(Color.blue)
+            }
+            .padding(16)
+        }
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .rockBorder(cornerRadius: 14)
+    }
+
+    private var exportCard: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.orange.opacity(0.12))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color.orange)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Exportar dados")
+                        .font(.body.weight(.bold))
+                    Text("Gera um arquivo JSON com todas as listas")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if let url = exportURL {
+                    ShareLink(item: url) {
+                        Text("Compartilhar")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(AppTheme.accent)
+                    }
+                } else {
+                    Button("Exportar") {
+                        if let url = try? ExportService.exportarJSON(context: context) {
+                            exportURL = url
+                        } else {
+                            showExportError = true
+                        }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+                }
+            }
+            .padding(16)
+        }
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .rockBorder(cornerRadius: 14)
+        .alert("Erro ao exportar", isPresented: $showExportError) {
+            Button("OK", role: .cancel) {}
+        }
     }
 
     private var setupCard: some View {
