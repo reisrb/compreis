@@ -9,16 +9,37 @@ struct ListasView: View {
     @State private var showNova = false
     @State private var showingDetail: ListaDeCompras?
 
-    private var ativas: [ListaDeCompras] { listas.filter { !$0.finalizada } }
-    private var finalizadas: [ListaDeCompras] { listas.filter { $0.finalizada } }
+    private var templates:  [ListaDeCompras] { listas.filter {  $0.isTemplate } }
+    private var ativas:     [ListaDeCompras] { listas.filter { !$0.finalizada && !$0.isTemplate } }
+    private var finalizadas:[ListaDeCompras] { listas.filter {  $0.finalizada && !$0.isTemplate } }
 
     var body: some View {
         NavigationStack {
             Group {
-                if listas.isEmpty {
+                if listas.filter({ !$0.isTemplate }).isEmpty {
                     emptyState
                 } else {
                     List {
+                        if !templates.isEmpty {
+                            Section {
+                                ForEach(templates) { lista in
+                                    NavigationLink(destination: ContentView(lista: lista)) {
+                                        ListaRow(lista: lista, isTemplate: true)
+                                    }
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            context.delete(lista)
+                                        } label: { Label("Excluir", systemImage: "trash") }
+                                        .tint(.red)
+                                        Button { showingDetail = lista } label: {
+                                            Label("Detalhes", systemImage: "info.circle")
+                                        }
+                                        .tint(.blue)
+                                    }
+                                }
+                            } header: { RockSectionHeader(title: "Templates") }
+                        }
+
                         if !ativas.isEmpty {
                             Section {
                                 ForEach(ativas) { lista in
@@ -29,9 +50,7 @@ struct ListasView: View {
                                         Button(role: .destructive) {
                                             context.delete(lista)
                                             SyncService.shared.scheduleSync(context: context)
-                                        } label: {
-                                            Label("Excluir", systemImage: "trash")
-                                        }
+                                        } label: { Label("Excluir", systemImage: "trash") }
                                         .tint(.red)
                                         Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
@@ -39,10 +58,9 @@ struct ListasView: View {
                                         .tint(.blue)
                                     }
                                 }
-                            } header: {
-                                RockSectionHeader(title: "Em aberto")
-                            }
+                            } header: { RockSectionHeader(title: "Em aberto") }
                         }
+
                         if !finalizadas.isEmpty {
                             Section {
                                 ForEach(finalizadas) { lista in
@@ -53,9 +71,7 @@ struct ListasView: View {
                                         Button(role: .destructive) {
                                             context.delete(lista)
                                             SyncService.shared.scheduleSync(context: context)
-                                        } label: {
-                                            Label("Excluir", systemImage: "trash")
-                                        }
+                                        } label: { Label("Excluir", systemImage: "trash") }
                                         .tint(.red)
                                         Button { showingDetail = lista } label: {
                                             Label("Detalhes", systemImage: "info.circle")
@@ -63,9 +79,7 @@ struct ListasView: View {
                                         .tint(.blue)
                                     }
                                 }
-                            } header: {
-                                RockSectionHeader(title: "Finalizadas")
-                            }
+                            } header: { RockSectionHeader(title: "Finalizadas") }
                         }
                     }
                     .listStyle(.insetGrouped)
@@ -89,11 +103,20 @@ struct ListasView: View {
                 }
             }
             .sheet(isPresented: $showNova) {
-                NovaListaView { nome, data, localNome, lat, lon in
+                NovaListaView { nome, data, localNome, lat, lon, modelo, templateUsuario in
                     let nova = ListaDeCompras(nome: nome, dataMercado: data,
                                              localNome: localNome,
                                              localLatitude: lat, localLongitude: lon)
                     context.insert(nova)
+                    if let t = templateUsuario {
+                        for item in t.itens {
+                            nova.itens.append(Item(nome: item.nome, preco: item.preco,
+                                                   unidade: item.unidade, quantidade: item.quantidade,
+                                                   categoria: item.categoria))
+                        }
+                    } else if modelo != .vazia {
+                        ProdutoBase.criarItens(para: nova, modelo: modelo, context: context)
+                    }
                     SyncService.shared.scheduleSync(context: context)
                 }
             }
@@ -122,6 +145,7 @@ struct ListasView: View {
 
 private struct ListaRow: View {
     let lista: ListaDeCompras
+    var isTemplate: Bool = false
 
     private var dataFormatada: String? {
         guard let data = lista.dataMercado else { return nil }
@@ -134,22 +158,26 @@ private struct ListaRow: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(lista.finalizada
-                          ? Color.secondary.opacity(0.12)
-                          : AppTheme.accentSubtle)
+                    .fill(isTemplate
+                          ? Color.orange.opacity(0.12)
+                          : lista.finalizada
+                              ? Color.secondary.opacity(0.12)
+                              : AppTheme.accentSubtle)
                     .frame(width: 42, height: 42)
                     .overlay(Circle().strokeBorder(
-                        lista.finalizada ? Color.clear : AppTheme.accentBorder,
+                        isTemplate ? Color.orange.opacity(0.4)
+                            : lista.finalizada ? Color.clear : AppTheme.accentBorder,
                         lineWidth: 0.75))
-                Image(systemName: lista.finalizada ? "checkmark.circle" : "cart")
+                Image(systemName: isTemplate ? "star.fill"
+                      : lista.finalizada ? "checkmark.circle" : "cart")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(lista.finalizada ? Color.gray : AppTheme.accent)
+                    .foregroundStyle(isTemplate ? Color.orange
+                                     : lista.finalizada ? Color.gray : AppTheme.accent)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 4) {
-                    Text(lista.nome)
-                        .font(.body.weight(.bold))
+                    Text(lista.nome).font(.body.weight(.bold))
                     if lista.localNome != nil {
                         Image(systemName: "mappin.circle.fill")
                             .font(.caption)
@@ -172,7 +200,8 @@ private struct ListaRow: View {
             if !lista.itens.isEmpty {
                 Text(lista.total.brl)
                     .font(.callout.weight(.heavy).monospacedDigit())
-                    .foregroundStyle(lista.finalizada ? Color.secondary : AppTheme.accent)
+                    .foregroundStyle(isTemplate ? Color.orange
+                                     : lista.finalizada ? Color.secondary : AppTheme.accent)
             }
         }
         .padding(.vertical, 4)

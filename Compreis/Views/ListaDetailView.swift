@@ -46,6 +46,13 @@ struct ListaDetailView: View {
                 }
 
                 Section {
+                    Toggle(isOn: Binding(get: { lista.isTemplate }, set: { lista.isTemplate = $0 })) {
+                        Label("Usar como template", systemImage: "doc.badge.plus")
+                    }
+                    .tint(AppTheme.accent)
+                } header: { RockSectionHeader(title: "Template") }
+
+                Section {
                     Toggle("Definir data", isOn: $usarData)
                         .tint(AppTheme.accent)
                     if usarData {

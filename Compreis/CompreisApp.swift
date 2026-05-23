@@ -7,19 +7,16 @@ struct CompreisApp: App {
 
     init() {
         container = Self.makeContainer()
+        ProdutoBase.sementar(context: container.mainContext)
     }
 
     private static func makeContainer() -> ModelContainer {
         do {
-            let config = ModelConfiguration(cloudKitDatabase: .automatic)
-            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
-                                      configurations: config)
+            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
         } catch {
             wipeStore()
             do {
-                let config = ModelConfiguration(cloudKitDatabase: .automatic)
-                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
-                                          configurations: config)
+                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
             } catch {
                 fatalError("SwiftData: \(error)")
             }

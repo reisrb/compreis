@@ -12,6 +12,7 @@ final class ListaDeCompras {
     var localLatitude: Double?
     var localLongitude: Double?
     var totalPago: Double?
+    var isTemplate: Bool = false
     @Relationship(deleteRule: .cascade, inverse: \Item.lista) var itens: [Item] = []
 
     init(nome: String, dataMercado: Date? = nil, criadaEm: Date = .now,

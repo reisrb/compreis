@@ -2,40 +2,45 @@ import SwiftUI
 
 struct ItemRow: View {
     let item: Item
+    var onEdit: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.accentSubtle)
+            Button {
+                withAnimation(.spring(duration: 0.25)) { item.pegou.toggle() }
+            } label: {
+                Image(systemName: item.pegou ? "checkmark.circle.fill" : "checkmark.circle")
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundStyle(item.pegou ? AppTheme.accent : Color.secondary.opacity(0.35))
                     .frame(width: 42, height: 42)
-                    .overlay(Circle().strokeBorder(AppTheme.accentBorder, lineWidth: 0.75))
-                Image(systemName: "cart")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(AppTheme.accent)
             }
+            .buttonStyle(.plain)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(item.nome)
-                    .font(.body.weight(.bold))
-                HStack(spacing: 4) {
-                    Text(item.preco.brl)
+            Button(action: onEdit) {
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(item.nome)
+                            .font(.body.weight(.bold))
+                            .strikethrough(item.pegou, color: .secondary)
+                            .foregroundStyle(item.pegou ? .secondary : .primary)
+                        HStack(spacing: 4) {
+                            Text(item.preco.brl)
+                            Text("/ \(item.unidade.rawValue)")
+                            Text("·")
+                            Text("\(item.quantidade.formatted()) \(item.unidade.rawValue)")
+                        }
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("/ \(item.unidade.rawValue)")
-                        .foregroundStyle(.secondary)
-                    Text("·")
-                        .foregroundStyle(.secondary)
-                    Text("\(item.quantidade.formatted()) \(item.unidade.rawValue)")
-                        .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Text(item.total.brl)
+                        .font(.callout.weight(.heavy).monospacedDigit())
+                        .foregroundStyle(item.pegou ? .secondary : AppTheme.spend)
                 }
-                .font(.caption)
             }
-
-            Spacer()
-
-            Text(item.total.brl)
-                .font(.callout.weight(.heavy).monospacedDigit())
-                .foregroundStyle(AppTheme.spend)
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 6)
     }

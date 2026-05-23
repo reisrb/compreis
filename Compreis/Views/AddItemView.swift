@@ -6,11 +6,12 @@ struct AddItemView: View {
     @Environment(\.modelContext) private var context
 
     var item: Item?
-    var onSave: (String, Double, Unidade, Double) -> Void
+    var onSave: (String, Double, Unidade, Double, Categoria) -> Void
 
     @State private var nome: String = ""
     @State private var precoText: String = ""
     @State private var unidade: Unidade = .unidade
+    @State private var categoria: Categoria = .outros
     @State private var quantidadeInt: Int = 1
     @State private var pesoDisplay: String = "0,000"
     @State private var pesoGramas: Int = 0
@@ -54,7 +55,7 @@ struct AddItemView: View {
                     if mlBuscando {
                         HStack(spacing: 8) {
                             ProgressView().scaleEffect(0.8)
-                            Text("Buscando no Mercado Livre…")
+                            Text("Buscando produtos…")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -75,9 +76,9 @@ struct AddItemView: View {
                                             .font(.subheadline)
                                             .foregroundStyle(.primary)
                                             .lineLimit(2)
-                                        Text(p.preco.brl)
-                                            .font(.caption.weight(.semibold))
-                                            .foregroundStyle(AppTheme.accent)
+                                        Text("Preencha o preço")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
                                     }
                                     Spacer()
                                     Image(systemName: "arrow.up.left")
@@ -85,6 +86,18 @@ struct AddItemView: View {
                                 }
                             }
                         }
+                    }
+                    HStack(spacing: 12) {
+                        Image(systemName: categoria.icone)
+                            .foregroundStyle(categoria.cor)
+                            .frame(width: 20)
+                        Picker("Categoria", selection: $categoria) {
+                            ForEach(Categoria.allCases, id: \.self) { cat in
+                                Label(cat.rawValue, systemImage: cat.icone).tag(cat)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(AppTheme.accent)
                     }
                 } header: { RockSectionHeader(title: "Produto") }
 
@@ -195,6 +208,7 @@ struct AddItemView: View {
         nome = item.nome
         precoText = String(item.preco)
         unidade = item.unidade
+        categoria = item.categoria
         if item.unidade == .unidade {
             quantidadeInt = Int(item.quantidade)
         } else {
@@ -218,6 +232,7 @@ struct AddItemView: View {
         nome = s.nome
         precoText = String(s.preco)
         unidade = s.unidade
+        categoria = s.categoria
         quantidadeInt = 1
         pesoGramas = 0
         pesoDisplay = "0,000"
@@ -242,8 +257,18 @@ struct AddItemView: View {
 
     private func aplicarML(_ p: MLProduto) {
         nome = p.titulo
-        precoText = String(format: "%.2f", p.preco).replacingOccurrences(of: ".", with: ",")
-        unidade = .unidade
+        // Busca preço salvo no histórico para esse produto
+        let fetch = FetchDescriptor<ProdutoHistorico>()
+        let hist = (try? context.fetch(fetch)) ?? []
+        if let match = hist.first(where: { $0.nome.localizedCaseInsensitiveContains(p.titulo) ||
+                                           p.titulo.localizedCaseInsensitiveContains($0.nome) }),
+           match.preco > 0 {
+            precoText = String(match.preco).replacingOccurrences(of: ".", with: ",")
+            unidade = match.unidade
+            categoria = match.categoria
+        } else {
+            precoText = ""
+        }
         quantidadeInt = 1
         mlResultados = []
         sugestoes = []
@@ -252,7 +277,7 @@ struct AddItemView: View {
     private func save() {
         let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
         let quantidade = unidade == .kg ? pesoValor : Double(quantidadeInt)
-        onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade)
+        onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade, categoria)
         dismiss()
     }
 }
