@@ -201,7 +201,7 @@ private struct TemplatesView: View {
                 }
             }
             .sheet(isPresented: $showNovo) {
-                NovaListaView(titulo: "Novo template") { nome, data, localNome, lat, lon, modelo, templateOrigem in
+                NovaListaView(titulo: "Novo template", isTemplate: true) { nome, data, localNome, lat, lon, modelo, templateOrigem in
                     let novo = ListaDeCompras(nome: nome, dataMercado: data,
                                               localNome: localNome,
                                               localLatitude: lat, localLongitude: lon)

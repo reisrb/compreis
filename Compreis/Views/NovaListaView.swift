@@ -37,6 +37,7 @@ struct NovaListaView: View {
     private var predefinedTemplates: [ListaDeCompras]
 
     var titulo: String = "Nova lista"
+    var isTemplate: Bool = false
     var onCreate: (String, Date?, String?, Double?, Double?, ListaModelo, ListaDeCompras?) -> Void
 
     @State private var nome: String = ""
@@ -135,7 +136,7 @@ struct NovaListaView: View {
                                                 .font(.caption2)
                                                 .foregroundStyle(.secondary)
                                         }
-                                        .frame(maxWidth: .infinity)
+                                        .frame(width: 110)
                                         .padding(.vertical, 12)
                                         .background(sel
                                             ? AppTheme.accentSubtle
@@ -165,9 +166,10 @@ struct NovaListaView: View {
                             .frame(width: 20)
                         TextField("Ex: Semana, Churrasco…", text: $nome)
                     }
-                } header: { Text("Nome da lista") }
+                } header: { Text(isTemplate ? "Nome do template" : "Nome da lista") }
 
                 // MARK: Data
+                if !isTemplate {
                 Section {
                     Toggle("Definir data", isOn: $usarData)
                         .tint(AppTheme.accent)
@@ -177,8 +179,10 @@ struct NovaListaView: View {
                             .tint(AppTheme.accent)
                     }
                 } header: { Text("Quando vai ao mercado") }
+                } // if !isTemplate
 
                 // MARK: Local
+                if !isTemplate {
                 Section {
                     Toggle("Definir local", isOn: $usarLocal)
                         .tint(AppTheme.accent)
@@ -232,6 +236,7 @@ struct NovaListaView: View {
                         }
                     }
                 } header: { Text("Local do mercado") }
+                } // if !isTemplate
             }
             .navigationTitle(titulo)
             .navigationBarTitleDisplayMode(.inline)

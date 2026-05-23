@@ -201,6 +201,13 @@ struct ListaDetailView: View {
             localLon = lista.localLongitude
             localQuery = nome
         }
+        let listaNome = lista.nome
+        let desc = FetchDescriptor<ListaDeCompras>(
+            predicate: #Predicate { $0.isTemplate == true && $0.isPredefined == false && $0.nome == listaNome }
+        )
+        if let count = try? context.fetchCount(desc) {
+            templateCriado = count > 0
+        }
     }
 
     private func resolve(_ completion: MKLocalSearchCompletion) async {
