@@ -209,6 +209,8 @@ private struct ListaTotalFooter: View {
     let lista: ListaDeCompras
     var onFinalizar: () -> Void
 
+    @State private var showCarrinho = false
+
     private var pegos: [Item] { lista.itens.filter { $0.pegou } }
     private var totalCarrinho: Double { pegos.reduce(0) { $0 + $1.total } }
     private var totalItens: Int { lista.itens.count }
@@ -225,6 +227,23 @@ private struct ListaTotalFooter: View {
                     .clipShape(Capsule())
                     .rockGlow(radius: 6)
             }
+
+            if !pegos.isEmpty {
+                Button { showCarrinho = true } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "cart.fill")
+                            .font(.caption.weight(.semibold))
+                        Text("\(pegos.count)")
+                            .font(.subheadline.weight(.heavy).monospacedDigit())
+                    }
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(AppTheme.accent.opacity(0.85))
+                    .clipShape(Capsule())
+                }
+            }
+
             Spacer()
             if pegos.isEmpty {
                 VStack(alignment: .trailing, spacing: 2) {
@@ -253,5 +272,78 @@ private struct ListaTotalFooter: View {
         .padding(.vertical, 14)
         .background(.regularMaterial)
         .overlay(alignment: .top) { Divider() }
+        .sheet(isPresented: $showCarrinho) {
+            CarrinhoSheet(pegos: pegos, total: totalCarrinho)
+        }
+    }
+}
+
+// MARK: - Carrinho Sheet
+
+private struct CarrinhoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let pegos: [Item]
+    let total: Double
+
+    private var porCategoria: [(Categoria, [Item])] {
+        let agrupados = Dictionary(grouping: pegos, by: { $0.categoria })
+        return Categoria.allCases.compactMap { cat in
+            guard let grupo = agrupados[cat], !grupo.isEmpty else { return nil }
+            return (cat, grupo.sorted { $0.nome < $1.nome })
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(porCategoria, id: \.0) { cat, itens in
+                    Section {
+                        ForEach(itens) { item in
+                            HStack(spacing: 10) {
+                                Image(systemName: cat.icone)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(cat.cor)
+                                    .frame(width: 20)
+                                Text(item.nome)
+                                    .font(.subheadline)
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text(item.total.brl)
+                                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                                        .foregroundStyle(AppTheme.accent)
+                                    Text("\(item.preco.brl) × \(item.unidade == .kg ? String(format: "%.3f kg", item.quantidade) : String(format: "%.0f", item.quantidade))")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    } header: {
+                        Label(cat.rawValue, systemImage: cat.icone)
+                            .font(.footnote.weight(.bold))
+                            .foregroundStyle(cat.cor)
+                    }
+                }
+
+                Section {
+                    HStack {
+                        Text("Total no carrinho")
+                            .font(.body.weight(.bold))
+                        Spacer()
+                        Text(total.brl)
+                            .font(.title3.weight(.heavy).monospacedDigit())
+                            .foregroundStyle(AppTheme.accent)
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Carrinho")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fechar") { dismiss() }
+                        .tint(AppTheme.accent)
+                }
+            }
+        }
     }
 }

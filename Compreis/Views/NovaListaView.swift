@@ -31,8 +31,10 @@ final class SearchCompleter: NSObject, ObservableObject, @preconcurrency MKLocal
 
 struct NovaListaView: View {
     @Environment(\.dismiss) private var dismiss
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate })
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && !$0.isPredefined })
     private var templates: [ListaDeCompras]
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && $0.isPredefined })
+    private var predefinedTemplates: [ListaDeCompras]
 
     var titulo: String = "Nova lista"
     var onCreate: (String, Date?, String?, Double?, Double?, ListaModelo, ListaDeCompras?) -> Void
@@ -147,9 +149,11 @@ struct NovaListaView: View {
                                     .buttonStyle(.plain)
                                 }
                             }
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
                         }
-                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                     } header: { Text("Seus templates") }
                 }
 
@@ -234,6 +238,10 @@ struct NovaListaView: View {
             .sheet(isPresented: $showPreview) {
                 if let t = templateUsuario {
                     TemplatePreviewSheet(nome: t.nome, itens: t.itens.map {
+                        ProdutoSemente(nome: $0.nome, categoria: $0.categoria, unidade: $0.unidade)
+                    })
+                } else if let stored = predefinedTemplates.first(where: { $0.nome == modeloSelecionado.rawValue }) {
+                    TemplatePreviewSheet(nome: stored.nome, itens: stored.itens.map {
                         ProdutoSemente(nome: $0.nome, categoria: $0.categoria, unidade: $0.unidade)
                     })
                 } else {

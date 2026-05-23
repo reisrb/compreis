@@ -126,26 +126,59 @@ enum ProdutoBase {
     // MARK: - Semente (roda uma vez no primeiro launch)
 
     static func sementar(context: ModelContext) {
-        guard !UserDefaults.standard.bool(forKey: "semente_v1") else { return }
-        let todos = (try? context.fetch(FetchDescriptor<ProdutoHistorico>())) ?? []
-        let existentes = Set(todos.map { $0.nome.lowercased() })
-        for p in mensal where !existentes.contains(p.nome.lowercased()) {
-            context.insert(ProdutoHistorico(nome: p.nome, preco: 0,
-                                            unidade: p.unidade, categoria: p.categoria))
+        if !UserDefaults.standard.bool(forKey: "semente_v1") {
+            let todos = (try? context.fetch(FetchDescriptor<ProdutoHistorico>())) ?? []
+            let existentes = Set(todos.map { $0.nome.lowercased() })
+            for p in mensal where !existentes.contains(p.nome.lowercased()) {
+                context.insert(ProdutoHistorico(nome: p.nome, preco: 0,
+                                                unidade: p.unidade, categoria: p.categoria))
+            }
+            UserDefaults.standard.set(true, forKey: "semente_v1")
         }
-        UserDefaults.standard.set(true, forKey: "semente_v1")
+
+        if !UserDefaults.standard.bool(forKey: "semente_templates_v1") {
+            let existentes = (try? context.fetch(FetchDescriptor<ListaDeCompras>(
+                predicate: #Predicate { $0.isPredefined }
+            ))) ?? []
+            let existentesNomes = Set(existentes.map { $0.nome })
+
+            for (nome, produtos) in [("Essencial", essencial), ("Do mês", mensal)] {
+                guard !existentesNomes.contains(nome) else { continue }
+                let t = ListaDeCompras(nome: nome)
+                t.isTemplate = true
+                t.isPredefined = true
+                for p in produtos {
+                    t.itens.append(Item(nome: p.nome, preco: 0,
+                                       unidade: p.unidade, quantidade: 1, categoria: p.categoria))
+                }
+                context.insert(t)
+            }
+            UserDefaults.standard.set(true, forKey: "semente_templates_v1")
+        }
     }
 
     // MARK: - Cria itens na lista com preços do histórico
 
     static func criarItens(para lista: ListaDeCompras, modelo: ListaModelo, context: ModelContext) {
-        guard !modelo.produtos.isEmpty else { return }
+        guard modelo != .vazia else { return }
+
         let historico = (try? context.fetch(FetchDescriptor<ProdutoHistorico>())) ?? []
         let mapa = Dictionary(uniqueKeysWithValues:
             Dictionary(grouping: historico, by: { $0.nome.lowercased() })
                 .compactMap { k, v -> (String, ProdutoHistorico)? in v.first.map { (k, $0) } }
         )
-        for p in modelo.produtos {
+
+        // Prefere itens do template armazenado (pode ter sido editado pelo usuário)
+        let storedFetch = FetchDescriptor<ListaDeCompras>(
+            predicate: #Predicate { $0.isPredefined && $0.nome == modelo.rawValue }
+        )
+        let stored = (try? context.fetch(storedFetch))?.first
+
+        let produtos: [(nome: String, unidade: Unidade, categoria: Categoria)] = stored.map { t in
+            t.itens.map { ($0.nome, $0.unidade, $0.categoria) }
+        } ?? modelo.produtos.map { ($0.nome, $0.unidade, $0.categoria) }
+
+        for p in produtos {
             let hist = mapa[p.nome.lowercased()]
             lista.itens.append(Item(
                 nome: p.nome,

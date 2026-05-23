@@ -139,43 +139,37 @@ struct ListasView: View {
 private struct TemplatesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate },
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && $0.isPredefined },
+           sort: \ListaDeCompras.criadaEm, order: .forward)
+    private var predefined: [ListaDeCompras]
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && !$0.isPredefined },
            sort: \ListaDeCompras.criadaEm, order: .reverse)
-    private var templates: [ListaDeCompras]
+    private var userTemplates: [ListaDeCompras]
 
     @State private var showNovo = false
     @State private var showingDetail: ListaDeCompras?
 
     var body: some View {
         NavigationStack {
-            Group {
-                if templates.isEmpty {
-                    VStack(spacing: 14) {
-                        Image(systemName: "star")
-                            .font(.system(size: 56))
-                            .foregroundStyle(Color.orange.opacity(0.4))
-                        Text("Sem templates")
-                            .font(.title2.weight(.heavy))
-                        Text("Crie templates para reutilizar listas de compras")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
+            List {
+                if !predefined.isEmpty {
+                    Section {
+                        ForEach(predefined) { t in
+                            NavigationLink(destination: ContentView(lista: t)) {
+                                ListaRow(lista: t, isTemplate: true)
+                            }
+                        }
+                    } header: { RockSectionHeader(title: "Padrão") }
+                }
+
+                Section {
+                    if userTemplates.isEmpty {
                         Button { showNovo = true } label: {
                             Label("Criar template", systemImage: "plus")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.black)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .background(AppTheme.accent)
-                                .clipShape(Capsule())
+                                .foregroundStyle(AppTheme.accent)
                         }
-                        .padding(.top, 4)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(templates) { t in
+                    } else {
+                        ForEach(userTemplates) { t in
                             NavigationLink(destination: ContentView(lista: t)) {
                                 ListaRow(lista: t, isTemplate: true)
                             }
@@ -191,9 +185,9 @@ private struct TemplatesView: View {
                             }
                         }
                     }
-                    .listStyle(.insetGrouped)
-                }
+                } header: { RockSectionHeader(title: "Meus templates") }
             }
+            .listStyle(.insetGrouped)
             .navigationTitle("Templates")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
