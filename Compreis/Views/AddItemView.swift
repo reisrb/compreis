@@ -261,9 +261,22 @@ struct AddItemView: View {
                     nomeAtual: confirmandoDelecao?.nome ?? "",
                     onConfirmar: { novoNome in
                         if let hist = confirmandoDelecao {
+                            let nomeAntigo = hist.nome
                             for item in itensEmUso { item.nome = novoNome }
+                            let descH = FetchDescriptor<ProdutoHistorico>(predicate: #Predicate { $0.nome == novoNome })
+                            let existeNovo = ((try? context.fetch(descH))?.first) != nil
+                            if !existeNovo, let primeiro = itensEmUso.first {
+                                context.insert(ProdutoHistorico(
+                                    nome: novoNome, preco: primeiro.preco,
+                                    unidade: primeiro.unidade, categoria: primeiro.categoria
+                                ))
+                            }
                             context.delete(hist)
-                            sugestoes.removeAll { $0.nome == hist.nome }
+                            if nome.localizedCaseInsensitiveCompare(nomeAntigo) == .orderedSame {
+                                nome = novoNome
+                            }
+                            sugestoes.removeAll { $0.nome == nomeAntigo }
+                            buscarSugestoes(nome)
                             confirmandoDelecao = nil; itensEmUso = []
                         }
                     },
