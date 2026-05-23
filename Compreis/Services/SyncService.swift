@@ -44,8 +44,8 @@ final class SyncService: ObservableObject {
             let folderId = try await garantirPasta(token: token)
             let sheetId  = try await garantirPlanilha(folderId: folderId, token: token)
 
-            let listas   = (try? context.fetch(FetchDescriptor<ListaDeCompras>(sort: [SortDescriptor(\.criadaEm)]))) ?? []
-            let historico = (try? context.fetch(FetchDescriptor<ProdutoHistorico>(sort: [SortDescriptor(\.nome)]))) ?? []
+            let listas   = (try? context.fetch(FetchDescriptor<ListaDeCompras>(sortBy: [SortDescriptor(\.criadaEm)]))) ?? []
+            let historico = (try? context.fetch(FetchDescriptor<ProdutoHistorico>(sortBy: [SortDescriptor(\.nome)]))) ?? []
 
             try await reescreverAba(spreadsheetId: sheetId, nome: "Listas",
                                     cabecalho: ["Nome", "Status", "Criada em", "Finalizada em", "Itens", "Total Calculado", "Total Pago", "Local"],

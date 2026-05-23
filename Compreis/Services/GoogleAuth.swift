@@ -1,4 +1,5 @@
 import AuthenticationServices
+import SwiftUI
 import UIKit
 
 private final class AuthAnchor: NSObject, ASWebAuthenticationPresentationContextProviding {
