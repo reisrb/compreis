@@ -6,6 +6,7 @@ struct AddItemView: View {
     @Environment(\.modelContext) private var context
 
     var item: Item?
+    var listaUF: String? = nil
     var onSave: (String, Double, Unidade, Double, Categoria) -> Void
 
     @State private var nome: String = ""
@@ -20,6 +21,8 @@ struct AddItemView: View {
     @State private var mlResultados: [MLProduto] = []
     @State private var mlBuscando = false
     @State private var mlTask: Task<Void, Never>?
+    @State private var conabInfo: (preco: Double, uf: String)?
+    @State private var conabTask: Task<Void, Never>?
 
     private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
 
@@ -35,6 +38,7 @@ struct AddItemView: View {
                             .onChange(of: nome) { _, novo in
                                 buscarSugestoes(novo)
                                 agendarBuscaML(novo)
+                                agendarBuscaCONAB(novo)
                             }
                     }
                     if !sugestoes.isEmpty {
@@ -50,6 +54,21 @@ struct AddItemView: View {
                                     Image(systemName: "arrow.up.left")
                                         .font(.caption).foregroundStyle(AppTheme.accent)
                                 }
+                            }
+                        }
+                    }
+                    if let info = conabInfo {
+                        Button { aplicarCONAB(info.preco) } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Ref. CONAB · \(info.uf) (atacado)")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                    Text("\(info.preco.brl) / kg")
+                                        .foregroundStyle(.primary)
+                                }
+                                Spacer()
+                                Image(systemName: "arrow.up.left")
+                                    .font(.caption).foregroundStyle(Color.green.opacity(0.8))
                             }
                         }
                     }
@@ -285,6 +304,27 @@ struct AddItemView: View {
         quantidadeInt = 1
         mlResultados = []
         sugestoes = []
+    }
+
+    private func agendarBuscaCONAB(_ texto: String) {
+        conabTask?.cancel()
+        conabInfo = nil
+        guard let uf = listaUF, texto.count >= 3 else { return }
+        conabTask = Task {
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            let preco = await CONABService.shared.preco(nomeProduto: texto, uf: uf)
+            await MainActor.run {
+                if let p = preco { conabInfo = (p, uf) }
+            }
+        }
+    }
+
+    private func aplicarCONAB(_ preco: Double) {
+        precoCentavos = Int((preco * 100).rounded())
+        precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+        unidade = .kg
+        conabInfo = nil
     }
 
     private func save() {

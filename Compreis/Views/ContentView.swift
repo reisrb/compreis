@@ -7,6 +7,7 @@ struct ContentView: View {
 
     @State private var showAdd = false
     @State private var editingItem: Item?
+    @State private var listaUF: String?
     @State private var showFinalizar = false
     @State private var showDetalhes = false
     @State private var categoriasExpandidas: Set<Categoria> = []
@@ -128,8 +129,13 @@ struct ContentView: View {
                 .padding(.bottom, totalItens == 0 ? 20 : 110)
             }
         }
+        .task {
+            if let lat = lista.localLatitude, let lon = lista.localLongitude {
+                listaUF = await CONABService.uf(lat: lat, lon: lon)
+            }
+        }
         .sheet(isPresented: $showAdd) {
-            AddItemView { nome, preco, unidade, quantidade, categoria in
+            AddItemView(listaUF: listaUF) { nome, preco, unidade, quantidade, categoria in
                 let item = Item(nome: nome, preco: preco, unidade: unidade,
                                 quantidade: quantidade, categoria: categoria)
                 lista.itens.append(item)
@@ -138,7 +144,7 @@ struct ContentView: View {
             }
         }
         .sheet(item: $editingItem) { item in
-            AddItemView(item: item) { nome, preco, unidade, quantidade, categoria in
+            AddItemView(item: item, listaUF: listaUF) { nome, preco, unidade, quantidade, categoria in
                 item.nome = nome
                 item.preco = preco
                 item.unidade = unidade
