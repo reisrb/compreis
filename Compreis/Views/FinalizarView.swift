@@ -8,7 +8,7 @@ struct FinalizarView: View {
     @State private var copiarItens = true
     @State private var ajustarTotal = false
     @State private var totalText: String = ""
-    private var auth = GoogleAuth.shared
+    private var auth: GoogleAuth { GoogleAuth.shared }
 
     private var totalFinal: Double {
         if ajustarTotal, let v = Double(totalText.replacingOccurrences(of: ",", with: ".")) {
