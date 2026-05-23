@@ -2,11 +2,10 @@ import SwiftUI
 import UIKit
 
 enum AppTheme {
-    // Electric green — mais saturado/neon que o system green
     static let accent = Color(UIColor { t in
         t.userInterfaceStyle == .dark
-            ? UIColor(red: 0.17, green: 1.00, blue: 0.38, alpha: 1)
-            : UIColor(red: 0.10, green: 0.72, blue: 0.28, alpha: 1)
+            ? UIColor(red: 0.25, green: 0.78, blue: 0.45, alpha: 1)
+            : UIColor(red: 0.13, green: 0.55, blue: 0.25, alpha: 1)
     })
 
     static let accentSubtle = accent.opacity(0.15)
@@ -23,8 +22,8 @@ extension View {
     // Glow duplo — efeito neon rock
     func rockGlow(_ color: Color = AppTheme.accent, radius: CGFloat = 8) -> some View {
         self
-            .shadow(color: color.opacity(0.55), radius: radius)
-            .shadow(color: color.opacity(0.25), radius: radius * 2.5)
+            .shadow(color: color.opacity(0.30), radius: radius)
+            .shadow(color: color.opacity(0.12), radius: radius * 2)
     }
 
     // Borda sutil verde nos cards
