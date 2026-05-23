@@ -8,10 +8,6 @@ struct FinalizarView: View {
     @State private var copiarItens = true
     @State private var ajustarTotal = false
     @State private var totalText: String = ""
-    @State private var salvarSheets = true
-    @State private var exportando = false
-    @State private var exportErro: String?
-
     private var auth = GoogleAuth.shared
 
     private var totalFinal: Double {
@@ -86,16 +82,12 @@ struct FinalizarView: View {
 
                 if auth.isConnected {
                     Section {
-                        Toggle("Salvar no Google Sheets", isOn: $salvarSheets)
-                            .tint(AppTheme.accent)
-                        if exportando {
-                            HStack(spacing: 8) {
-                                ProgressView().scaleEffect(0.8)
-                                Text("Exportando…").font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                        if let erro = exportErro {
-                            Text(erro).font(.caption).foregroundStyle(.red)
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(AppTheme.accent)
+                            Text("Será sincronizado com Google Sheets")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
                     } header: { RockSectionHeader(title: "Nuvem") }
                 }
@@ -110,20 +102,7 @@ struct FinalizarView: View {
                     Button("Confirmar") {
                         lista.totalPago = ajustarTotal ? totalFinal : nil
                         onFinalizar(copiarItens)
-                        if salvarSheets && auth.isConnected {
-                            exportando = true
-                            Task {
-                                do {
-                                    try await SheetsService.exportar(lista, auth: auth)
-                                } catch {
-                                    exportErro = error.localizedDescription
-                                }
-                                exportando = false
-                                if exportErro == nil { dismiss() }
-                            }
-                        } else {
-                            dismiss()
-                        }
+                        dismiss()
                     }
                     .fontWeight(.heavy)
                     .tint(AppTheme.accent)

@@ -65,6 +65,7 @@ struct ContentView: View {
                 let item = Item(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade)
                 lista.itens.append(item)
                 salvarHistorico(nome: nome, preco: preco, unidade: unidade)
+                SyncService.shared.scheduleSync(context: context)
             }
         }
         .sheet(item: $editingItem) { item in
@@ -74,6 +75,7 @@ struct ContentView: View {
                 item.unidade = unidade
                 item.quantidade = quantidade
                 salvarHistorico(nome: nome, preco: preco, unidade: unidade)
+                SyncService.shared.scheduleSync(context: context)
             }
         }
         .sheet(isPresented: $showDetalhes) {
@@ -140,6 +142,7 @@ struct ContentView: View {
 
     private func delete(at offsets: IndexSet) {
         for i in offsets { context.delete(itens[i]) }
+        SyncService.shared.scheduleSync(context: context)
     }
 
     private func salvarHistorico(nome: String, preco: Double, unidade: Unidade) {

@@ -26,7 +26,10 @@ struct ListasView: View {
                                         ListaRow(lista: lista)
                                     }
                                     .swipeActions(edge: .trailing) {
-                                        Button(role: .destructive) { context.delete(lista) } label: {
+                                        Button(role: .destructive) {
+                                            context.delete(lista)
+                                            SyncService.shared.scheduleSync(context: context)
+                                        } label: {
                                             Label("Excluir", systemImage: "trash")
                                         }
                                         .tint(.red)
@@ -47,7 +50,10 @@ struct ListasView: View {
                                         ListaRow(lista: lista)
                                     }
                                     .swipeActions(edge: .trailing) {
-                                        Button(role: .destructive) { context.delete(lista) } label: {
+                                        Button(role: .destructive) {
+                                            context.delete(lista)
+                                            SyncService.shared.scheduleSync(context: context)
+                                        } label: {
                                             Label("Excluir", systemImage: "trash")
                                         }
                                         .tint(.red)
@@ -88,6 +94,7 @@ struct ListasView: View {
                                              localNome: localNome,
                                              localLatitude: lat, localLongitude: lon)
                     context.insert(nova)
+                    SyncService.shared.scheduleSync(context: context)
                 }
             }
             .sheet(item: $showingDetail) { lista in

@@ -150,7 +150,8 @@ struct PerfilView: View {
     }
 
     private var sheetsCard: some View {
-        VStack(spacing: 0) {
+        let sync = SyncService.shared
+        return VStack(spacing: 0) {
             HStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
@@ -163,14 +164,26 @@ struct PerfilView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Google Sheets")
                         .font(.body.weight(.bold))
-                    Text("Compreis - Histórico")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if sync.syncing {
+                        Text("Sincronizando…")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else if let err = sync.lastError {
+                        Text(err).font(.caption).foregroundStyle(.red).lineLimit(1)
+                    } else if let ts = sync.lastSynced {
+                        Text("Sincronizado \(ts.formatted(.relative(presentation: .named)))")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        Text("Compreis - Dados")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(AppTheme.accent)
-                    .rockGlow(radius: 4)
+                if sync.syncing {
+                    ProgressView().scaleEffect(0.8)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(AppTheme.accent)
+                }
             }
             .padding(16)
         }
