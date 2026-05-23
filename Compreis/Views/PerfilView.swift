@@ -219,7 +219,7 @@ struct PerfilView: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 passo(n: 1, texto: "Abra console.cloud.google.com")
-                passo(n: 2, texto: "Crie um projeto "Compreis"")
+                passo(n: 2, texto: "Crie um projeto \"Compreis\"")
                 passo(n: 3, texto: "Ative Google Sheets API e Google Drive API")
                 passo(n: 4, texto: "Credenciais → OAuth 2.0 → tipo iOS")
                 passo(n: 5, texto: "Bundle ID: com.rafaelreis.compreis")
