@@ -8,6 +8,11 @@ struct FinalizarView: View {
     @State private var copiarItens = true
     @State private var ajustarTotal = false
     @State private var totalText: String = ""
+    @State private var salvarSheets = true
+    @State private var exportando = false
+    @State private var exportErro: String?
+
+    private var auth = GoogleAuth.shared
 
     private var totalFinal: Double {
         if ajustarTotal, let v = Double(totalText.replacingOccurrences(of: ",", with: ".")) {
@@ -78,6 +83,22 @@ struct FinalizarView: View {
                 } header: { RockSectionHeader(title: "Nova lista") } footer: {
                     Text("Os mesmos produtos aparecem na próxima lista com os preços salvos.")
                 }
+
+                if auth.isConnected {
+                    Section {
+                        Toggle("Salvar no Google Sheets", isOn: $salvarSheets)
+                            .tint(AppTheme.accent)
+                        if exportando {
+                            HStack(spacing: 8) {
+                                ProgressView().scaleEffect(0.8)
+                                Text("Exportando…").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        if let erro = exportErro {
+                            Text(erro).font(.caption).foregroundStyle(.red)
+                        }
+                    } header: { RockSectionHeader(title: "Nuvem") }
+                }
             }
             .navigationTitle("Finalizar compra")
             .navigationBarTitleDisplayMode(.inline)
@@ -89,7 +110,20 @@ struct FinalizarView: View {
                     Button("Confirmar") {
                         lista.totalPago = ajustarTotal ? totalFinal : nil
                         onFinalizar(copiarItens)
-                        dismiss()
+                        if salvarSheets && auth.isConnected {
+                            exportando = true
+                            Task {
+                                do {
+                                    try await SheetsService.exportar(lista, auth: auth)
+                                } catch {
+                                    exportErro = error.localizedDescription
+                                }
+                                exportando = false
+                                if exportErro == nil { dismiss() }
+                            }
+                        } else {
+                            dismiss()
+                        }
                     }
                     .fontWeight(.heavy)
                     .tint(AppTheme.accent)
