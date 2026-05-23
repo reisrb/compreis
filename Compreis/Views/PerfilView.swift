@@ -7,6 +7,10 @@ struct PerfilView: View {
     @State private var showClientIdSheet = false
     @State private var exportURL: URL?
     @State private var showExportError = false
+    @State private var showImportPicker = false
+    @State private var importResultMessage: String?
+    @State private var showImportError = false
+    @State private var importErrorMessage = ""
 
     var body: some View {
         NavigationStack {
@@ -24,6 +28,7 @@ struct PerfilView: View {
                         }
                         setupCard
                         exportCard
+                        importCard
                         icloudCard
                     }
                     .padding(.horizontal, 20)
@@ -33,6 +38,28 @@ struct PerfilView: View {
             .navigationTitle("Perfil")
             .navigationBarTitleDisplayMode(.large)
             .tint(AppTheme.accent)
+        }
+        .fileImporter(isPresented: $showImportPicker, allowedContentTypes: [.json]) { result in
+            switch result {
+            case .success(let url):
+                let accessed = url.startAccessingSecurityScopedResource()
+                defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    let (listas, itens) = try ExportService.importarJSON(url: url, context: context)
+                    importResultMessage = "\(listas) \(listas == 1 ? "lista" : "listas") e \(itens) \(itens == 1 ? "item importado" : "itens importados")"
+                } catch {
+                    importErrorMessage = error.localizedDescription
+                    showImportError = true
+                }
+            case .failure(let error):
+                importErrorMessage = error.localizedDescription
+                showImportError = true
+            }
+        }
+        .alert("Erro ao importar", isPresented: $showImportError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(importErrorMessage)
         }
         .sheet(isPresented: $showClientIdSheet) {
             ClientIdSheet { id in
@@ -211,6 +238,43 @@ struct PerfilView: View {
             .rockBorder(cornerRadius: 14)
         }
         .foregroundStyle(.red)
+    }
+
+    private var importCard: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.purple.opacity(0.12))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color.purple)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Importar dados")
+                        .font(.body.weight(.bold))
+                    if let msg = importResultMessage {
+                        Text(msg)
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    } else {
+                        Text("Importa um arquivo JSON exportado pelo app")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                Button(importResultMessage == nil ? "Importar" : "Importar mais") {
+                    showImportPicker = true
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.purple)
+            }
+            .padding(16)
+        }
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .rockBorder(cornerRadius: 14)
     }
 
     private var icloudCard: some View {

@@ -7,39 +7,19 @@ struct ListasView: View {
     private var listas: [ListaDeCompras]
 
     @State private var showNova = false
+    @State private var showTemplates = false
     @State private var showingDetail: ListaDeCompras?
 
-    private var templates:  [ListaDeCompras] { listas.filter {  $0.isTemplate } }
     private var ativas:     [ListaDeCompras] { listas.filter { !$0.finalizada && !$0.isTemplate } }
     private var finalizadas:[ListaDeCompras] { listas.filter {  $0.finalizada && !$0.isTemplate } }
 
     var body: some View {
         NavigationStack {
             Group {
-                if listas.filter({ !$0.isTemplate }).isEmpty {
+                if ativas.isEmpty && finalizadas.isEmpty {
                     emptyState
                 } else {
                     List {
-                        if !templates.isEmpty {
-                            Section {
-                                ForEach(templates) { lista in
-                                    NavigationLink(destination: ContentView(lista: lista)) {
-                                        ListaRow(lista: lista, isTemplate: true)
-                                    }
-                                    .swipeActions(edge: .trailing) {
-                                        Button(role: .destructive) {
-                                            context.delete(lista)
-                                        } label: { Label("Excluir", systemImage: "trash") }
-                                        .tint(.red)
-                                        Button { showingDetail = lista } label: {
-                                            Label("Detalhes", systemImage: "info.circle")
-                                        }
-                                        .tint(.blue)
-                                    }
-                                }
-                            } header: { RockSectionHeader(title: "Templates") }
-                        }
-
                         if !ativas.isEmpty {
                             Section {
                                 ForEach(ativas) { lista in
@@ -86,6 +66,14 @@ struct ListasView: View {
                 }
             }
             .navigationTitle("Compreis")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showTemplates = true } label: {
+                        Label("Templates", systemImage: "star")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                }
+            }
             .safeAreaInset(edge: .bottom) {
                 HStack {
                     Spacer()
@@ -120,6 +108,9 @@ struct ListasView: View {
                     SyncService.shared.scheduleSync(context: context)
                 }
             }
+            .sheet(isPresented: $showTemplates) {
+                TemplatesView()
+            }
             .sheet(item: $showingDetail) { lista in
                 ListaDetailView(lista: lista)
             }
@@ -142,6 +133,106 @@ struct ListasView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
+// MARK: - Templates management
+
+private struct TemplatesView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate },
+           sort: \ListaDeCompras.criadaEm, order: .reverse)
+    private var templates: [ListaDeCompras]
+
+    @State private var showNovo = false
+    @State private var showingDetail: ListaDeCompras?
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if templates.isEmpty {
+                    VStack(spacing: 14) {
+                        Image(systemName: "star")
+                            .font(.system(size: 56))
+                            .foregroundStyle(Color.orange.opacity(0.4))
+                        Text("Sem templates")
+                            .font(.title2.weight(.heavy))
+                        Text("Crie templates para reutilizar listas de compras")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                        Button { showNovo = true } label: {
+                            Label("Criar template", systemImage: "plus")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(AppTheme.accent)
+                                .clipShape(Capsule())
+                        }
+                        .padding(.top, 4)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(templates) { t in
+                            NavigationLink(destination: ContentView(lista: t)) {
+                                ListaRow(lista: t, isTemplate: true)
+                            }
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    context.delete(t)
+                                } label: { Label("Excluir", systemImage: "trash") }
+                                .tint(.red)
+                                Button { showingDetail = t } label: {
+                                    Label("Editar", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
+                        }
+                    }
+                    .listStyle(.insetGrouped)
+                }
+            }
+            .navigationTitle("Templates")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Fechar") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showNovo = true } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showNovo) {
+                NovaListaView(titulo: "Novo template") { nome, data, localNome, lat, lon, modelo, templateOrigem in
+                    let novo = ListaDeCompras(nome: nome, dataMercado: data,
+                                              localNome: localNome,
+                                              localLatitude: lat, localLongitude: lon)
+                    novo.isTemplate = true
+                    context.insert(novo)
+                    if let t = templateOrigem {
+                        for item in t.itens {
+                            novo.itens.append(Item(nome: item.nome, preco: item.preco,
+                                                   unidade: item.unidade, quantidade: item.quantidade,
+                                                   categoria: item.categoria))
+                        }
+                    } else if modelo != .vazia {
+                        ProdutoBase.criarItens(para: novo, modelo: modelo, context: context)
+                    }
+                }
+            }
+            .sheet(item: $showingDetail) { t in
+                ListaDetailView(lista: t)
+            }
+        }
+        .tint(AppTheme.accent)
+    }
+}
+
+// MARK: - Row
 
 private struct ListaRow: View {
     let lista: ListaDeCompras

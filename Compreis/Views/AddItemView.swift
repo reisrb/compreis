@@ -9,7 +9,8 @@ struct AddItemView: View {
     var onSave: (String, Double, Unidade, Double, Categoria) -> Void
 
     @State private var nome: String = ""
-    @State private var precoText: String = ""
+    @State private var precoText: String = "0,00"
+    @State private var precoCentavos: Int = 0
     @State private var unidade: Unidade = .unidade
     @State private var categoria: Categoria = .outros
     @State private var quantidadeInt: Int = 1
@@ -106,7 +107,15 @@ struct AddItemView: View {
                         Image(systemName: "brazilianrealsign")
                             .foregroundStyle(AppTheme.accent).frame(width: 20)
                         TextField("0,00", text: $precoText)
-                            .keyboardType(.decimalPad)
+                            .keyboardType(.numberPad)
+                            .monospacedDigit()
+                            .onChange(of: precoText) { _, newVal in
+                                let digits = String(newVal.filter { $0.isNumber }.prefix(8))
+                                let n = Int(digits) ?? 0
+                                precoCentavos = n
+                                let formatted = String(format: "%d,%02d", n / 100, n % 100)
+                                if precoText != formatted { precoText = formatted }
+                            }
                     }
                     HStack(spacing: 12) {
                         Image(systemName: "scalemass")
@@ -172,7 +181,7 @@ struct AddItemView: View {
                         HStack {
                             Text("Total do item").foregroundStyle(.secondary)
                             Spacer()
-                            let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
+                            let preco = Double(precoCentavos) / 100.0
                             let qtd = unidade == .kg ? pesoValor : Double(quantidadeInt)
                             Text((preco * qtd).brl)
                                 .font(.body.weight(.bold).monospacedDigit())
@@ -206,7 +215,8 @@ struct AddItemView: View {
     private func populate() {
         guard let item else { return }
         nome = item.nome
-        precoText = String(item.preco)
+        precoCentavos = Int((item.preco * 100).rounded())
+        precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
         unidade = item.unidade
         categoria = item.categoria
         if item.unidade == .unidade {
@@ -230,7 +240,8 @@ struct AddItemView: View {
 
     private func aplicarSugestao(_ s: ProdutoHistorico) {
         nome = s.nome
-        precoText = String(s.preco)
+        precoCentavos = Int((s.preco * 100).rounded())
+        precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
         unidade = s.unidade
         categoria = s.categoria
         quantidadeInt = 1
@@ -263,11 +274,13 @@ struct AddItemView: View {
         if let match = hist.first(where: { $0.nome.localizedCaseInsensitiveContains(p.titulo) ||
                                            p.titulo.localizedCaseInsensitiveContains($0.nome) }),
            match.preco > 0 {
-            precoText = String(match.preco).replacingOccurrences(of: ".", with: ",")
+            precoCentavos = Int((match.preco * 100).rounded())
+            precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
             unidade = match.unidade
             categoria = match.categoria
         } else {
-            precoText = ""
+            precoCentavos = 0
+            precoText = "0,00"
         }
         quantidadeInt = 1
         mlResultados = []
@@ -275,7 +288,7 @@ struct AddItemView: View {
     }
 
     private func save() {
-        let preco = Double(precoText.replacingOccurrences(of: ",", with: ".")) ?? 0
+        let preco = Double(precoCentavos) / 100.0
         let quantidade = unidade == .kg ? pesoValor : Double(quantidadeInt)
         onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade, categoria)
         dismiss()

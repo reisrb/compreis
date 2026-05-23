@@ -34,6 +34,7 @@ struct NovaListaView: View {
     @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate })
     private var templates: [ListaDeCompras]
 
+    var titulo: String = "Nova lista"
     var onCreate: (String, Date?, String?, Double?, Double?, ListaModelo, ListaDeCompras?) -> Void
 
     @State private var nome: String = ""
@@ -48,6 +49,7 @@ struct NovaListaView: View {
     @State private var showMapPicker = false
     @State private var modeloSelecionado: ListaModelo = .vazia
     @State private var templateUsuario: ListaDeCompras?
+    @State private var showPreview = false
 
     var body: some View {
         NavigationStack {
@@ -87,6 +89,25 @@ struct NovaListaView: View {
                         }
                     }
                     .padding(.vertical, 4)
+
+                    let previewDisponivel = (modeloSelecionado != .vazia && templateUsuario == nil)
+                        || templateUsuario != nil
+                    if previewDisponivel {
+                        Button { showPreview = true } label: {
+                            HStack {
+                                Image(systemName: "eye")
+                                let count = templateUsuario.map { $0.itens.count }
+                                    ?? modeloSelecionado.produtos.count
+                                Text("Ver \(count) itens incluídos")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(AppTheme.accent)
+                        }
+                    }
                 } header: { Text("Modelo") }
 
                 // MARK: Templates do usuário
@@ -208,8 +229,18 @@ struct NovaListaView: View {
                     }
                 } header: { Text("Local do mercado") }
             }
-            .navigationTitle("Nova lista")
+            .navigationTitle(titulo)
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showPreview) {
+                if let t = templateUsuario {
+                    TemplatePreviewSheet(nome: t.nome, itens: t.itens.map {
+                        ProdutoSemente(nome: $0.nome, categoria: $0.categoria, unidade: $0.unidade)
+                    })
+                } else {
+                    TemplatePreviewSheet(nome: modeloSelecionado.rawValue,
+                                         itens: modeloSelecionado.produtos)
+                }
+            }
             .sheet(isPresented: $showMapPicker) {
                 MapPickerView { nome, lat, lon in
                     localNome = nome; localLat = lat; localLon = lon
@@ -249,5 +280,59 @@ struct NovaListaView: View {
         localLon = item.placemark.coordinate.longitude
         localQuery = item.name ?? completion.title
         completer.clear()
+    }
+}
+
+// MARK: - Preview sheet
+
+private struct TemplatePreviewSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let nome: String
+    let itens: [ProdutoSemente]
+
+    private var porCategoria: [(Categoria, [ProdutoSemente])] {
+        let agrupados = Dictionary(grouping: itens, by: { $0.categoria })
+        return Categoria.allCases.compactMap { cat in
+            guard let grupo = agrupados[cat], !grupo.isEmpty else { return nil }
+            return (cat, grupo.sorted { $0.nome < $1.nome })
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(porCategoria, id: \.0) { cat, produtos in
+                    Section {
+                        ForEach(produtos, id: \.nome) { p in
+                            HStack(spacing: 10) {
+                                Image(systemName: cat.icone)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(cat.cor)
+                                    .frame(width: 20)
+                                Text(p.nome)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text(p.unidade.rawValue)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } header: {
+                        Label(cat.rawValue, systemImage: cat.icone)
+                            .font(.footnote.weight(.bold))
+                            .foregroundStyle(cat.cor)
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle(nome)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fechar") { dismiss() }
+                        .tint(AppTheme.accent)
+                }
+            }
+        }
     }
 }

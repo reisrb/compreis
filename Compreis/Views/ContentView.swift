@@ -9,19 +9,25 @@ struct ContentView: View {
     @State private var editingItem: Item?
     @State private var showFinalizar = false
     @State private var showDetalhes = false
-    @State private var showPegos = false
+    @State private var categoriasExpandidas: Set<Categoria> = []
 
-    private var itensPorCategoria: [(Categoria, [Item])] {
-        let unchecked = lista.itens.filter { !$0.pegou }
-        let agrupados = Dictionary(grouping: unchecked, by: { $0.categoria })
-        return Categoria.allCases.compactMap { cat in
-            guard let grupo = agrupados[cat], !grupo.isEmpty else { return nil }
-            return (cat, grupo.sorted { $0.nome < $1.nome })
-        }
+    private struct GrupoCategoria {
+        let categoria: Categoria
+        let pendentes: [Item]
+        let pegos: [Item]
     }
 
-    private var itensPegos: [Item] {
-        lista.itens.filter { $0.pegou }.sorted { $0.nome < $1.nome }
+    private var grupos: [GrupoCategoria] {
+        let porCat = Dictionary(grouping: lista.itens, by: { $0.categoria })
+        return Categoria.allCases.compactMap { cat in
+            let todos = porCat[cat] ?? []
+            guard !todos.isEmpty else { return nil }
+            return GrupoCategoria(
+                categoria: cat,
+                pendentes: todos.filter { !$0.pegou }.sorted { $0.nome < $1.nome },
+                pegos:     todos.filter {  $0.pegou }.sorted { $0.nome < $1.nome }
+            )
+        }
     }
 
     private var totalItens: Int { lista.itens.count }
@@ -32,49 +38,58 @@ struct ContentView: View {
                 emptyState
             } else {
                 List {
-                    ForEach(itensPorCategoria, id: \.0) { cat, itens in
+                    ForEach(grupos, id: \.categoria) { grupo in
                         Section {
-                            ForEach(itens) { item in
+                            // Itens pendentes
+                            ForEach(grupo.pendentes) { item in
                                 ItemRow(item: item, onEdit: { editingItem = item })
                             }
                             .onDelete { offsets in
-                                for i in offsets { context.delete(itens[i]) }
+                                for i in offsets { context.delete(grupo.pendentes[i]) }
                                 SyncService.shared.scheduleSync(context: context)
                             }
-                        } header: {
-                            Label(cat.rawValue, systemImage: cat.icone)
-                                .font(.footnote.weight(.bold))
-                                .foregroundStyle(cat.cor)
-                        }
-                    }
 
-                    if !itensPegos.isEmpty {
-                        Section {
-                            if showPegos {
-                                ForEach(itensPegos) { item in
-                                    ItemRow(item: item, onEdit: { editingItem = item })
+                            // Mini-carrinho da categoria
+                            if !grupo.pegos.isEmpty {
+                                let expandido = categoriasExpandidas.contains(grupo.categoria)
+                                Button {
+                                    withAnimation(.spring(duration: 0.25)) {
+                                        if expandido {
+                                            categoriasExpandidas.remove(grupo.categoria)
+                                        } else {
+                                            categoriasExpandidas.insert(grupo.categoria)
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "cart.badge.checkmark")
+                                            .font(.caption.weight(.semibold))
+                                        Text("No carrinho · \(grupo.pegos.count)")
+                                            .font(.caption.weight(.semibold))
+                                        Spacer()
+                                        Image(systemName: expandido ? "chevron.up" : "chevron.down")
+                                            .font(.caption2.weight(.bold))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .foregroundStyle(AppTheme.accent)
+                                    .padding(.vertical, 4)
                                 }
-                                .onDelete { offsets in
-                                    for i in offsets { context.delete(itensPegos[i]) }
-                                    SyncService.shared.scheduleSync(context: context)
+                                .buttonStyle(.plain)
+
+                                if expandido {
+                                    ForEach(grupo.pegos) { item in
+                                        ItemRow(item: item, onEdit: { editingItem = item })
+                                    }
+                                    .onDelete { offsets in
+                                        for i in offsets { context.delete(grupo.pegos[i]) }
+                                        SyncService.shared.scheduleSync(context: context)
+                                    }
                                 }
                             }
                         } header: {
-                            Button {
-                                withAnimation(.spring(duration: 0.3)) { showPegos.toggle() }
-                            } label: {
-                                HStack {
-                                    Label("No carrinho · \(itensPegos.count)",
-                                          systemImage: "cart.badge.checkmark")
-                                        .font(.footnote.weight(.bold))
-                                        .foregroundStyle(AppTheme.accent)
-                                    Spacer()
-                                    Image(systemName: showPegos ? "chevron.up" : "chevron.down")
-                                        .font(.caption2.weight(.bold))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .buttonStyle(.plain)
+                            Label(grupo.categoria.rawValue, systemImage: grupo.categoria.icone)
+                                .font(.footnote.weight(.bold))
+                                .foregroundStyle(grupo.categoria.cor)
                         }
                     }
                 }
@@ -182,7 +197,7 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Footer (struct separado para observar pegou via Observable)
+// MARK: - Footer
 
 private struct ListaTotalFooter: View {
     let lista: ListaDeCompras
@@ -217,8 +232,7 @@ private struct ListaTotalFooter: View {
             } else {
                 VStack(alignment: .trailing, spacing: 2) {
                     HStack(spacing: 4) {
-                        Image(systemName: "cart.fill")
-                            .font(.caption2)
+                        Image(systemName: "cart.fill").font(.caption2)
                         Text(totalCarrinho.brl)
                             .font(.title3.weight(.heavy).monospacedDigit())
                     }

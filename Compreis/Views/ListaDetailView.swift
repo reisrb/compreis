@@ -1,11 +1,14 @@
 import SwiftUI
+import SwiftData
 import MapKit
 
 struct ListaDetailView: View {
     let lista: ListaDeCompras
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
 
     @State private var nome: String = ""
+    @State private var templateCriado = false
     @State private var usarData = false
     @State private var dataMercado = Date()
     @State private var usarLocal = false
@@ -45,12 +48,38 @@ struct ListaDetailView: View {
                     } header: { RockSectionHeader(title: "Resumo") }
                 }
 
-                Section {
-                    Toggle(isOn: Binding(get: { lista.isTemplate }, set: { lista.isTemplate = $0 })) {
-                        Label("Usar como template", systemImage: "doc.badge.plus")
-                    }
-                    .tint(AppTheme.accent)
-                } header: { RockSectionHeader(title: "Template") }
+                if !lista.isTemplate {
+                    Section {
+                        if templateCriado {
+                            Label("Template criado com sucesso", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .font(.subheadline)
+                        } else {
+                            Button {
+                                let copia = ListaDeCompras(
+                                    nome: lista.nome,
+                                    dataMercado: nil,
+                                    localNome: lista.localNome,
+                                    localLatitude: lista.localLatitude,
+                                    localLongitude: lista.localLongitude
+                                )
+                                copia.isTemplate = true
+                                for item in lista.itens {
+                                    copia.itens.append(Item(
+                                        nome: item.nome, preco: item.preco,
+                                        unidade: item.unidade, quantidade: item.quantidade,
+                                        categoria: item.categoria
+                                    ))
+                                }
+                                context.insert(copia)
+                                templateCriado = true
+                            } label: {
+                                Label("Usar como template", systemImage: "doc.badge.plus")
+                                    .foregroundStyle(AppTheme.accent)
+                            }
+                        }
+                    } header: { RockSectionHeader(title: "Template") }
+                }
 
                 Section {
                     Toggle("Definir data", isOn: $usarData)
