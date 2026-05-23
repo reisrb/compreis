@@ -52,7 +52,7 @@ final class GoogleAuth: ObservableObject {
         ]
 
         do {
-            let code = try await withCheckedThrowingContinuation { continuation in
+            let code = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
                 let session = ASWebAuthenticationSession(
                     url: comps.url!,
                     callbackURLScheme: scheme
