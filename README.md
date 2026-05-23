@@ -4,21 +4,41 @@ iOS shopping list app built with SwiftUI and SwiftData.
 
 ## Features
 
-- **Shopping lists** — create named lists with an optional market date and pinned location
-- **Item tracking** — add products with price per unit or per kg; stepper for quantities; calculator-style right-to-left weight input for kg items
-- **Automatic totals** — real-time subtotal per item and grand total at the bottom of the list
-- **Price history** — autocomplete suggestions from past purchases when adding items; autocompletes name, price and unit
-- **Finalize & copy** — mark a shopping trip as done; optionally copy all items to a new list for the next trip
-- **Location** — search for a supermarket via Apple Maps when creating a list; details view shows a mini map with a pin at the chosen location
-- **Report** — monthly spending totals, average per trip, last 7 days; tap "Examples" to preview with mock data
-- **Locale-aware currency** — currency symbol and format follow the device region (BRL in Brazil, USD in the US, EUR in Europe, etc.)
-- **Dark mode** — follows system appearance
+### Lists
+- **Multiple lists** — active and finalized lists in separate sections; swipe to delete
+- **Templates** — default templates (Essencial, Do mês) and custom user templates; reusable across trips
+- **Editable default templates** — add or remove items per category; changes are respected when creating new lists
+- **"Use as template"** — convert any finalized list into a template (creates a copy; original stays intact)
+- **Location** — search for a supermarket via Apple Maps or tap on the map; mini map preview in list details
+- **Market date** — optional date and time for the shopping trip
 
-## Screenshots
+### Items
+- **Categories** — Hortifruti, Carnes, Peixaria, Laticínios, Padaria, Bebidas, Congelados, Mercearia, Higiene, Limpeza, Outros
+- **Unit or kg pricing** — stepper for unit quantity; calculator-style right-to-left weight input for kg items
+- **Cash-register price input** — digits fill right-to-left, always formatted as `X,XX`
+- **Checkboxes** — mark items as picked; picked items collapse into a per-category cart section
+- **Cart sheet** — tap the cart button in the footer to see all picked items grouped by category with subtotals
+- **Price history** — autocomplete from past purchases (name, price, unit, category)
+- **Open Food Facts search** — product suggestions from the Open Food Facts database while typing
 
-| Lists | Items | Details | Report |
-|-------|-------|---------|--------|
-| Active and finalized lists with totals | Items with unit/kg pricing and total | Mini map + metadata | Monthly totals and averages |
+### Totals & tracking
+- **Real-time totals** — estimated total in the footer; switches to "R$ X in cart / of R$ Y estimated" as items are picked
+- **Finalize** — close a trip; optionally edit the actual total paid and copy items to a new list
+
+### Templates
+- **Default section** — Essencial (~34 items) and Do mês (~62 items) always visible in Templates; fully editable
+- **My templates** — create, edit and delete personal templates
+- **Preview** — tap "Ver X itens incluídos" before creating a list to see all items by category
+
+### Prices
+- **CONAB integration** — when a list has a location, typing a product name shows a reference price from CONAB/PROHORT (wholesale CEASA price for the list's state); covers ~48 produce and poultry items
+- **Price seeding** — prices from ProdutoHistorico are applied to template items when a list is created
+
+### Data & sync
+- **Export** — generate a JSON file with all lists, items, categories, pick status, template flags and coordinates
+- **Import** — import a JSON backup from another device; full round-trip fidelity
+- **Google Sheets sync** — optional OAuth integration; syncs lists and items to a spreadsheet on finalize
+- **iCloud** — SwiftData store backed by iCloud for automatic backup across devices
 
 ## Tech stack
 
@@ -26,7 +46,8 @@ iOS shopping list app built with SwiftUI and SwiftData.
 |-------|--------|
 | UI | SwiftUI |
 | Persistence | SwiftData |
-| Maps & search | MapKit |
+| Maps & search | MapKit + CLGeocoder |
+| Price reference | CONAB PROHORT (Pentaho endpoint) + Open Food Facts |
 | Deployment target | iOS 17+ |
 | Language | Swift 6 |
 
