@@ -135,7 +135,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showAdd) {
-            AddItemView(listaUF: listaUF) { nome, preco, unidade, quantidade, categoria in
+            AddItemView(listaUF: listaUF, nomesExistentes: lista.itens.map { $0.nome }) { nome, preco, unidade, quantidade, categoria in
                 let item = Item(nome: nome, preco: preco, unidade: unidade,
                                 quantidade: quantidade, categoria: categoria)
                 lista.itens.append(item)

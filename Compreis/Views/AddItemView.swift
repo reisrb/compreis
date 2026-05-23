@@ -7,6 +7,7 @@ struct AddItemView: View {
 
     var item: Item?
     var listaUF: String? = nil
+    var nomesExistentes: [String] = []
     var onSave: (String, Double, Unidade, Double, Categoria) -> Void
 
     @State private var nome: String = ""
@@ -23,6 +24,12 @@ struct AddItemView: View {
     @State private var mlTask: Task<Void, Never>?
     @State private var conabInfo: (preco: Double, uf: String)?
     @State private var conabTask: Task<Void, Never>?
+    @State private var confirmandoDelecao: ProdutoHistorico? = nil
+    @State private var itensEmUso: [Item] = []
+    @State private var showDeleteAlert = false
+    @State private var showRenomearSheet = false
+    @State private var novoNomeRenomear = ""
+    @State private var showDuplicataAlert = false
 
     private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
 
@@ -55,6 +62,9 @@ struct AddItemView: View {
                                         .font(.caption).foregroundStyle(AppTheme.accent)
                                 }
                             }
+                        }
+                        .onDelete { indexSet in
+                            for idx in indexSet { tentarDeletar(sugestoes[idx]) }
                         }
                     }
                     if let info = conabInfo {
@@ -222,6 +232,46 @@ struct AddItemView: View {
                 }
             }
             .onAppear { populate() }
+            .alert("Produto já na lista", isPresented: $showDuplicataAlert) {
+                Button("Adicionar mesmo assim") { confirmarSave() }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text(""\(nome.trimmingCharacters(in: .whitespaces))" já está nesta lista.")
+            }
+            .alert("Produto em uso", isPresented: $showDeleteAlert, presenting: confirmandoDelecao) { hist in
+                Button("Apagar e remover das listas", role: .destructive) {
+                    for item in itensEmUso { context.delete(item) }
+                    context.delete(hist)
+                    sugestoes.removeAll { $0.nome == hist.nome }
+                    confirmandoDelecao = nil; itensEmUso = []
+                }
+                Button("Renomear itens") {
+                    novoNomeRenomear = hist.nome
+                    showRenomearSheet = true
+                }
+                Button("Cancelar", role: .cancel) {
+                    confirmandoDelecao = nil; itensEmUso = []
+                }
+            } message: { hist in
+                let n = itensEmUso.count
+                Text(""\(hist.nome)" está em \(n) \(n == 1 ? "item" : "itens") em listas ativas. O que deseja fazer?")
+            }
+            .sheet(isPresented: $showRenomearSheet) {
+                RenomearProdutoSheet(
+                    nomeAtual: confirmandoDelecao?.nome ?? "",
+                    onConfirmar: { novoNome in
+                        if let hist = confirmandoDelecao {
+                            for item in itensEmUso { item.nome = novoNome }
+                            context.delete(hist)
+                            sugestoes.removeAll { $0.nome == hist.nome }
+                            confirmandoDelecao = nil; itensEmUso = []
+                        }
+                    },
+                    onCancelar: {
+                        confirmandoDelecao = nil; itensEmUso = []
+                    }
+                )
+            }
         }
     }
 
@@ -327,10 +377,101 @@ struct AddItemView: View {
         conabInfo = nil
     }
 
+    private func tentarDeletar(_ historico: ProdutoHistorico) {
+        let nomeH = historico.nome
+        let desc = FetchDescriptor<Item>(predicate: #Predicate { $0.nome == nomeH })
+        let usados = (try? context.fetch(desc)) ?? []
+        confirmandoDelecao = historico
+        itensEmUso = usados
+        if usados.isEmpty {
+            context.delete(historico)
+            sugestoes.removeAll { $0.nome == nomeH }
+            confirmandoDelecao = nil
+        } else {
+            showDeleteAlert = true
+        }
+    }
+
     private func save() {
+        let nomeFinal = nome.trimmingCharacters(in: .whitespaces)
+        let jaExiste = item == nil && nomesExistentes.contains { $0.localizedCaseInsensitiveCompare(nomeFinal) == .orderedSame }
+        if jaExiste {
+            showDuplicataAlert = true
+            return
+        }
+        confirmarSave()
+    }
+
+    private func confirmarSave() {
         let preco = Double(precoCentavos) / 100.0
         let quantidade = unidade == .kg ? pesoValor : Double(quantidadeInt)
         onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade, categoria)
         dismiss()
+    }
+}
+
+// MARK: - Rename sheet
+
+private struct RenomearProdutoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+
+    let nomeAtual: String
+    let onConfirmar: (String) -> Void
+    let onCancelar: () -> Void
+
+    @State private var novoNome: String = ""
+    @State private var historico: [ProdutoHistorico] = []
+
+    private var sugestoes: [ProdutoHistorico] {
+        historico.filter { $0.nome != nomeAtual && (novoNome.isEmpty || $0.nome.localizedCaseInsensitiveContains(novoNome)) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Novo nome", text: $novoNome)
+                        .autocorrectionDisabled()
+                } header: { Text("Renomear "\(nomeAtual)" para") }
+
+                if !sugestoes.isEmpty {
+                    Section {
+                        ForEach(sugestoes) { s in
+                            Button { novoNome = s.nome } label: {
+                                HStack {
+                                    Text(s.nome).foregroundStyle(.primary)
+                                    Spacer()
+                                    if novoNome == s.nome {
+                                        Image(systemName: "checkmark").foregroundStyle(AppTheme.accent)
+                                    }
+                                }
+                            }
+                        }
+                    } header: { Text("Do histórico") }
+                }
+            }
+            .navigationTitle("Renomear produto")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { onCancelar(); dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Confirmar") {
+                        onConfirmar(novoNome.trimmingCharacters(in: .whitespaces))
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .tint(AppTheme.accent)
+                    .disabled(novoNome.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+            .onAppear {
+                novoNome = ""
+                let fetch = FetchDescriptor<ProdutoHistorico>(sortBy: [SortDescriptor(\.nome)])
+                historico = (try? context.fetch(fetch)) ?? []
+            }
+        }
     }
 }
