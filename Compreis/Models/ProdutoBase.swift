@@ -169,8 +169,9 @@ enum ProdutoBase {
         )
 
         // Prefere itens do template armazenado (pode ter sido editado pelo usuário)
+        let nomeModelo = modelo.rawValue
         let storedFetch = FetchDescriptor<ListaDeCompras>(
-            predicate: #Predicate { $0.isPredefined && $0.nome == modelo.rawValue }
+            predicate: #Predicate { $0.isPredefined == true && $0.nome == nomeModelo }
         )
         let stored = (try? context.fetch(storedFetch))?.first
 

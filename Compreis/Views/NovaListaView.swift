@@ -31,9 +31,9 @@ final class SearchCompleter: NSObject, ObservableObject, @preconcurrency MKLocal
 
 struct NovaListaView: View {
     @Environment(\.dismiss) private var dismiss
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && !$0.isPredefined })
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == false })
     private var templates: [ListaDeCompras]
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && $0.isPredefined })
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == true })
     private var predefinedTemplates: [ListaDeCompras]
 
     var titulo: String = "Nova lista"

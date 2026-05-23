@@ -139,10 +139,10 @@ struct ListasView: View {
 private struct TemplatesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && $0.isPredefined },
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == true },
            sort: \ListaDeCompras.criadaEm, order: .forward)
     private var predefined: [ListaDeCompras]
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate && !$0.isPredefined },
+    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == false },
            sort: \ListaDeCompras.criadaEm, order: .reverse)
     private var userTemplates: [ListaDeCompras]
 
