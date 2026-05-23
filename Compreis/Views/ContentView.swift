@@ -139,17 +139,20 @@ struct ContentView: View {
                 let item = Item(nome: nome, preco: preco, unidade: unidade,
                                 quantidade: quantidade, categoria: categoria)
                 lista.itens.append(item)
+                sincronizarItemGlobal(nomeOriginal: nome, novoNome: nome, preco: preco, excluindo: item)
                 salvarHistorico(nome: nome, preco: preco, unidade: unidade, categoria: categoria)
                 SyncService.shared.scheduleSync(context: context)
             }
         }
         .sheet(item: $editingItem) { item in
             AddItemView(item: item, listaUF: listaUF) { nome, preco, unidade, quantidade, categoria in
+                let nomeOriginal = item.nome
                 item.nome = nome
                 item.preco = preco
                 item.unidade = unidade
                 item.quantidade = quantidade
                 item.categoria = categoria
+                sincronizarItemGlobal(nomeOriginal: nomeOriginal, novoNome: nome, preco: preco, excluindo: item)
                 salvarHistorico(nome: nome, preco: preco, unidade: unidade, categoria: categoria)
                 SyncService.shared.scheduleSync(context: context)
             }
@@ -187,6 +190,15 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func sincronizarItemGlobal(nomeOriginal: String, novoNome: String, preco: Double, excluindo: Item? = nil) {
+        let desc = FetchDescriptor<Item>(predicate: #Predicate { $0.nome == nomeOriginal })
+        let todos = (try? context.fetch(desc)) ?? []
+        for outro in todos where outro !== excluindo {
+            outro.nome = novoNome
+            outro.preco = preco
+        }
     }
 
     private func salvarHistorico(nome: String, preco: Double, unidade: Unidade, categoria: Categoria) {
