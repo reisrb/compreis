@@ -123,10 +123,10 @@ struct NovaListaView: View {
                                         templateUsuario = t
                                         modeloSelecionado = .vazia
                                     } label: {
-                                        VStack(alignment: .leading, spacing: 6) {
+                                        VStack(spacing: 6) {
                                             Image(systemName: "star.fill")
-                                                .font(.caption.weight(.semibold))
-                                                .foregroundStyle(sel ? AppTheme.accent : Color.secondary)
+                                                .font(.title2.weight(.semibold))
+                                                .foregroundStyle(sel ? AppTheme.accent : .secondary)
                                             Text(t.nome)
                                                 .font(.caption.weight(.bold))
                                                 .foregroundStyle(sel ? AppTheme.accent : .primary)
@@ -135,8 +135,8 @@ struct NovaListaView: View {
                                                 .font(.caption2)
                                                 .foregroundStyle(.secondary)
                                         }
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 10)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
                                         .background(sel
                                             ? AppTheme.accentSubtle
                                             : Color.secondary.opacity(0.07),
