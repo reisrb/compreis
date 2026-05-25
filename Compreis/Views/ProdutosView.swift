@@ -108,7 +108,7 @@ struct ProdutosView: View {
                             }
                         }
                     } label: {
-                        Image(systemName: todasExpandidas ? "chevron.up.chevron.down" : "chevron.down.chevron.up")
+                        Text(todasExpandidas ? "Colapsar" : "Expandir")
                             .font(.caption.weight(.semibold))
                     }
                 }

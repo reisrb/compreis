@@ -182,7 +182,7 @@ struct ContentView: View {
                         .font(.title3.weight(.heavy))
                         .foregroundStyle(.black)
                         .frame(width: 48, height: 48)
-                        .background(AppTheme.accent)
+                        .background(lista.emAndamento ? Color.orange : AppTheme.accent)
                         .clipShape(Circle())
                         .rockGlow(radius: 8)
                 }
@@ -321,7 +321,7 @@ private struct ListaTotalFooter: View {
                     .foregroundStyle(.black)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(AppTheme.accent)
+                    .background(lista.emAndamento ? Color.orange : AppTheme.accent)
                     .clipShape(Capsule())
                     .rockGlow(radius: 6)
             }
@@ -337,7 +337,7 @@ private struct ListaTotalFooter: View {
                     .foregroundStyle(.black)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(AppTheme.accent.opacity(0.85))
+                    .background(lista.emAndamento ? Color.orange.opacity(0.85) : AppTheme.accent.opacity(0.85))
                     .clipShape(Capsule())
                 }
             }
