@@ -13,6 +13,8 @@ struct ContentView: View {
     @State private var categoriasExpandidas: Set<Categoria> = []
     @State private var pegarItem: Item? = nil
     @State private var moverItem: Item? = nil
+    @State private var showAddMenu = false
+    @State private var showAddProduto = false
 
     private struct GrupoCategoria {
         let categoria: Categoria
@@ -158,7 +160,7 @@ struct ContentView: View {
         }
         .overlay(alignment: .bottomTrailing) {
             if !lista.finalizada {
-                Button { showAdd = true } label: {
+                Button { showAddMenu = true } label: {
                     Image(systemName: "plus")
                         .font(.title3.weight(.heavy))
                         .foregroundStyle(.black)
@@ -176,10 +178,18 @@ struct ContentView: View {
                 listaUF = await CONABService.uf(lat: lat, lon: lon)
             }
         }
+        .confirmationDialog("Adicionar", isPresented: $showAddMenu) {
+            Button("Item na lista") { showAdd = true }
+            Button("Produto no catálogo") { showAddProduto = true }
+            Button("Cancelar", role: .cancel) {}
+        }
         .sheet(isPresented: $showAdd) {
             AddItemView(listaUF: listaUF, nomesExistentes: lista.itens.map { $0.nome }, emAndamento: lista.emAndamento) { nome, preco, unidade, quantidade, categoria, pegou in
                 adicionarItem(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade, categoria: categoria, pegou: pegou)
             }
+        }
+        .sheet(isPresented: $showAddProduto) {
+            NovoProdutoSheet()
         }
         .sheet(item: $pegarItem) { item in
             ConfirmarPrecoSheet(item: item) { novoPreco in
@@ -534,6 +544,87 @@ private struct MoverItemSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Novo produto no catálogo
+
+private struct NovoProdutoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+
+    @State private var nome = ""
+    @State private var precoCentavos = 0
+    @State private var precoText = "0,00"
+    @State private var unidade: Unidade = .unidade
+    @State private var categoria: Categoria = .outros
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "tag").foregroundStyle(AppTheme.accent).frame(width: 20)
+                        TextField("Nome do produto", text: $nome).autocorrectionDisabled()
+                    }
+                } header: { Text("Nome") }
+
+                Section {
+                    HStack(spacing: 12) {
+                        Text("R$").foregroundStyle(.secondary)
+                        TextField("0,00", text: $precoText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .onChange(of: precoText) { _, novo in
+                                let digits = String(novo.filter { $0.isNumber }.prefix(7))
+                                precoCentavos = Int(digits) ?? 0
+                                let f = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+                                if precoText != f { precoText = f }
+                            }
+                    }
+                } header: { Text("Preço de referência") }
+
+                Section {
+                    Picker("Unidade", selection: $unidade) {
+                        ForEach(Unidade.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }.pickerStyle(.segmented)
+                } header: { Text("Unidade") }
+
+                Section {
+                    Picker("Categoria", selection: $categoria) {
+                        ForEach(Categoria.allCases, id: \.self) {
+                            Label($0.rawValue, systemImage: $0.icone).tag($0)
+                        }
+                    }
+                } header: { Text("Categoria") }
+            }
+            .navigationTitle("Novo produto")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Salvar") {
+                        let nomeFinal = nome.trimmingCharacters(in: .whitespaces)
+                        let preco = Double(precoCentavos) / 100.0
+                        let fetch = FetchDescriptor<ProdutoHistorico>()
+                        let todos = (try? context.fetch(fetch)) ?? []
+                        if let existente = todos.first(where: { $0.nome.localizedCaseInsensitiveCompare(nomeFinal) == .orderedSame }) {
+                            existente.preco = preco
+                            existente.unidade = unidade
+                            existente.categoria = categoria
+                        } else {
+                            context.insert(ProdutoHistorico(nome: nomeFinal, preco: preco, unidade: unidade, categoria: categoria))
+                        }
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .tint(AppTheme.accent)
+                    .disabled(nome.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
         }
