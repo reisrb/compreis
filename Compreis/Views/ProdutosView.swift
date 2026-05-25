@@ -8,6 +8,7 @@ struct ProdutosView: View {
     @State private var editando: ProdutoHistorico? = nil
     @State private var showNovo = false
     @State private var busca = ""
+    @State private var categoriasExpandidas: Set<Categoria> = Set(Categoria.allCases)
 
     private var filtrados: [ProdutoHistorico] {
         busca.isEmpty ? produtos : produtos.filter { $0.nome.localizedCaseInsensitiveContains(busca) }
@@ -20,6 +21,8 @@ struct ProdutosView: View {
             return (cat, grupo.sorted { $0.nome < $1.nome })
         }
     }
+
+    private var todasExpandidas: Bool { porCategoria.allSatisfy { categoriasExpandidas.contains($0.0) } }
 
     var body: some View {
         NavigationStack {
@@ -34,35 +37,57 @@ struct ProdutosView: View {
                     List {
                         ForEach(porCategoria, id: \.0) { cat, grupo in
                             Section {
-                                ForEach(grupo) { p in
-                                    Button { editando = p } label: {
-                                        HStack(spacing: 12) {
-                                            VStack(alignment: .leading, spacing: 3) {
-                                                Text(p.nome)
-                                                    .font(.body.weight(.semibold))
-                                                    .foregroundStyle(.primary)
-                                                HStack(spacing: 4) {
-                                                    Text(p.preco.brl)
-                                                    Text("/ \(p.unidade.rawValue)")
+                                if categoriasExpandidas.contains(cat) {
+                                    ForEach(grupo) { p in
+                                        Button { editando = p } label: {
+                                            HStack(spacing: 12) {
+                                                VStack(alignment: .leading, spacing: 3) {
+                                                    Text(p.nome)
+                                                        .font(.body.weight(.semibold))
+                                                        .foregroundStyle(.primary)
+                                                    HStack(spacing: 4) {
+                                                        Text(p.preco.brl)
+                                                        Text("/ \(p.unidade.rawValue)")
+                                                    }
+                                                    .font(.caption).foregroundStyle(.secondary)
                                                 }
-                                                .font(.caption).foregroundStyle(.secondary)
+                                                Spacer()
+                                                Image(systemName: "chevron.right")
+                                                    .font(.caption2.weight(.semibold))
+                                                    .foregroundStyle(.secondary)
                                             }
-                                            Spacer()
-                                            Image(systemName: "chevron.right")
-                                                .font(.caption2.weight(.semibold))
-                                                .foregroundStyle(.secondary)
                                         }
-                                    }
-                                    .swipeActions(edge: .trailing) {
-                                        Button(role: .destructive) {
-                                            context.delete(p)
-                                        } label: { Label("Excluir", systemImage: "trash") }
+                                        .swipeActions(edge: .trailing) {
+                                            Button(role: .destructive) {
+                                                context.delete(p)
+                                            } label: { Label("Excluir", systemImage: "trash") }
+                                        }
                                     }
                                 }
                             } header: {
-                                Label(cat.rawValue, systemImage: cat.icone)
+                                Button {
+                                    withAnimation(.spring(duration: 0.25)) {
+                                        if categoriasExpandidas.contains(cat) {
+                                            categoriasExpandidas.remove(cat)
+                                        } else {
+                                            categoriasExpandidas.insert(cat)
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: cat.icone)
+                                        Text(cat.rawValue)
+                                        Text("· \(grupo.count)")
+                                            .foregroundStyle(cat.cor.opacity(0.7))
+                                        Spacer()
+                                        Image(systemName: categoriasExpandidas.contains(cat) ? "chevron.up" : "chevron.down")
+                                            .font(.caption2.weight(.bold))
+                                            .foregroundStyle(cat.cor.opacity(0.7))
+                                    }
                                     .font(.footnote.weight(.bold))
                                     .foregroundStyle(cat.cor)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -74,11 +99,32 @@ struct ProdutosView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showNovo = true } label: {
-                        Image(systemName: "plus")
-                            .font(.body.weight(.semibold))
+                    Button {
+                        withAnimation(.spring(duration: 0.25)) {
+                            if todasExpandidas {
+                                categoriasExpandidas = []
+                            } else {
+                                categoriasExpandidas = Set(Categoria.allCases)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: todasExpandidas ? "chevron.up.chevron.down" : "chevron.down.chevron.up")
+                            .font(.caption.weight(.semibold))
                     }
                 }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                Button { showNovo = true } label: {
+                    Image(systemName: "plus")
+                        .font(.title3.weight(.heavy))
+                        .foregroundStyle(.black)
+                        .frame(width: 48, height: 48)
+                        .background(AppTheme.accent)
+                        .clipShape(Circle())
+                        .rockGlow(radius: 8)
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
             }
             .sheet(item: $editando) { p in
                 ProdutoEditSheet(produto: p)
