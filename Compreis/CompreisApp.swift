@@ -35,6 +35,8 @@ struct CompreisApp: App {
             TabView {
                 ListasView()
                     .tabItem { Label("Listas", systemImage: "cart.fill") }
+                ProdutosView()
+                    .tabItem { Label("Catálogo", systemImage: "shippingbox.fill") }
                 RelatorioView()
                     .tabItem { Label("Relatório", systemImage: "chart.bar.fill") }
                 PerfilView()
