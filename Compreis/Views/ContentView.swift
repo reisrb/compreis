@@ -41,31 +41,6 @@ struct ContentView: View {
                 emptyState
             } else {
                 List {
-                    if lista.emAndamento {
-                        Section {
-                            HStack(spacing: 8) {
-                                Image(systemName: "cart.fill.badge.checkmark")
-                                    .foregroundStyle(.orange)
-                                Text("Modo mercado ativo")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.orange)
-                                Spacer()
-                                Button {
-                                    withAnimation { lista.emAndamento = false }
-                                } label: {
-                                    Text("Desativar")
-                                        .font(.caption.weight(.bold))
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 4)
-                                        .background(.orange, in: Capsule())
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.vertical, 2)
-                        }
-                        .listRowBackground(Color.orange.opacity(0.08))
-                    }
                     ForEach(grupos, id: \.categoria) { grupo in
                         Section {
                             // Itens pendentes
@@ -136,19 +111,37 @@ struct ContentView: View {
                 if totalItens > 0 && !lista.finalizada { EditButton() }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 16) {
-                    if !lista.finalizada && !lista.isTemplate {
-                        Button {
-                            withAnimation { lista.emAndamento.toggle() }
-                        } label: {
-                            Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
-                                .foregroundStyle(lista.emAndamento ? .orange : AppTheme.accent)
-                        }
-                    }
-                    Button { showDetalhes = true } label: {
-                        Image(systemName: "info.circle")
-                    }
+                Button { showDetalhes = true } label: {
+                    Image(systemName: "info.circle")
                 }
+            }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if !lista.finalizada && !lista.isTemplate {
+                HStack(spacing: 10) {
+                    Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(lista.emAndamento ? .orange : .secondary)
+                    Text("Modo mercado")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(lista.emAndamento ? .orange : .secondary)
+                    Spacer()
+                    Button {
+                        withAnimation(.spring(duration: 0.2)) { lista.emAndamento.toggle() }
+                    } label: {
+                        Text(lista.emAndamento ? "Desativar" : "Ativar")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 5)
+                            .background(lista.emAndamento ? Color.orange : AppTheme.accent, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(lista.emAndamento ? Color.orange.opacity(0.08) : Color(.secondarySystemGroupedBackground))
+                .overlay(alignment: .bottom) { Divider() }
             }
         }
         .safeAreaInset(edge: .bottom) {
