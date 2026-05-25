@@ -13,8 +13,6 @@ struct ContentView: View {
     @State private var categoriasExpandidas: Set<Categoria> = []
     @State private var pegarItem: Item? = nil
     @State private var moverItem: Item? = nil
-    @State private var pendingAddInfo: (nome: String, preco: Double, unidade: Unidade, quantidade: Double, categoria: Categoria)? = nil
-    @State private var showDestinoDialog = false
 
     private struct GrupoCategoria {
         let categoria: Categoria
@@ -179,28 +177,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showAdd) {
-            AddItemView(listaUF: listaUF, nomesExistentes: lista.itens.map { $0.nome }) { nome, preco, unidade, quantidade, categoria in
-                if lista.emAndamento {
-                    pendingAddInfo = (nome, preco, unidade, quantidade, categoria)
-                    showDestinoDialog = true
-                } else {
-                    adicionarItem(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade, categoria: categoria, pegou: false)
-                }
+            AddItemView(listaUF: listaUF, nomesExistentes: lista.itens.map { $0.nome }, emAndamento: lista.emAndamento) { nome, preco, unidade, quantidade, categoria, pegou in
+                adicionarItem(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade, categoria: categoria, pegou: pegou)
             }
         }
-        .confirmationDialog("Onde adicionar?", isPresented: $showDestinoDialog) {
-            Button("Carrinho (já peguei)") {
-                if let p = pendingAddInfo {
-                    adicionarItem(nome: p.nome, preco: p.preco, unidade: p.unidade, quantidade: p.quantidade, categoria: p.categoria, pegou: true)
-                }
-            }
-            Button("Lista") {
-                if let p = pendingAddInfo {
-                    adicionarItem(nome: p.nome, preco: p.preco, unidade: p.unidade, quantidade: p.quantidade, categoria: p.categoria, pegou: false)
-                }
-            }
-            Button("Cancelar", role: .cancel) { pendingAddInfo = nil }
-        } message: { Text("Adicionar ao carrinho (já pego) ou à lista?") }
         .sheet(item: $pegarItem) { item in
             ConfirmarPrecoSheet(item: item) { novoPreco in
                 withAnimation(.spring(duration: 0.25)) {
@@ -223,7 +203,7 @@ struct ContentView: View {
             }
         }
         .sheet(item: $editingItem) { item in
-            AddItemView(item: item, listaUF: listaUF) { nome, preco, unidade, quantidade, categoria in
+            AddItemView(item: item, listaUF: listaUF) { nome, preco, unidade, quantidade, categoria, _ in
                 let nomeOriginal = item.nome
                 item.nome = nome
                 item.preco = preco
@@ -277,7 +257,6 @@ struct ContentView: View {
         sincronizarItemGlobal(nomeOriginal: nome, novoNome: nome, preco: preco, excluindo: item)
         salvarHistorico(nome: nome, preco: preco, unidade: unidade, categoria: categoria)
         SyncService.shared.scheduleSync(context: context)
-        pendingAddInfo = nil
     }
 
     private func sincronizarItemGlobal(nomeOriginal: String, novoNome: String, preco: Double, excluindo: Item? = nil) {

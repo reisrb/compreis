@@ -8,7 +8,8 @@ struct AddItemView: View {
     var item: Item?
     var listaUF: String? = nil
     var nomesExistentes: [String] = []
-    var onSave: (String, Double, Unidade, Double, Categoria) -> Void
+    var emAndamento: Bool = false
+    var onSave: (String, Double, Unidade, Double, Categoria, Bool) -> Void
 
     @State private var nome: String = ""
     @State private var precoText: String = "0,00"
@@ -30,6 +31,7 @@ struct AddItemView: View {
     @State private var showRenomearSheet = false
     @State private var novoNomeRenomear = ""
     @State private var showDuplicataAlert = false
+    @State private var showDestinoDialog = false
 
     private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
 
@@ -232,8 +234,13 @@ struct AddItemView: View {
                 }
             }
             .onAppear { populate() }
+            .confirmationDialog("Onde adicionar?", isPresented: $showDestinoDialog) {
+                Button("Carrinho (já peguei)") { confirmarSave(pegou: true) }
+                Button("Lista") { confirmarSave(pegou: false) }
+                Button("Cancelar", role: .cancel) {}
+            } message: { Text("Adicionar ao carrinho (já pego) ou à lista?") }
             .alert("Produto já na lista", isPresented: $showDuplicataAlert) {
-                Button("Adicionar mesmo assim") { confirmarSave() }
+                Button("Adicionar mesmo assim") { confirmarSave(pegou: false) }
                 Button("Cancelar", role: .cancel) {}
             } message: {
                 Text("\"\(nome.trimmingCharacters(in: .whitespaces))\" já está nesta lista.")
@@ -412,13 +419,17 @@ struct AddItemView: View {
             showDuplicataAlert = true
             return
         }
-        confirmarSave()
+        if emAndamento && item == nil {
+            showDestinoDialog = true
+            return
+        }
+        confirmarSave(pegou: item?.pegou ?? false)
     }
 
-    private func confirmarSave() {
+    private func confirmarSave(pegou: Bool) {
         let preco = Double(precoCentavos) / 100.0
         let quantidade = unidade == .kg ? pesoValor : Double(quantidadeInt)
-        onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade, categoria)
+        onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade, categoria, pegou)
         dismiss()
     }
 }
