@@ -149,6 +149,8 @@ struct NovoProdutoSheet: View {
     @State private var categoria: Categoria = .outros
     @State private var sugestoes: [ProdutoHistorico] = []
     @State private var produtoExistente: ProdutoHistorico? = nil
+    @State private var editandoExistente: ProdutoHistorico? = nil
+    @State private var showDuplicadoAlert = false
 
     private func buscarSugestoes(_ texto: String) {
         guard texto.count >= 2 else { sugestoes = []; produtoExistente = nil; return }
@@ -204,7 +206,7 @@ struct NovoProdutoSheet: View {
                     if produtoExistente != nil {
                         HStack(spacing: 6) {
                             Image(systemName: "info.circle").foregroundStyle(.orange)
-                            Text("Produto já cadastrado — salvar irá atualizar o preço")
+                            Text("Produto já cadastrado no catálogo")
                                 .font(.caption).foregroundStyle(.orange)
                         }
                         .padding(.vertical, 2)
@@ -253,18 +255,26 @@ struct NovoProdutoSheet: View {
                         let fetch = FetchDescriptor<ProdutoHistorico>()
                         let todos = (try? context.fetch(fetch)) ?? []
                         if let existente = todos.first(where: { $0.nome.localizedCaseInsensitiveCompare(nomeFinal) == .orderedSame }) {
-                            existente.preco = preco
-                            existente.unidade = unidade
-                            existente.categoria = categoria
+                            editandoExistente = existente
+                            showDuplicadoAlert = true
                         } else {
                             context.insert(ProdutoHistorico(nome: nomeFinal, preco: preco, unidade: unidade, categoria: categoria))
+                            dismiss()
                         }
-                        dismiss()
                     }
                     .fontWeight(.semibold)
                     .tint(AppTheme.accent)
                     .disabled(nome.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
+            }
+            .alert("Produto já cadastrado", isPresented: $showDuplicadoAlert) {
+                Button("Editar existente") { /* editandoExistente already set */ }
+                Button("Cancelar", role: .cancel) { editandoExistente = nil }
+            } message: {
+                Text("\"\(editandoExistente?.nome ?? "")\" já existe no catálogo.")
+            }
+            .sheet(item: $editandoExistente) { p in
+                ProdutoEditSheet(produto: p)
             }
         }
     }
