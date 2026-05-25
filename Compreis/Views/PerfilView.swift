@@ -26,6 +26,34 @@ struct PerfilView: View {
                         } else {
                             signInCard
                         }
+                        NavigationLink(destination: ProdutosView()) {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.indigo.opacity(0.12))
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "shippingbox.fill")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(Color.indigo)
+                                }
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Produtos")
+                                        .font(.body.weight(.bold))
+                                        .foregroundStyle(.primary)
+                                    Text("Gerenciar histórico de produtos")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(16)
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                        .buttonStyle(.plain)
                         setupCard
                         exportCard
                         importCard

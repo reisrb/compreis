@@ -14,6 +14,7 @@ final class ListaDeCompras {
     var totalPago: Double?
     var isTemplate: Bool = false
     var isPredefined: Bool = false
+    var emAndamento: Bool = false
     @Relationship(deleteRule: .cascade, inverse: \Item.lista) var itens: [Item] = []
 
     init(nome: String, dataMercado: Date? = nil, criadaEm: Date = .now,

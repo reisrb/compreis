@@ -3,11 +3,17 @@ import SwiftUI
 struct ItemRow: View {
     let item: Item
     var onEdit: () -> Void = {}
+    var onPegar: (() -> Void)? = nil
+    var onMover: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
             Button {
-                withAnimation(.spring(duration: 0.25)) { item.pegou.toggle() }
+                if !item.pegou, let onPegar {
+                    onPegar()
+                } else {
+                    withAnimation(.spring(duration: 0.25)) { item.pegou.toggle() }
+                }
             } label: {
                 Image(systemName: item.pegou ? "checkmark.circle.fill" : "checkmark.circle")
                     .font(.system(size: 28, weight: .regular))
@@ -41,6 +47,13 @@ struct ItemRow: View {
                 }
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                if let onMover {
+                    Button { onMover() } label: {
+                        Label("Mover para outra lista", systemImage: "arrow.right.doc.on.clipboard")
+                    }
+                }
+            }
         }
         .padding(.vertical, 6)
     }

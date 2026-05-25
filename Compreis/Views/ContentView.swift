@@ -11,6 +11,10 @@ struct ContentView: View {
     @State private var showFinalizar = false
     @State private var showDetalhes = false
     @State private var categoriasExpandidas: Set<Categoria> = []
+    @State private var pegarItem: Item? = nil
+    @State private var moverItem: Item? = nil
+    @State private var pendingAddInfo: (nome: String, preco: Double, unidade: Unidade, quantidade: Double, categoria: Categoria)? = nil
+    @State private var showDestinoDialog = false
 
     private struct GrupoCategoria {
         let categoria: Categoria
@@ -39,11 +43,27 @@ struct ContentView: View {
                 emptyState
             } else {
                 List {
+                    if lista.emAndamento {
+                        Section {
+                            HStack(spacing: 8) {
+                                Image(systemName: "cart.fill.badge.checkmark")
+                                    .foregroundStyle(.orange)
+                                Text("Modo mercado ativo — novos itens vão ao carrinho ou lista")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                        .listRowBackground(Color.orange.opacity(0.08))
+                    }
                     ForEach(grupos, id: \.categoria) { grupo in
                         Section {
                             // Itens pendentes
                             ForEach(grupo.pendentes) { item in
-                                ItemRow(item: item, onEdit: { editingItem = item })
+                                ItemRow(item: item,
+                                        onEdit: { editingItem = item },
+                                        onPegar: lista.finalizada ? nil : { pegarItem = item },
+                                        onMover: lista.finalizada ? nil : { moverItem = item })
                             }
                             .onDelete { offsets in
                                 for i in offsets { context.delete(grupo.pendentes[i]) }
@@ -79,7 +99,9 @@ struct ContentView: View {
 
                                 if expandido {
                                     ForEach(grupo.pegos) { item in
-                                        ItemRow(item: item, onEdit: { editingItem = item })
+                                        ItemRow(item: item,
+                                                onEdit: { editingItem = item },
+                                                onMover: lista.finalizada ? nil : { moverItem = item })
                                     }
                                     .onDelete { offsets in
                                         for i in offsets { context.delete(grupo.pegos[i]) }
@@ -104,8 +126,18 @@ struct ContentView: View {
                 if totalItens > 0 && !lista.finalizada { EditButton() }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button { showDetalhes = true } label: {
-                    Image(systemName: "info.circle")
+                HStack(spacing: 16) {
+                    if !lista.finalizada && !lista.isTemplate {
+                        Button {
+                            withAnimation { lista.emAndamento.toggle() }
+                        } label: {
+                            Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
+                                .foregroundStyle(lista.emAndamento ? .orange : AppTheme.accent)
+                        }
+                    }
+                    Button { showDetalhes = true } label: {
+                        Image(systemName: "info.circle")
+                    }
                 }
             }
         }
@@ -136,11 +168,45 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showAdd) {
             AddItemView(listaUF: listaUF, nomesExistentes: lista.itens.map { $0.nome }) { nome, preco, unidade, quantidade, categoria in
-                let item = Item(nome: nome, preco: preco, unidade: unidade,
-                                quantidade: quantidade, categoria: categoria)
-                lista.itens.append(item)
-                sincronizarItemGlobal(nomeOriginal: nome, novoNome: nome, preco: preco, excluindo: item)
-                salvarHistorico(nome: nome, preco: preco, unidade: unidade, categoria: categoria)
+                if lista.emAndamento {
+                    pendingAddInfo = (nome, preco, unidade, quantidade, categoria)
+                    showDestinoDialog = true
+                } else {
+                    adicionarItem(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade, categoria: categoria, pegou: false)
+                }
+            }
+        }
+        .confirmationDialog("Onde adicionar?", isPresented: $showDestinoDialog) {
+            Button("Carrinho (já peguei)") {
+                if let p = pendingAddInfo {
+                    adicionarItem(nome: p.nome, preco: p.preco, unidade: p.unidade, quantidade: p.quantidade, categoria: p.categoria, pegou: true)
+                }
+            }
+            Button("Lista") {
+                if let p = pendingAddInfo {
+                    adicionarItem(nome: p.nome, preco: p.preco, unidade: p.unidade, quantidade: p.quantidade, categoria: p.categoria, pegou: false)
+                }
+            }
+            Button("Cancelar", role: .cancel) { pendingAddInfo = nil }
+        } message: { Text("Adicionar ao carrinho (já pego) ou à lista?") }
+        .sheet(item: $pegarItem) { item in
+            ConfirmarPrecoSheet(item: item) { novoPreco in
+                withAnimation(.spring(duration: 0.25)) {
+                    item.pegou = true
+                    if novoPreco != item.preco {
+                        item.preco = novoPreco
+                        sincronizarItemGlobal(nomeOriginal: item.nome, novoNome: item.nome, preco: novoPreco, excluindo: item)
+                        salvarHistorico(nome: item.nome, preco: novoPreco, unidade: item.unidade, categoria: item.categoria)
+                    }
+                }
+            }
+        }
+        .sheet(item: $moverItem) { item in
+            MoverItemSheet(item: item, listaAtual: lista) { destino in
+                if let idx = lista.itens.firstIndex(where: { $0 === item }) {
+                    lista.itens.remove(at: idx)
+                }
+                destino.itens.append(item)
                 SyncService.shared.scheduleSync(context: context)
             }
         }
@@ -190,6 +256,16 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func adicionarItem(nome: String, preco: Double, unidade: Unidade, quantidade: Double, categoria: Categoria, pegou: Bool) {
+        let item = Item(nome: nome, preco: preco, unidade: unidade, quantidade: quantidade, categoria: categoria)
+        item.pegou = pegou
+        lista.itens.append(item)
+        sincronizarItemGlobal(nomeOriginal: nome, novoNome: nome, preco: preco, excluindo: item)
+        salvarHistorico(nome: nome, preco: preco, unidade: unidade, categoria: categoria)
+        SyncService.shared.scheduleSync(context: context)
+        pendingAddInfo = nil
     }
 
     private func sincronizarItemGlobal(nomeOriginal: String, novoNome: String, preco: Double, excluindo: Item? = nil) {
@@ -354,6 +430,119 @@ private struct CarrinhoSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fechar") { dismiss() }
                         .tint(AppTheme.accent)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Confirmar preço ao colocar no carrinho
+
+private struct ConfirmarPrecoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let item: Item
+    var onConfirmar: (Double) -> Void
+
+    @State private var precoCentavos: Int = 0
+    @State private var precoText: String = "0,00"
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(item.nome).font(.headline)
+                    HStack(spacing: 4) {
+                        Text(item.preco.brl)
+                        Text("/ \(item.unidade.rawValue)")
+                    }
+                    .font(.caption).foregroundStyle(.secondary)
+                } header: { Text("Produto") }
+
+                Section {
+                    HStack(spacing: 12) {
+                        Text("R$").foregroundStyle(.secondary)
+                        TextField("0,00", text: $precoText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .onChange(of: precoText) { _, novo in
+                                let digits = String(novo.filter { $0.isNumber }.prefix(7))
+                                precoCentavos = Int(digits) ?? 0
+                                let formatted = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+                                if precoText != formatted { precoText = formatted }
+                            }
+                    }
+                } header: { Text("Confirmar preço") }
+            }
+            .navigationTitle("Adicionar ao carrinho")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Confirmar") {
+                        onConfirmar(Double(precoCentavos) / 100.0)
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .tint(AppTheme.accent)
+                }
+            }
+            .onAppear {
+                precoCentavos = Int((item.preco * 100).rounded())
+                precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+            }
+        }
+    }
+}
+
+// MARK: - Mover item entre listas
+
+private struct MoverItemSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let item: Item
+    let listaAtual: ListaDeCompras
+    var onMover: (ListaDeCompras) -> Void
+
+    @Query(filter: #Predicate<ListaDeCompras> { $0.finalizada == false && $0.isTemplate == false })
+    private var ativas: [ListaDeCompras]
+
+    private var destinos: [ListaDeCompras] { ativas.filter { $0.nome != listaAtual.nome } }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if destinos.isEmpty {
+                    Text("Nenhuma outra lista ativa")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(destinos) { lista in
+                        Button {
+                            onMover(lista)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "cart")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(AppTheme.accent)
+                                    .frame(width: 32)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(lista.nome).font(.body.weight(.semibold)).foregroundStyle(.primary)
+                                    Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                            }
+                        }
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Mover \"\(item.nome)\" para")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }
                 }
             }
         }

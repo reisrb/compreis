@@ -10,8 +10,9 @@ struct ListasView: View {
     @State private var showTemplates = false
     @State private var showingDetail: ListaDeCompras?
 
-    private var ativas:     [ListaDeCompras] { listas.filter { !$0.finalizada && !$0.isTemplate } }
-    private var finalizadas:[ListaDeCompras] { listas.filter {  $0.finalizada && !$0.isTemplate } }
+    private var ativas:      [ListaDeCompras] { listas.filter { !$0.finalizada && !$0.isTemplate } }
+    private var finalizadas: [ListaDeCompras] { listas.filter {  $0.finalizada && !$0.isTemplate } }
+    private var totalAtivas: Double { ativas.reduce(0) { $0 + $1.totalCalculado } }
 
     var body: some View {
         NavigationStack {
@@ -38,7 +39,17 @@ struct ListasView: View {
                                         .tint(.blue)
                                     }
                                 }
-                            } header: { RockSectionHeader(title: "Em aberto") }
+                            } header: {
+                                HStack {
+                                    RockSectionHeader(title: "Em aberto")
+                                    Spacer()
+                                    if totalAtivas > 0 {
+                                        Text(totalAtivas.brl)
+                                            .font(.caption.weight(.bold).monospacedDigit())
+                                            .foregroundStyle(AppTheme.accent)
+                                    }
+                                }
+                            }
                         }
 
                         if !finalizadas.isEmpty {
@@ -267,6 +278,11 @@ private struct ListaRow: View {
                         Image(systemName: "mappin.circle.fill")
                             .font(.caption)
                             .foregroundStyle(AppTheme.accent.opacity(0.7))
+                    }
+                    if lista.emAndamento {
+                        Image(systemName: "cart.fill.badge.checkmark")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
                     }
                 }
                 HStack(spacing: 6) {
