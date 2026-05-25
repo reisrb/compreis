@@ -92,6 +92,7 @@ struct ContentView: View {
                                 .buttonStyle(.plain)
                             }
                             .padding(.vertical, 2)
+                            .tutorialAnchor(.modoMercadoBanner)
                         }
                         .listRowBackground(lista.emAndamento ? Color.orange.opacity(0.10) : Color(.secondarySystemGroupedBackground))
                     }
@@ -186,6 +187,7 @@ struct ContentView: View {
                         .clipShape(Circle())
                         .rockGlow(radius: 8)
                 }
+                .tutorialAnchor(.addItemFAB)
                 .padding(.trailing, 20)
                 .padding(.bottom, totalItens == 0 ? 20 : 110)
             }

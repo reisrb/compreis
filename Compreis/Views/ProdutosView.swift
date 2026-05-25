@@ -123,6 +123,7 @@ struct ProdutosView: View {
                         .clipShape(Circle())
                         .rockGlow(radius: 8)
                 }
+                .tutorialAnchor(.catalogoFAB)
                 .padding(.trailing, 20)
                 .padding(.bottom, 20)
             }

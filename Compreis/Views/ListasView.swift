@@ -97,6 +97,7 @@ struct ListasView: View {
                             .clipShape(Circle())
                             .rockGlow(radius: 10)
                     }
+                    .tutorialAnchor(.novaListaFAB)
                     .padding(.trailing, 24)
                     .padding(.vertical, 16)
                 }

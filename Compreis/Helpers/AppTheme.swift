@@ -2,14 +2,10 @@ import SwiftUI
 import UIKit
 
 enum AppTheme {
-    static let accent = Color(UIColor { t in
-        t.userInterfaceStyle == .dark
-            ? UIColor(red: 0.25, green: 0.78, blue: 0.45, alpha: 1)
-            : UIColor(red: 0.13, green: 0.55, blue: 0.25, alpha: 1)
-    })
-
-    static let accentSubtle = accent.opacity(0.15)
-    static let accentBorder = accent.opacity(0.25)
+    static var accent: Color       { ThemeSettings.shared.accent }
+    static var accentSubtle: Color { ThemeSettings.shared.accentSubtle }
+    static var accentBorder: Color { ThemeSettings.shared.accentBorder }
+    static var rowBackground: Color { ThemeSettings.shared.rowBackground }
 
     static let spend = Color(UIColor { t in
         t.userInterfaceStyle == .dark
@@ -19,14 +15,13 @@ enum AppTheme {
 }
 
 extension View {
-    // Glow duplo — efeito neon rock
-    func rockGlow(_ color: Color = AppTheme.accent, radius: CGFloat = 8) -> some View {
-        self
-            .shadow(color: color.opacity(0.30), radius: radius)
-            .shadow(color: color.opacity(0.12), radius: radius * 2)
+    func rockGlow(_ color: Color? = nil, radius: CGFloat = 8) -> some View {
+        let c = color ?? AppTheme.accent
+        return self
+            .shadow(color: c.opacity(0.30), radius: radius)
+            .shadow(color: c.opacity(0.12), radius: radius * 2)
     }
 
-    // Borda sutil verde nos cards
     func rockBorder(cornerRadius: CGFloat = 12) -> some View {
         self.overlay(
             RoundedRectangle(cornerRadius: cornerRadius)
@@ -35,7 +30,6 @@ extension View {
     }
 }
 
-// Header de seção estilo rock: barra + texto uppercase espaçado
 struct RockSectionHeader: View {
     let title: String
 

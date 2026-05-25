@@ -54,6 +54,35 @@ struct PerfilView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                         .buttonStyle(.plain)
+                        tutorialCard
+                        NavigationLink(destination: TemaView()) {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(AppTheme.accentSubtle)
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "paintpalette.fill")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(AppTheme.accent)
+                                }
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Aparência")
+                                        .font(.body.weight(.bold))
+                                        .foregroundStyle(.primary)
+                                    Text("Tema, cores e estilo de fundo")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(16)
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                        .buttonStyle(.plain)
                         setupCard
                         exportCard
                         importCard
@@ -149,6 +178,39 @@ struct PerfilView: View {
     }
 
     // MARK: - Cards
+
+    private var tutorialCard: some View {
+        Button {
+            TutorialManager.shared.start(resetTab: { _ in })
+        } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.teal.opacity(0.12))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: "hand.point.up.left.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(Color.teal)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Tutorial")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.primary)
+                    Text("Revisar como usar o app")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+    }
 
     private var signInCard: some View {
         Button {
