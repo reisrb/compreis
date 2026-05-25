@@ -32,6 +32,7 @@ struct AddItemView: View {
     @State private var novoNomeRenomear = ""
     @State private var showDuplicataAlert = false
     @State private var showDestinoDialog = false
+    @State private var showConfirmarCarrinho = false
 
     private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
 
@@ -235,7 +236,7 @@ struct AddItemView: View {
             }
             .onAppear { populate() }
             .confirmationDialog("Onde adicionar?", isPresented: $showDestinoDialog) {
-                Button("Carrinho (já peguei)") { confirmarSave(pegou: true) }
+                Button("Carrinho (já peguei)") { showConfirmarCarrinho = true }
                 Button("Lista") { confirmarSave(pegou: false) }
                 Button("Cancelar", role: .cancel) {}
             } message: { Text("Adicionar ao carrinho (já pego) ou à lista?") }
@@ -262,6 +263,17 @@ struct AddItemView: View {
             } message: { hist in
                 let n = itensEmUso.count
                 Text("\"\(hist.nome)\" está em \(n) \(n == 1 ? "item" : "itens") em listas ativas. O que deseja fazer?")
+            }
+            .sheet(isPresented: $showConfirmarCarrinho) {
+                ConfirmarPrecoCarrinhoSheet(
+                    nome: nome.trimmingCharacters(in: .whitespaces),
+                    precoInicial: Double(precoCentavos) / 100.0,
+                    unidade: unidade
+                ) { novoPreco in
+                    precoCentavos = Int((novoPreco * 100).rounded())
+                    precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+                    confirmarSave(pegou: true)
+                }
             }
             .sheet(isPresented: $showRenomearSheet) {
                 RenomearProdutoSheet(
@@ -431,6 +443,65 @@ struct AddItemView: View {
         let quantidade = unidade == .kg ? pesoValor : Double(quantidadeInt)
         onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade, categoria, pegou)
         dismiss()
+    }
+}
+
+// MARK: - Confirmar preço ao adicionar ao carrinho
+
+private struct ConfirmarPrecoCarrinhoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let nome: String
+    let precoInicial: Double
+    let unidade: Unidade
+    var onConfirmar: (Double) -> Void
+
+    @State private var precoCentavos: Int = 0
+    @State private var precoText: String = "0,00"
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(nome).font(.headline)
+                    Text("/ \(unidade.rawValue)").font(.caption).foregroundStyle(.secondary)
+                } header: { Text("Produto") }
+
+                Section {
+                    HStack(spacing: 12) {
+                        Text("R$").foregroundStyle(.secondary)
+                        TextField("0,00", text: $precoText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .onChange(of: precoText) { _, novo in
+                                let digits = String(novo.filter { $0.isNumber }.prefix(7))
+                                precoCentavos = Int(digits) ?? 0
+                                let formatted = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+                                if precoText != formatted { precoText = formatted }
+                            }
+                    }
+                } header: { Text("Preço pago") }
+            }
+            .navigationTitle("Adicionar ao carrinho")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Confirmar") {
+                        onConfirmar(Double(precoCentavos) / 100.0)
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .tint(AppTheme.accent)
+                }
+            }
+            .onAppear {
+                precoCentavos = Int((precoInicial * 100).rounded())
+                precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+            }
+        }
     }
 }
 
