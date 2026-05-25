@@ -201,7 +201,7 @@ struct NovoProdutoSheet: View {
                             }
                         }
                     }
-                    if let existente = produtoExistente {
+                    if produtoExistente != nil {
                         HStack(spacing: 6) {
                             Image(systemName: "info.circle").foregroundStyle(.orange)
                             Text("Produto já cadastrado — salvar irá atualizar o preço")
