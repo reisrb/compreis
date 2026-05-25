@@ -201,13 +201,16 @@ struct ContentView: View {
             }
         }
         .sheet(item: $pegarItem) { item in
-            ConfirmarPrecoSheet(item: item) { novoPreco in
+            ConfirmarPrecoSheet(item: item) { novoPreco, novaQuantidade in
                 withAnimation(.spring(duration: 0.25)) {
                     item.pegou = true
                     if novoPreco != item.preco {
                         item.preco = novoPreco
                         sincronizarItemGlobal(nomeOriginal: item.nome, novoNome: item.nome, preco: novoPreco, excluindo: item)
                         salvarHistorico(nome: item.nome, preco: novoPreco, unidade: item.unidade, categoria: item.categoria)
+                    }
+                    if item.unidade == .kg && novaQuantidade != item.quantidade {
+                        item.quantidade = novaQuantidade
                     }
                 }
             }
@@ -451,10 +454,15 @@ private struct CarrinhoSheet: View {
 private struct ConfirmarPrecoSheet: View {
     @Environment(\.dismiss) private var dismiss
     let item: Item
-    var onConfirmar: (Double) -> Void
+    var onConfirmar: (Double, Double) -> Void  // preco, quantidade
 
     @State private var precoCentavos: Int = 0
     @State private var precoText: String = "0,00"
+    @State private var pesoGramas: Int = 0
+    @State private var pesoDisplay: String = "0,000"
+
+    private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
+    private var totalKg: Double { (Double(precoCentavos) / 100.0) * pesoValor }
 
     var body: some View {
         NavigationStack {
@@ -481,7 +489,36 @@ private struct ConfirmarPrecoSheet: View {
                                 if precoText != formatted { precoText = formatted }
                             }
                     }
-                } header: { Text("Confirmar preço") }
+                } header: { Text(item.unidade == .kg ? "Preço por kg" : "Confirmar preço") }
+
+                if item.unidade == .kg {
+                    Section {
+                        HStack(spacing: 12) {
+                            TextField("0,000", text: $pesoDisplay)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .onChange(of: pesoDisplay) { _, novo in
+                                    let digits = String(novo.filter { $0.isNumber }.prefix(6))
+                                    pesoGramas = Int(digits) ?? 0
+                                    let formatted = String(format: "%d,%03d", pesoGramas / 1000, pesoGramas % 1000)
+                                    if pesoDisplay != formatted { pesoDisplay = formatted }
+                                }
+                            Text("kg").foregroundStyle(.secondary)
+                        }
+                    } header: { Text("Peso") }
+
+                    if pesoValor > 0 {
+                        Section {
+                            HStack {
+                                Text("Total")
+                                Spacer()
+                                Text(totalKg.brl)
+                                    .font(.headline)
+                                    .foregroundStyle(AppTheme.spend)
+                            }
+                        }
+                    }
+                }
             }
             .navigationTitle("Adicionar ao carrinho")
             .navigationBarTitleDisplayMode(.inline)
@@ -491,7 +528,9 @@ private struct ConfirmarPrecoSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Confirmar") {
-                        onConfirmar(Double(precoCentavos) / 100.0)
+                        let novoPreco = Double(precoCentavos) / 100.0
+                        let novaQuantidade = item.unidade == .kg ? pesoValor : item.quantidade
+                        onConfirmar(novoPreco, novaQuantidade)
                         dismiss()
                     }
                     .fontWeight(.semibold)
@@ -501,6 +540,10 @@ private struct ConfirmarPrecoSheet: View {
             .onAppear {
                 precoCentavos = Int((item.preco * 100).rounded())
                 precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
+                if item.unidade == .kg {
+                    pesoGramas = Int((item.quantidade * 1000).rounded())
+                    pesoDisplay = String(format: "%d,%03d", pesoGramas / 1000, pesoGramas % 1000)
+                }
             }
         }
     }
