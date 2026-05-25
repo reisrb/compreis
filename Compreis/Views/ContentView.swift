@@ -48,9 +48,21 @@ struct ContentView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "cart.fill.badge.checkmark")
                                     .foregroundStyle(.orange)
-                                Text("Modo mercado ativo — novos itens vão ao carrinho ou lista")
-                                    .font(.caption)
+                                Text("Modo mercado ativo")
+                                    .font(.caption.weight(.semibold))
                                     .foregroundStyle(.orange)
+                                Spacer()
+                                Button {
+                                    withAnimation { lista.emAndamento = false }
+                                } label: {
+                                    Text("Desativar")
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(.orange, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
                             }
                             .padding(.vertical, 2)
                         }
