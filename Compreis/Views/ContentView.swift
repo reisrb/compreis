@@ -38,9 +38,63 @@ struct ContentView: View {
     var body: some View {
         Group {
             if lista.itens.isEmpty {
-                emptyState
+                VStack(spacing: 0) {
+                    if !lista.finalizada && !lista.isTemplate {
+                        HStack(spacing: 10) {
+                            Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(lista.emAndamento ? .orange : .secondary)
+                            Text("Modo mercado")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(lista.emAndamento ? .orange : .secondary)
+                            Spacer()
+                            Button {
+                                withAnimation(.spring(duration: 0.2)) { lista.emAndamento.toggle() }
+                            } label: {
+                                Text(lista.emAndamento ? "Desativar" : "Ativar")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 5)
+                                    .background(lista.emAndamento ? Color.orange : AppTheme.accent, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(lista.emAndamento ? Color.orange.opacity(0.10) : Color(.secondarySystemGroupedBackground))
+                        Divider()
+                    }
+                    emptyState
+                }
             } else {
                 List {
+                    if !lista.finalizada && !lista.isTemplate {
+                        Section {
+                            HStack(spacing: 10) {
+                                Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(lista.emAndamento ? .orange : .secondary)
+                                Text("Modo mercado")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(lista.emAndamento ? .orange : .secondary)
+                                Spacer()
+                                Button {
+                                    withAnimation(.spring(duration: 0.2)) { lista.emAndamento.toggle() }
+                                } label: {
+                                    Text(lista.emAndamento ? "Desativar" : "Ativar")
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 5)
+                                        .background(lista.emAndamento ? Color.orange : AppTheme.accent, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                        .listRowBackground(lista.emAndamento ? Color.orange.opacity(0.10) : Color(.secondarySystemGroupedBackground))
+                    }
                     ForEach(grupos, id: \.categoria) { grupo in
                         Section {
                             // Itens pendentes
@@ -114,34 +168,6 @@ struct ContentView: View {
                 Button { showDetalhes = true } label: {
                     Image(systemName: "info.circle")
                 }
-            }
-        }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if !lista.finalizada && !lista.isTemplate {
-                HStack(spacing: 10) {
-                    Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(lista.emAndamento ? .orange : .secondary)
-                    Text("Modo mercado")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(lista.emAndamento ? .orange : .secondary)
-                    Spacer()
-                    Button {
-                        withAnimation(.spring(duration: 0.2)) { lista.emAndamento.toggle() }
-                    } label: {
-                        Text(lista.emAndamento ? "Desativar" : "Ativar")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 5)
-                            .background(lista.emAndamento ? Color.orange : AppTheme.accent, in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(lista.emAndamento ? Color.orange.opacity(0.08) : Color(.secondarySystemGroupedBackground))
-                .overlay(alignment: .bottom) { Divider() }
             }
         }
         .safeAreaInset(edge: .bottom) {
