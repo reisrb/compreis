@@ -102,7 +102,7 @@ struct TutorialOverlayView: View {
 
             // Buttons
             HStack(spacing: 12) {
-                Button("Pular") {
+                Button("Skip") {
                     tutorial.skip()
                 }
                 .font(.subheadline.weight(.semibold))
@@ -114,7 +114,7 @@ struct TutorialOverlayView: View {
                     tutorial.next(switchTab: switchTab)
                 } label: {
                     HStack(spacing: 6) {
-                        Text(tutorial.isLast ? "Concluir" : "Próximo")
+                        Text(tutorial.isLast ? "Finish" : "Next")
                         if !tutorial.isLast {
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.bold))

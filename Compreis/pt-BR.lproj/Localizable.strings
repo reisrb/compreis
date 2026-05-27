@@ -1,0 +1,276 @@
+/* Tab Bar */
+"Lists" = "Listas";
+"Catalogue" = "Catálogo";
+"Report" = "Relatório";
+"Profile" = "Perfil";
+
+/* ListasView */
+"Compreis" = "Compreis";
+"Open" = "Em aberto";
+"Finalized" = "Finalizadas";
+"No lists" = "Nenhuma lista";
+"Tap + to create a list" = "Toque em + para criar uma lista";
+"Templates" = "Templates";
+"Delete" = "Excluir";
+"Details" = "Detalhes";
+
+/* TemplatesView */
+"Default" = "Padrão";
+"My templates" = "Meus templates";
+"Create template" = "Criar template";
+"Close" = "Fechar";
+"New template" = "Novo template";
+"Edit" = "Editar";
+
+/* ListaRow */
+"item" = "item";
+"items" = "itens";
+
+/* ContentView */
+"Market mode" = "Modo mercado";
+"Disable" = "Desativar";
+"Enable" = "Ativar";
+"Empty list" = "Lista vazia";
+"Tap + to add products" = "Toque em + para adicionar produtos";
+"In cart · %d" = "No carrinho · %d";
+"Finalize" = "Finalizar";
+"of %@ estimated" = "de %@ estimado";
+
+/* CarrinhoSheet */
+"Cart" = "Carrinho";
+"Total in cart" = "Total no carrinho";
+
+/* ConfirmarPrecoSheet */
+"Product" = "Produto";
+"Last purchase here: %@ / %@" = "Última compra aqui: %@ / %@";
+"Price per kg" = "Preço por kg";
+"Confirm price" = "Confirmar preço";
+"Weight" = "Peso";
+"Quantity" = "Quantidade";
+"Total" = "Total";
+"Add to cart" = "Adicionar ao carrinho";
+"Cancel" = "Cancelar";
+"Confirm" = "Confirmar";
+
+/* MercadoBaratoSheet */
+"Savings: %@" = "Economia: %@";
+"Cheapest market for \"%@\"" = "Mercado mais barato para \"%@\"";
+"Action" = "Ação";
+"Move to \"%@\"" = "Mover para \"%@\"";
+"%d %@ · %@" = "%d %@ · %@";
+"Create list at \"%@\"" = "Criar lista em \"%@\"";
+"Move item to new list" = "Mover o item para a nova lista";
+"Cheapest market" = "Mercado mais barato";
+
+/* MoverItemSheet */
+"No other active list" = "Nenhuma outra lista ativa";
+"Move \"%@\" to" = "Mover \"%@\" para";
+
+/* AddItemView */
+"Product name" = "Nome do produto";
+"CONAB Ref. · %@ (wholesale)" = "Ref. CONAB · %@ (atacado)";
+"Searching products…" = "Buscando produtos…";
+"Fill in the price" = "Preencha o preço";
+"Category" = "Categoria";
+"Price" = "Preço";
+"Per unit" = "Por unidade";
+"Per kg" = "Por kg";
+"Unit" = "Unidade";
+"Weight — %dg" = "Peso — %dg";
+"Item total" = "Total do item";
+"New item" = "Novo item";
+"Edit item" = "Editar item";
+"Save" = "Salvar";
+"Where to add?" = "Onde adicionar?";
+"Cart (already picked)" = "Carrinho (já peguei)";
+"List" = "Lista";
+"Add to cart or to list?" = "Adicionar ao carrinho (já pego) ou à lista?";
+"Product already in list" = "Produto já na lista";
+"Add anyway" = "Adicionar mesmo assim";
+"\"%@\" is already in this list." = "\"%@\" já está nesta lista.";
+"Product in use" = "Produto em uso";
+"Delete and remove from lists" = "Apagar e remover das listas";
+"Rename items" = "Renomear itens";
+"\"%@\" is in %d %@ in active lists. What do you want to do?" = "\"%@\" está em %d %@ em listas ativas. O que deseja fazer?";
+
+/* RenomearProdutoSheet */
+"New name" = "Novo nome";
+"Rename \"%@\" to" = "Renomear \"%@\" para";
+"From history" = "Do histórico";
+"Rename product" = "Renomear produto";
+
+/* ProdutosView */
+"Empty catalogue" = "Catálogo vazio";
+"Tap + to add products" = "Toque em + para cadastrar produtos";
+"Collapse" = "Colapsar";
+"Expand" = "Expandir";
+"Search product" = "Buscar produto";
+
+/* ProdutoDetalheSheet */
+"No market registered yet" = "Nenhum mercado registrado ainda";
+"Prices by market" = "Preços por mercado";
+"Cheapest" = "Mais barato";
+"Details" = "Detalhes";
+
+/* NovoProdutoSheet */
+"Name" = "Nome";
+"Product already in catalogue" = "Produto já cadastrado no catálogo";
+"Reference price" = "Preço de referência";
+"New product" = "Novo produto";
+"Product already registered" = "Produto já cadastrado";
+"Edit existing" = "Editar existente";
+"\"%@\" already exists in the catalogue." = "\"%@\" já existe no catálogo.";
+
+/* ProdutoEditSheet */
+"Edit product" = "Editar produto";
+
+/* PerfilView */
+"Categories" = "Categorias";
+"Access, create and edit categories" = "Acessar, criar e editar categorias";
+"Products" = "Produtos";
+"Manage product history" = "Gerenciar histórico de produtos";
+"Appearance" = "Aparência";
+"Theme, colours and background style" = "Tema, cores e estilo de fundo";
+"Tutorial" = "Tutorial";
+"Review how to use the app" = "Revisar como usar o app";
+"No linked account" = "Sem conta vinculada";
+"Sign in with Google to sync" = "Entre com Google para sincronizar";
+"Connecting…" = "Conectando…";
+"Sign in with Google" = "Entrar com Google";
+"Syncing…" = "Sincronizando…";
+"Synced %@" = "Sincronizado %@";
+"Compreis - Data" = "Compreis - Dados";
+"Disconnect Google account" = "Desconectar conta Google";
+"Import data" = "Importar dados";
+"Import a JSON file exported by the app" = "Importa um arquivo JSON exportado pelo app";
+"Import" = "Importar";
+"Import more" = "Importar mais";
+"%d %@ and %d %@ imported" = "%d %@ e %d %@ importados";
+"list" = "lista";
+"lists" = "listas";
+"item imported" = "item importado";
+"items imported" = "itens importados";
+"iCloud" = "iCloud";
+"Automatic backup — survives iPhone replacement" = "Backup automático — sobrevive troca de iPhone";
+"Export data" = "Exportar dados";
+"Generates a JSON file with all lists" = "Gera um arquivo JSON com todas as listas";
+"Export" = "Exportar";
+"Share" = "Compartilhar";
+"How to set up" = "Como configurar";
+"Open Google Cloud Console" = "Abrir Google Cloud Console";
+"Import error" = "Erro ao importar";
+"Export error" = "Erro ao exportar";
+"OK" = "OK";
+"Save and Sign In" = "Salvar e Entrar";
+"Set up Google" = "Configurar Google";
+"Google Cloud Client ID" = "Client ID do Google Cloud";
+
+/* CategoriasView */
+"Default categories" = "Categorias padrão";
+"Default" = "Padrão";
+"My categories" = "Minhas categorias";
+"No category created" = "Nenhuma categoria criada";
+
+/* CategoriaEditSheet */
+"Category name" = "Nome da categoria";
+"Icon" = "Ícone";
+"Colour" = "Cor";
+"Preview" = "Prévia";
+"New category" = "Nova categoria";
+"Edit category" = "Editar categoria";
+
+/* TemaView */
+"Preview" = "Prévia";
+"Highlight colour" = "Cor de destaque";
+"Custom" = "Personalizado";
+"Choose colour" = "Escolher cor";
+"Custom colour" = "Cor personalizada";
+"List background" = "Fundo das listas";
+"Background style" = "Estilo de fundo";
+"Sample list" = "Lista de exemplo";
+"5 items · sun 08/06" = "5 itens · dom 08/06";
+
+/* NovaListaView */
+"Template" = "Modelo";
+"See %d included items" = "Ver %d itens incluídos";
+"Your templates" = "Seus templates";
+"List name" = "Nome da lista";
+"Template name" = "Nome do template";
+"Ex: Week, BBQ…" = "Ex: Semana, Churrasco…";
+"Set date" = "Definir data";
+"Date" = "Data";
+"When going to the market" = "Quando vai ao mercado";
+"Set location" = "Definir local";
+"Choose on map" = "Escolher no mapa";
+"Search supermarket…" = "Buscar supermercado…";
+"Market location" = "Local do mercado";
+"New list" = "Nova lista";
+"Create" = "Criar";
+"Model" = "Modelo";
+
+/* FinalizarView */
+"Calculated total" = "Total calculado";
+"Adjust real total" = "Ajustar total real";
+"Difference" = "Diferença";
+"Savings" = "Economia";
+"Total to register" = "Total a registrar";
+"Items" = "Itens";
+"Summary" = "Resumo";
+"Copy items to next list" = "Copiar itens para próxima lista";
+"The same products appear in the next list with saved prices." = "Os mesmos produtos aparecem na próxima lista com os preços salvos.";
+"New list" = "Nova lista";
+"Will be synced with Google Sheets" = "Será sincronizado com Google Sheets";
+"Cloud" = "Nuvem";
+"Finalize purchase" = "Finalizar compra";
+
+/* ListaDetailView */
+"Status" = "Status";
+"Finalized" = "Finalizada";
+"Open" = "Em aberto";
+"Template created successfully" = "Template criado com sucesso";
+"Use as template" = "Usar como template";
+"Market date" = "Data do mercado";
+"Market location" = "Local do mercado";
+"Summary" = "Resumo";
+"Template" = "Template";
+
+/* RelatorioView */
+"Last 7 days" = "Últimos 7 dias";
+"Monthly average" = "Média mensal";
+"Average per trip" = "Média por compra";
+"Overview" = "Visão geral";
+"Spent by market" = "Gasto por mercado";
+"visit" = "visita";
+"visits" = "visitas";
+"average %@" = "média %@";
+"Basket comparison" = "Comparação de cesta";
+"Cheapest" = "Mais barato";
+"Month total" = "Total do mês";
+"No finalized purchases" = "Sem compras finalizadas";
+"Finalize a purchase to see the report" = "Finalize uma compra para ver o relatório";
+"Examples" = "Exemplos";
+"Your report preview" = "Como fica o seu relatório";
+"See how it looks after finalizing a few purchases" = "Veja como ficará após finalizar algumas compras";
+
+/* ItemRow */
+"Cheaper at %@: %@/%@" = "Mais barato em %@: %@/%@";
+"Go" = "Ir";
+"Move to another list" = "Mover para outra lista";
+"Go to cheapest market (%@)" = "Ir ao mercado mais barato (%@)";
+
+/* Tutorial */
+"Welcome to Compreis!" = "Bem-vindo ao Compreis!";
+"Manage your shopping lists with price history and market mode. See how it works in a few steps." = "Gerencie suas listas de compras com histórico de preços e modo mercado. Veja como funciona em poucos passos.";
+"Create a list" = "Criar uma lista";
+"Tap the + button to create a list. You can set a name, date and market location." = "Toque no botão + para criar uma lista. Você pode dar um nome, definir data e localização do mercado.";
+"Add items" = "Adicionar itens";
+"Inside the list, use + to add products. The app searches your price history automatically as you type." = "Dentro da lista, use o + para adicionar produtos. O app busca preços do seu histórico automaticamente ao digitar o nome.";
+"Market mode" = "Modo mercado";
+"Enable market mode when you are at the supermarket. Tapping ✓ on an item confirms the price paid and moves it to the cart." = "Ative o modo mercado quando estiver no supermercado. Ao clicar no ✓ de um item, você confirma o preço pago e ele vai para o carrinho.";
+"Product catalogue" = "Catálogo de produtos";
+"The catalogue stores all products you have used with reference prices. Add, edit or remove products here." = "O catálogo guarda todos os produtos que você já usou com os preços de referência. Cadastre, edite ou remova produtos aqui.";
+"All done! 🎉" = "Tudo pronto! 🎉";
+"You now know the essentials of Compreis. Explore templates, reports and settings in Profile." = "Você já conhece o essencial do Compreis. Explore os templates, relatórios e configurações no Perfil.";
+"Skip" = "Pular";
+"Next" = "Próximo";
+"Finish" = "Concluir";

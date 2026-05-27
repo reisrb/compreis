@@ -36,7 +36,7 @@ struct NovaListaView: View {
     @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == true })
     private var predefinedTemplates: [ListaDeCompras]
 
-    var titulo: String = "Nova lista"
+    var titulo: String = "New list"
     var isTemplate: Bool = false
     var onCreate: (String, Date?, String?, Double?, Double?, ListaModelo, ListaDeCompras?) -> Void
 
@@ -57,7 +57,7 @@ struct NovaListaView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // MARK: Modelo estático
+                // MARK: Static model
                 Section {
                     HStack(spacing: 8) {
                         ForEach(ListaModelo.allCases, id: \.self) { modelo in
@@ -101,7 +101,7 @@ struct NovaListaView: View {
                                 Image(systemName: "eye")
                                 let count = templateUsuario.map { $0.itens.count }
                                     ?? modeloSelecionado.produtos.count
-                                Text("Ver \(count) itens incluídos")
+                                Text("See \(count) included items")
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
@@ -111,9 +111,9 @@ struct NovaListaView: View {
                             .foregroundStyle(AppTheme.accent)
                         }
                     }
-                } header: { Text("Modelo") }
+                } header: { Text("Model") }
 
-                // MARK: Templates do usuário
+                // MARK: User templates
                 if !templates.isEmpty {
                     Section {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -132,7 +132,7 @@ struct NovaListaView: View {
                                                 .font(.caption.weight(.bold))
                                                 .foregroundStyle(sel ? AppTheme.accent : .primary)
                                                 .lineLimit(1)
-                                            Text("\(t.itens.count) \(t.itens.count == 1 ? "item" : "itens")")
+                                            Text("\(t.itens.count) \(t.itens.count == 1 ? "item" : "items")")
                                                 .font(.caption2)
                                                 .foregroundStyle(.secondary)
                                         }
@@ -155,36 +155,36 @@ struct NovaListaView: View {
                         }
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
-                    } header: { Text("Seus templates") }
+                    } header: { Text("Your templates") }
                 }
 
-                // MARK: Nome
+                // MARK: Name
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "list.bullet")
                             .foregroundStyle(AppTheme.accent)
                             .frame(width: 20)
-                        TextField("Ex: Semana, Churrasco…", text: $nome)
+                        TextField("Ex: Week, BBQ…", text: $nome)
                     }
-                } header: { Text(isTemplate ? "Nome do template" : "Nome da lista") }
+                } header: { Text(isTemplate ? "Template name" : "List name") }
 
-                // MARK: Data
+                // MARK: Date
                 if !isTemplate {
                 Section {
-                    Toggle("Definir data", isOn: $usarData)
+                    Toggle("Set date", isOn: $usarData)
                         .tint(AppTheme.accent)
                     if usarData {
-                        DatePicker("Data", selection: $dataMercado, displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("Date", selection: $dataMercado, displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.graphical)
                             .tint(AppTheme.accent)
                     }
-                } header: { Text("Quando vai ao mercado") }
+                } header: { Text("When going to the market") }
                 } // if !isTemplate
 
-                // MARK: Local
+                // MARK: Location
                 if !isTemplate {
                 Section {
-                    Toggle("Definir local", isOn: $usarLocal)
+                    Toggle("Set location", isOn: $usarLocal)
                         .tint(AppTheme.accent)
                     if usarLocal {
                         if let pinned = localNome, let lat = localLat, let lon = localLon {
@@ -213,13 +213,13 @@ struct NovaListaView: View {
                             }
                         } else {
                             Button { showMapPicker = true } label: {
-                                Label("Escolher no mapa", systemImage: "map")
+                                Label("Choose on map", systemImage: "map")
                                     .font(.subheadline).foregroundStyle(AppTheme.accent)
                             }
                             HStack(spacing: 12) {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundStyle(.secondary).frame(width: 20)
-                                TextField("Buscar supermercado…", text: $localQuery)
+                                TextField("Search supermarket…", text: $localQuery)
                                     .onChange(of: localQuery) { _, q in completer.search(q) }
                             }
                             ForEach(completer.completions, id: \.self) { completion in
@@ -235,7 +235,7 @@ struct NovaListaView: View {
                             }
                         }
                     }
-                } header: { Text("Local do mercado") }
+                } header: { Text("Market location") }
                 } // if !isTemplate
             }
             .navigationTitle(titulo)
@@ -262,12 +262,12 @@ struct NovaListaView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Criar") {
+                    Button("Create") {
                         onCreate(
-                            nome.isEmpty ? "Lista" : nome,
+                            nome.isEmpty ? "List" : nome,
                             usarData ? dataMercado : nil,
                             usarLocal ? localNome : nil,
                             usarLocal ? localLat : nil,
@@ -342,7 +342,7 @@ private struct TemplatePreviewSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fechar") { dismiss() }
+                    Button("Close") { dismiss() }
                         .tint(AppTheme.accent)
                 }
             }

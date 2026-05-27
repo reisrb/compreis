@@ -40,43 +40,43 @@ struct TutorialStep {
 
     static let steps: [TutorialStep] = [
         TutorialStep(
-            titulo: "Bem-vindo ao Compreis!",
-            descricao: "Gerencie suas listas de compras com histórico de preços e modo mercado. Veja como funciona em poucos passos.",
+            titulo: "Welcome to Compreis!",
+            descricao: "Manage your shopping lists with price history and market mode. See how it works in a few steps.",
             icone: "cart.fill",
             anchorID: nil,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Criar uma lista",
-            descricao: "Toque no botão + para criar uma lista. Você pode dar um nome, definir data e localização do mercado.",
+            titulo: "Create a list",
+            descricao: "Tap the + button to create a list. You can set a name, date and market location.",
             icone: "plus.circle.fill",
             anchorID: .novaListaFAB,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Adicionar itens",
-            descricao: "Dentro da lista, use o + para adicionar produtos. O app busca preços do seu histórico automaticamente ao digitar o nome.",
+            titulo: "Add items",
+            descricao: "Inside the list, use + to add products. The app searches your price history automatically as you type.",
             icone: "text.badge.plus",
             anchorID: .addItemFAB,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Modo mercado",
-            descricao: "Ative o modo mercado quando estiver no supermercado. Ao clicar no ✓ de um item, você confirma o preço pago e ele vai para o carrinho.",
+            titulo: "Market mode",
+            descricao: "Enable market mode when you are at the supermarket. Tapping ✓ on an item confirms the price paid and moves it to the cart.",
             icone: "cart.fill.badge.checkmark",
             anchorID: .modoMercadoBanner,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Catálogo de produtos",
-            descricao: "O catálogo guarda todos os produtos que você já usou com os preços de referência. Cadastre, edite ou remova produtos aqui.",
+            titulo: "Product catalogue",
+            descricao: "The catalogue stores all products you have used with reference prices. Add, edit or remove products here.",
             icone: "shippingbox.fill",
             anchorID: .catalogoFAB,
             tab: 1
         ),
         TutorialStep(
-            titulo: "Tudo pronto! 🎉",
-            descricao: "Você já conhece o essencial do Compreis. Explore os templates, relatórios e configurações no Perfil.",
+            titulo: "All done! 🎉",
+            descricao: "You now know the essentials of Compreis. Explore templates, reports and settings in Profile.",
             icone: "checkmark.seal.fill",
             anchorID: nil,
             tab: 0

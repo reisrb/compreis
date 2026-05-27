@@ -38,16 +38,16 @@ struct CompreisApp: App {
         WindowGroup {
             TabView(selection: $selectedTab) {
                 ListasView()
-                    .tabItem { Label("Listas", systemImage: "cart.fill") }
+                    .tabItem { Label("Lists", systemImage: "cart.fill") }
                     .tag(0)
                 ProdutosView()
-                    .tabItem { Label("Catálogo", systemImage: "shippingbox.fill") }
+                    .tabItem { Label("Catalogue", systemImage: "shippingbox.fill") }
                     .tag(1)
                 RelatorioView()
-                    .tabItem { Label("Relatório", systemImage: "chart.bar.fill") }
+                    .tabItem { Label("Report", systemImage: "chart.bar.fill") }
                     .tag(2)
                 PerfilView()
-                    .tabItem { Label("Perfil", systemImage: "person.fill") }
+                    .tabItem { Label("Profile", systemImage: "person.fill") }
                     .tag(3)
             }
             .environment(ThemeSettings.shared)

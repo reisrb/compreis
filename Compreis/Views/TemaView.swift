@@ -11,7 +11,7 @@ struct TemaView: View {
             // Preview
             Section {
                 previewCard
-            } header: { Text("Prévia") }
+            } header: { Text("Preview") }
 
             // Presets
             Section {
@@ -28,24 +28,24 @@ struct TemaView: View {
                     HStack {
                         Image(systemName: TemaPreset.custom.icone)
                             .foregroundStyle(theme.preset == .custom ? theme.accent : .secondary)
-                        Text("Personalizado").foregroundStyle(.primary)
+                        Text("Custom").foregroundStyle(.primary)
                         Spacer()
                         if theme.preset == .custom {
                             Image(systemName: "checkmark").foregroundStyle(theme.accent)
                         }
                     }
                 }
-            } header: { Text("Cor de destaque") }
+            } header: { Text("Highlight colour") }
 
             if theme.preset == .custom {
                 Section {
-                    ColorPicker("Escolher cor", selection: $theme.customColor, supportsOpacity: false)
-                } header: { Text("Cor personalizada") }
+                    ColorPicker("Choose colour", selection: $theme.customColor, supportsOpacity: false)
+                } header: { Text("Custom colour") }
             }
 
-            // Fundo
+            // Background
             Section {
-                Picker("Estilo de fundo", selection: $theme.estiloFundo) {
+                Picker("Background style", selection: $theme.estiloFundo) {
                     ForEach(EstiloFundo.allCases, id: \.self) { e in
                         Text(e.rawValue).tag(e)
                     }
@@ -55,9 +55,9 @@ struct TemaView: View {
                 Text(theme.estiloFundo.descricao)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            } header: { Text("Fundo das listas") }
+            } header: { Text("List background") }
         }
-        .navigationTitle("Aparência")
+        .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.large)
         .tint(theme.accent)
     }
@@ -77,8 +77,8 @@ struct TemaView: View {
                         .foregroundStyle(AppTheme.accent)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Lista de exemplo").font(.body.weight(.bold))
-                    Text("5 itens · dom 08/06").font(.caption).foregroundStyle(.secondary)
+                    Text("Sample list").font(.body.weight(.bold))
+                    Text("5 items · sun 08/06").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Text("R$ 87,50")
@@ -91,7 +91,7 @@ struct TemaView: View {
             Divider().padding(.vertical, 8)
 
             HStack {
-                Button("Finalizar") {}
+                Button("Finalize") {}
                     .font(.subheadline.weight(.heavy))
                     .foregroundStyle(.black)
                     .padding(.horizontal, 16)

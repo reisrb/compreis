@@ -23,16 +23,16 @@ struct CategoriasView: View {
                         }
                         Text(cat.rawValue).font(.body)
                         Spacer()
-                        Text("Padrão")
+                        Text("Default")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-            } header: { Text("Categorias padrão") }
+            } header: { Text("Default categories") }
 
             Section {
                 if customCats.isEmpty {
-                    Label("Nenhuma categoria criada", systemImage: "plus.circle")
+                    Label("No category created", systemImage: "plus.circle")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -57,13 +57,13 @@ struct CategoriasView: View {
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
                             context.delete(cat)
-                        } label: { Label("Excluir", systemImage: "trash") }
+                        } label: { Label("Delete", systemImage: "trash") }
                     }
                 }
-            } header: { Text("Minhas categorias") }
+            } header: { Text("My categories") }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Categorias")
+        .navigationTitle("Categories")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -99,9 +99,9 @@ private struct CategoriaEditSheet: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "tag").foregroundStyle(AppTheme.accent).frame(width: 20)
-                        TextField("Nome da categoria", text: $nome)
+                        TextField("Category name", text: $nome)
                     }
-                } header: { Text("Nome") }
+                } header: { Text("Name") }
 
                 Section {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
@@ -124,11 +124,11 @@ private struct CategoriaEditSheet: View {
                         }
                     }
                     .padding(.vertical, 4)
-                } header: { Text("Ícone") }
+                } header: { Text("Icon") }
 
                 Section {
-                    ColorPicker("Cor", selection: $cor, supportsOpacity: false)
-                } header: { Text("Cor") }
+                    ColorPicker("Colour", selection: $cor, supportsOpacity: false)
+                } header: { Text("Colour") }
 
                 Section {
                     HStack {
@@ -151,16 +151,16 @@ private struct CategoriaEditSheet: View {
                         Spacer()
                     }
                     .padding(.vertical, 8)
-                } header: { Text("Prévia") }
+                } header: { Text("Preview") }
             }
-            .navigationTitle(categoria == nil ? "Nova categoria" : "Editar categoria")
+            .navigationTitle(categoria == nil ? "New category" : "Edit category")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
+                    Button("Save") {
                         let nomeFinal = nome.trimmingCharacters(in: .whitespaces)
                         let hexStr = cor.toHex()
                         if let cat = categoria {

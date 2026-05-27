@@ -22,14 +22,14 @@ struct FinalizarView: View {
             Form {
                 Section {
                     HStack {
-                        Text("Total calculado")
+                        Text("Calculated total")
                         Spacer()
                         Text(lista.totalCalculado.brl)
                             .font(.body.weight(.bold).monospacedDigit())
                             .foregroundStyle(.secondary)
                     }
 
-                    Toggle("Ajustar total real", isOn: $ajustarTotal)
+                    Toggle("Adjust real total", isOn: $ajustarTotal)
                         .tint(AppTheme.accent)
 
                     if ajustarTotal {
@@ -45,7 +45,7 @@ struct FinalizarView: View {
                         if let v = Double(totalText.replacingOccurrences(of: ",", with: ".")) {
                             let diff = v - lista.totalCalculado
                             HStack {
-                                Text(diff >= 0 ? "Diferença" : "Economia")
+                                Text(diff >= 0 ? "Difference" : "Savings")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                 Spacer()
@@ -57,7 +57,7 @@ struct FinalizarView: View {
                     }
 
                     HStack {
-                        Text("Total a registrar")
+                        Text("Total to register")
                             .fontWeight(.semibold)
                         Spacer()
                         Text(totalFinal.brl)
@@ -66,18 +66,18 @@ struct FinalizarView: View {
                     }
 
                     HStack {
-                        Text("Itens")
+                        Text("Items")
                         Spacer()
                         Text("\(lista.itens.count)")
                             .foregroundStyle(.secondary)
                     }
-                } header: { RockSectionHeader(title: "Resumo") }
+                } header: { RockSectionHeader(title: "Summary") }
 
                 Section {
-                    Toggle("Copiar itens para próxima lista", isOn: $copiarItens)
+                    Toggle("Copy items to next list", isOn: $copiarItens)
                         .tint(AppTheme.accent)
-                } header: { RockSectionHeader(title: "Nova lista") } footer: {
-                    Text("Os mesmos produtos aparecem na próxima lista com os preços salvos.")
+                } header: { RockSectionHeader(title: "New list") } footer: {
+                    Text("The same products appear in the next list with saved prices.")
                 }
 
                 if auth.isConnected {
@@ -85,21 +85,21 @@ struct FinalizarView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(AppTheme.accent)
-                            Text("Será sincronizado com Google Sheets")
+                            Text("Will be synced with Google Sheets")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
-                    } header: { RockSectionHeader(title: "Nuvem") }
+                    } header: { RockSectionHeader(title: "Cloud") }
                 }
             }
-            .navigationTitle("Finalizar compra")
+            .navigationTitle("Finalize purchase")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Confirmar") {
+                    Button("Confirm") {
                         lista.totalPago = ajustarTotal ? totalFinal : nil
                         onFinalizar(copiarItens)
                         dismiss()

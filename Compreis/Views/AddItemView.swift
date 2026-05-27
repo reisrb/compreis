@@ -43,7 +43,7 @@ struct AddItemView: View {
                         Image(systemName: "tag")
                             .foregroundStyle(AppTheme.accent)
                             .frame(width: 20)
-                        TextField("Nome do produto", text: $nome)
+                        TextField("Product name", text: $nome)
                             .onChange(of: nome) { _, novo in
                                 buscarSugestoes(novo)
                                 agendarBuscaML(novo)
@@ -73,7 +73,7 @@ struct AddItemView: View {
                         Button { aplicarCONAB(info.preco) } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Ref. CONAB · \(info.uf) (atacado)")
+                                    Text("CONAB Ref. · \(info.uf) (wholesale)")
                                         .font(.caption).foregroundStyle(.secondary)
                                     Text("\(info.preco.brl) / kg")
                                         .foregroundStyle(.primary)
@@ -87,7 +87,7 @@ struct AddItemView: View {
                     if mlBuscando {
                         HStack(spacing: 8) {
                             ProgressView().scaleEffect(0.8)
-                            Text("Buscando produtos…")
+                            Text("Searching products…")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -108,7 +108,7 @@ struct AddItemView: View {
                                             .font(.subheadline)
                                             .foregroundStyle(.primary)
                                             .lineLimit(2)
-                                        Text("Preencha o preço")
+                                        Text("Fill in the price")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -123,7 +123,7 @@ struct AddItemView: View {
                         Image(systemName: categoria.icone)
                             .foregroundStyle(categoria.cor)
                             .frame(width: 20)
-                        Picker("Categoria", selection: $categoria) {
+                        Picker("Category", selection: $categoria) {
                             ForEach(Categoria.allCases, id: \.self) { cat in
                                 Label(cat.rawValue, systemImage: cat.icone).tag(cat)
                             }
@@ -131,7 +131,7 @@ struct AddItemView: View {
                         .pickerStyle(.menu)
                         .tint(AppTheme.accent)
                     }
-                } header: { RockSectionHeader(title: "Produto") }
+                } header: { RockSectionHeader(title: "Product") }
 
                 Section {
                     HStack(spacing: 12) {
@@ -151,15 +151,15 @@ struct AddItemView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "scalemass")
                             .foregroundStyle(AppTheme.accent).frame(width: 20)
-                        Picker("Unidade", selection: $unidade) {
+                        Picker("Unit", selection: $unidade) {
                             ForEach(Unidade.allCases, id: \.self) { u in
-                                Text(u.rawValue == "un" ? "Por unidade" : "Por kg").tag(u)
+                                Text(u.rawValue == "un" ? "Per unit" : "Per kg").tag(u)
                             }
                         }
                         .pickerStyle(.menu)
                         .tint(AppTheme.accent)
                     }
-                } header: { RockSectionHeader(title: "Preço") }
+                } header: { RockSectionHeader(title: "Price") }
 
                 Section {
                     if unidade == .kg {
@@ -205,12 +205,12 @@ struct AddItemView: View {
                         }
                         .padding(.vertical, 4)
                     }
-                } header: { Text(unidade == .kg ? "Peso — \(pesoGramas)g" : "Quantidade") }
+                } header: { Text(unidade == .kg ? "Weight — \(pesoGramas)g" : "Quantity") }
 
                 if isValid {
                     Section {
                         HStack {
-                            Text("Total do item").foregroundStyle(.secondary)
+                            Text("Item total").foregroundStyle(.secondary)
                             Spacer()
                             let preco = Double(precoCentavos) / 100.0
                             let qtd = unidade == .kg ? pesoValor : Double(quantidadeInt)
@@ -221,47 +221,47 @@ struct AddItemView: View {
                     }
                 }
             }
-            .navigationTitle(item == nil ? "Novo item" : "Editar item")
+            .navigationTitle(item == nil ? "New item" : "Edit item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") { save() }
+                    Button("Save") { save() }
                         .disabled(!isValid)
                         .tint(AppTheme.accent)
                 }
             }
             .onAppear { populate() }
-            .confirmationDialog("Onde adicionar?", isPresented: $showDestinoDialog) {
-                Button("Carrinho (já peguei)") { confirmarSave(pegou: true) }
-                Button("Lista") { confirmarSave(pegou: false) }
-                Button("Cancelar", role: .cancel) {}
-            } message: { Text("Adicionar ao carrinho (já pego) ou à lista?") }
-            .alert("Produto já na lista", isPresented: $showDuplicataAlert) {
-                Button("Adicionar mesmo assim") { confirmarSave(pegou: false) }
-                Button("Cancelar", role: .cancel) {}
+            .confirmationDialog("Where to add?", isPresented: $showDestinoDialog) {
+                Button("Cart (already picked)") { confirmarSave(pegou: true) }
+                Button("List") { confirmarSave(pegou: false) }
+                Button("Cancel", role: .cancel) {}
+            } message: { Text("Add to cart or to list?") }
+            .alert("Product already in list", isPresented: $showDuplicataAlert) {
+                Button("Add anyway") { confirmarSave(pegou: false) }
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("\"\(nome.trimmingCharacters(in: .whitespaces))\" já está nesta lista.")
+                Text("\"\(nome.trimmingCharacters(in: .whitespaces))\" is already in this list.")
             }
-            .alert("Produto em uso", isPresented: $showDeleteAlert, presenting: confirmandoDelecao) { hist in
-                Button("Apagar e remover das listas", role: .destructive) {
+            .alert("Product in use", isPresented: $showDeleteAlert, presenting: confirmandoDelecao) { hist in
+                Button("Delete and remove from lists", role: .destructive) {
                     for item in itensEmUso { context.delete(item) }
                     context.delete(hist)
                     sugestoes.removeAll { $0.nome == hist.nome }
                     confirmandoDelecao = nil; itensEmUso = []
                 }
-                Button("Renomear itens") {
+                Button("Rename items") {
                     novoNomeRenomear = hist.nome
                     showRenomearSheet = true
                 }
-                Button("Cancelar", role: .cancel) {
+                Button("Cancel", role: .cancel) {
                     confirmandoDelecao = nil; itensEmUso = []
                 }
             } message: { hist in
                 let n = itensEmUso.count
-                Text("\"\(hist.nome)\" está em \(n) \(n == 1 ? "item" : "itens") em listas ativas. O que deseja fazer?")
+                Text("\"\(hist.nome)\" is in \(n) \(n == 1 ? "item" : "items") in active lists. What do you want to do?")
             }
             .sheet(isPresented: $showRenomearSheet) {
                 RenomearProdutoSheet(
@@ -356,7 +356,7 @@ struct AddItemView: View {
 
     private func aplicarML(_ p: MLProduto) {
         nome = p.titulo
-        // Busca preço salvo no histórico para esse produto
+        // Search saved price in history for this product
         let fetch = FetchDescriptor<ProdutoHistorico>()
         let hist = (try? context.fetch(fetch)) ?? []
         if let match = hist.first(where: { $0.nome.localizedCaseInsensitiveContains(p.titulo) ||
@@ -454,9 +454,9 @@ private struct RenomearProdutoSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Novo nome", text: $novoNome)
+                    TextField("New name", text: $novoNome)
                         .autocorrectionDisabled()
-                } header: { Text("Renomear \"\(nomeAtual)\" para") }
+                } header: { Text("Rename \"\(nomeAtual)\" to") }
 
                 if !sugestoes.isEmpty {
                     Section {
@@ -471,17 +471,17 @@ private struct RenomearProdutoSheet: View {
                                 }
                             }
                         }
-                    } header: { Text("Do histórico") }
+                    } header: { Text("From history") }
                 }
             }
-            .navigationTitle("Renomear produto")
+            .navigationTitle("Rename product")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { onCancelar(); dismiss() }
+                    Button("Cancel") { onCancelar(); dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Confirmar") {
+                    Button("Confirm") {
                         onConfirmar(novoNome.trimmingCharacters(in: .whitespaces))
                         dismiss()
                     }

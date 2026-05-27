@@ -27,14 +27,14 @@ struct ListaDetailView: View {
                         Image(systemName: "list.bullet")
                             .foregroundStyle(AppTheme.accent)
                             .frame(width: 20)
-                        TextField("Nome", text: $nome)
+                        TextField("Name", text: $nome)
                     }
-                } header: { RockSectionHeader(title: "Nome") }
+                } header: { RockSectionHeader(title: "Name") }
 
                 if !lista.itens.isEmpty {
                     Section {
-                        LabeledContent("Itens") {
-                            Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
+                        LabeledContent("Items") {
+                            Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "items")")
                         }
                         LabeledContent("Total") {
                             Text(lista.total.brl)
@@ -42,16 +42,16 @@ struct ListaDetailView: View {
                                 .fontWeight(.heavy)
                         }
                         LabeledContent("Status") {
-                            Text(lista.finalizada ? "Finalizada" : "Em aberto")
+                            Text(lista.finalizada ? "Finalized" : "Open")
                                 .foregroundStyle(lista.finalizada ? .secondary : AppTheme.accent)
                         }
-                    } header: { RockSectionHeader(title: "Resumo") }
+                    } header: { RockSectionHeader(title: "Summary") }
                 }
 
                 if !lista.isTemplate {
                     Section {
                         if templateCriado {
-                            Label("Template criado com sucesso", systemImage: "checkmark.circle.fill")
+                            Label("Template created successfully", systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                                 .font(.subheadline)
                         } else {
@@ -74,7 +74,7 @@ struct ListaDetailView: View {
                                 context.insert(copia)
                                 templateCriado = true
                             } label: {
-                                Label("Usar como template", systemImage: "doc.badge.plus")
+                                Label("Use as template", systemImage: "doc.badge.plus")
                                     .foregroundStyle(AppTheme.accent)
                             }
                         }
@@ -82,17 +82,17 @@ struct ListaDetailView: View {
                 }
 
                 Section {
-                    Toggle("Definir data", isOn: $usarData)
+                    Toggle("Set date", isOn: $usarData)
                         .tint(AppTheme.accent)
                     if usarData {
-                        DatePicker("Data", selection: $dataMercado, displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("Date", selection: $dataMercado, displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.graphical)
                             .tint(AppTheme.accent)
                     }
-                } header: { RockSectionHeader(title: "Data do mercado") }
+                } header: { RockSectionHeader(title: "Market date") }
 
                 Section {
-                    Toggle("Definir local", isOn: $usarLocal)
+                    Toggle("Set location", isOn: $usarLocal)
                         .tint(AppTheme.accent)
                     if usarLocal {
                         if let pinned = localNome, let lat = localLat, let lon = localLon {
@@ -126,7 +126,7 @@ struct ListaDetailView: View {
                             Button {
                                 showMapPicker = true
                             } label: {
-                                Label("Escolher no mapa", systemImage: "map")
+                                Label("Choose on map", systemImage: "map")
                                     .font(.subheadline)
                                     .foregroundStyle(AppTheme.accent)
                             }
@@ -134,7 +134,7 @@ struct ListaDetailView: View {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundStyle(.secondary)
                                     .frame(width: 20)
-                                TextField("Buscar supermercado…", text: $localQuery)
+                                TextField("Search supermarket…", text: $localQuery)
                                     .onChange(of: localQuery) { _, q in completer.search(q) }
                             }
                             ForEach(completer.completions, id: \.self) { completion in
@@ -156,9 +156,9 @@ struct ListaDetailView: View {
                             }
                         }
                     }
-                } header: { RockSectionHeader(title: "Local do mercado") }
+                } header: { RockSectionHeader(title: "Market location") }
             }
-            .navigationTitle("Detalhes")
+            .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showMapPicker) {
                 MapPickerView { nome, lat, lon in
@@ -169,10 +169,10 @@ struct ListaDetailView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
+                    Button("Save") {
                         lista.nome = nome.isEmpty ? lista.nome : nome
                         lista.dataMercado = usarData ? dataMercado : nil
                         lista.localNome = usarLocal ? localNome : nil

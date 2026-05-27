@@ -9,7 +9,7 @@ struct RelatorioView: View {
 
     @State private var showExemplos = false
 
-    // Mercados com listas finalizadas: nome → (total gasto, visitas)
+    // Markets with finalized lists: name → (total spent, visits)
     private var gastosPorMercado: [(mercado: String, total: Double, visitas: Int)] {
         var mapa: [String: (total: Double, visitas: Int)] = [:]
         for lista in listas {
@@ -22,17 +22,17 @@ struct RelatorioView: View {
             .sorted { $0.total > $1.total }
     }
 
-    // Produtos comuns em ≥2 mercados + custo de cesta por mercado
+    // Products common in ≥2 markets + basket cost per market
     private var comparacaoCesta: [(mercado: String, totalCesta: Double)] {
-        // Produto → mercado → preco
+        // Product → market → price
         var mapa: [String: [String: Double]] = [:]
         for pm in precosMercado {
             mapa[pm.produtoNome, default: [:]][pm.mercadoNome] = pm.preco
         }
-        // Produtos que aparecem em ≥2 mercados
+        // Products that appear in ≥2 markets
         let comuns = mapa.filter { $0.value.count >= 2 }
         guard !comuns.isEmpty else { return [] }
-        // Soma por mercado (usando preço de referência do produto × 1 unidade)
+        // Sum per market (using product reference price × 1 unit)
         var totalPorMercado: [String: Double] = [:]
         for (_, mercados) in comuns {
             for (mercado, preco) in mercados {
@@ -64,7 +64,7 @@ struct RelatorioView: View {
         NavigationStack {
             if listas.isEmpty {
                 emptyState
-                    .navigationTitle("Relatório")
+                    .navigationTitle("Report")
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             exemplosButton
@@ -73,15 +73,15 @@ struct RelatorioView: View {
             } else {
                 List {
                     Section {
-                        MetricaRow(titulo: "Últimos 7 dias", valor: ultimos7dias.brl,
+                        MetricaRow(titulo: "Last 7 days", valor: ultimos7dias.brl,
                                    icone: "clock", cor: .blue)
                         let mediaMensal = porMes.map { $0.listas.reduce(0) { $0 + $1.total } }.reduce(0, +) / Double(max(porMes.count, 1))
-                        MetricaRow(titulo: "Média mensal", valor: mediaMensal.brl,
+                        MetricaRow(titulo: "Monthly average", valor: mediaMensal.brl,
                                    icone: "calendar", cor: .orange)
                         let mediaCompra = listas.reduce(0) { $0 + $1.total } / Double(listas.count)
-                        MetricaRow(titulo: "Média por compra", valor: mediaCompra.brl,
+                        MetricaRow(titulo: "Average per trip", valor: mediaCompra.brl,
                                    icone: "cart", cor: AppTheme.accent)
-                    } header: { RockSectionHeader(title: "Visão geral") }
+                    } header: { RockSectionHeader(title: "Overview") }
 
                     if !gastosPorMercado.isEmpty {
                         Section {
@@ -97,7 +97,7 @@ struct RelatorioView: View {
                                     }
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(entry.mercado).font(.body.weight(.semibold))
-                                        Text("\(entry.visitas) \(entry.visitas == 1 ? "visita" : "visitas")")
+                                        Text("\(entry.visitas) \(entry.visitas == 1 ? "visit" : "visits")")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
@@ -105,12 +105,12 @@ struct RelatorioView: View {
                                         Text(entry.total.brl)
                                             .font(.body.weight(.heavy).monospacedDigit())
                                             .foregroundStyle(AppTheme.accent)
-                                        Text("média \((entry.total / Double(entry.visitas)).brl)")
+                                        Text("average \((entry.total / Double(entry.visitas)).brl)")
                                             .font(.caption2).foregroundStyle(.secondary)
                                     }
                                 }
                             }
-                        } header: { RockSectionHeader(title: "Gasto por mercado") }
+                        } header: { RockSectionHeader(title: "Spent by market") }
                     }
 
                     if !comparacaoCesta.isEmpty {
@@ -127,7 +127,7 @@ struct RelatorioView: View {
                                             Text(entry.mercado).font(.subheadline.weight(.semibold))
                                         }
                                         if entry.totalCesta == minCesta {
-                                            Text("Mais barato").font(.caption2.weight(.bold)).foregroundStyle(.green)
+                                            Text("Cheapest").font(.caption2.weight(.bold)).foregroundStyle(.green)
                                         }
                                     }
                                     Spacer()
@@ -137,8 +137,7 @@ struct RelatorioView: View {
                                 }
                                 .padding(.vertical, 2)
                             }
-                        } header: { RockSectionHeader(title: "Comparação de cesta") }
-                        // Note: "cesta" = soma dos preços de produtos comuns em ≥2 mercados
+                        } header: { RockSectionHeader(title: "Basket comparison") }
                     }
 
                     ForEach(porMes, id: \.mes) { grupo in
@@ -147,7 +146,7 @@ struct RelatorioView: View {
                                 ListaFinalizadaRow(lista: lista)
                             }
                             HStack {
-                                Text("Total do mês").font(.subheadline.weight(.heavy))
+                                Text("Month total").font(.subheadline.weight(.heavy))
                                 Spacer()
                                 Text(grupo.listas.reduce(0) { $0 + $1.total }.brl)
                                     .font(.subheadline.weight(.heavy).monospacedDigit())
@@ -158,7 +157,7 @@ struct RelatorioView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
-                .navigationTitle("Relatório")
+                .navigationTitle("Report")
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         exemplosButton
@@ -173,7 +172,7 @@ struct RelatorioView: View {
     }
 
     private var exemplosButton: some View {
-        Button("Exemplos") { showExemplos = true }
+        Button("Examples") { showExemplos = true }
             .foregroundStyle(AppTheme.accent)
             .fontWeight(.semibold)
     }
@@ -184,9 +183,9 @@ struct RelatorioView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(AppTheme.accent.opacity(0.4))
                 .rockGlow(radius: 12)
-            Text("Sem compras finalizadas")
+            Text("No finalized purchases")
                 .font(.title2.weight(.heavy))
-            Text("Finalize uma compra para ver o relatório")
+            Text("Finalize a purchase to see the report")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -226,9 +225,9 @@ private struct ExemplosSheet: View {
             ScrollView {
                 VStack(spacing: 20) {
                     VStack(spacing: 6) {
-                        Text("Como fica o seu relatório")
+                        Text("Your report preview")
                             .font(.title2.weight(.bold))
-                        Text("Veja como ficará após finalizar algumas compras")
+                        Text("See how it looks after finalizing a few purchases")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -236,19 +235,19 @@ private struct ExemplosSheet: View {
                     .padding(.top, 8)
                     .padding(.horizontal)
 
-                    MetricaRow(titulo: "Últimos 7 dias", valor: "R$ 162,15", icone: "clock", cor: .blue)
+                    MetricaRow(titulo: "Last 7 days", valor: "R$ 162,15", icone: "clock", cor: .blue)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 14)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)
 
-                    MetricaRow(titulo: "Média mensal", valor: "R$ 655,32", icone: "calendar", cor: .orange)
+                    MetricaRow(titulo: "Monthly average", valor: "R$ 655,32", icone: "calendar", cor: .orange)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 14)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)
 
-                    MetricaRow(titulo: "Média por compra", valor: "R$ 238,66", icone: "cart", cor: AppTheme.accent)
+                    MetricaRow(titulo: "Average per trip", valor: "R$ 238,66", icone: "cart", cor: AppTheme.accent)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 14)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
@@ -267,7 +266,7 @@ private struct ExemplosSheet: View {
                                     HStack {
                                         VStack(alignment: .leading, spacing: 3) {
                                             Text(lista.nome).font(.subheadline.weight(.semibold))
-                                            Text("\(lista.data) · \(lista.itens) itens")
+                                            Text("\(lista.data) · \(lista.itens) items")
                                                 .font(.caption).foregroundStyle(.secondary)
                                         }
                                         Spacer()
@@ -281,7 +280,7 @@ private struct ExemplosSheet: View {
                                 }
                                 Divider()
                                 HStack {
-                                    Text("Total do mês").font(.subheadline.weight(.semibold))
+                                    Text("Month total").font(.subheadline.weight(.semibold))
                                     Spacer()
                                     Text(mes.listas.reduce(0) { $0 + $1.total }.brl)
                                         .font(.subheadline.weight(.bold).monospacedDigit())
@@ -300,7 +299,7 @@ private struct ExemplosSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fechar") { dismiss() }
+                    Button("Close") { dismiss() }
                         .tint(AppTheme.accent)
                 }
             }
@@ -350,7 +349,7 @@ private struct ListaFinalizadaRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
                 Text(lista.nome).font(.subheadline.weight(.semibold))
-                Text("\(dataFormatada) · \(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
+                Text("\(dataFormatada) · \(lista.itens.count) \(lista.itens.count == 1 ? "item" : "items")")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()

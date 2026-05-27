@@ -31,17 +31,17 @@ struct ListasView: View {
                                         Button(role: .destructive) {
                                             context.delete(lista)
                                             SyncService.shared.scheduleSync(context: context)
-                                        } label: { Label("Excluir", systemImage: "trash") }
+                                        } label: { Label("Delete", systemImage: "trash") }
                                         .tint(.red)
                                         Button { showingDetail = lista } label: {
-                                            Label("Detalhes", systemImage: "info.circle")
+                                            Label("Details", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
                                     }
                                 }
                             } header: {
                                 HStack {
-                                    RockSectionHeader(title: "Em aberto")
+                                    RockSectionHeader(title: "Open")
                                     Spacer()
                                     if totalAtivas > 0 {
                                         Text(totalAtivas.brl)
@@ -62,15 +62,15 @@ struct ListasView: View {
                                         Button(role: .destructive) {
                                             context.delete(lista)
                                             SyncService.shared.scheduleSync(context: context)
-                                        } label: { Label("Excluir", systemImage: "trash") }
+                                        } label: { Label("Delete", systemImage: "trash") }
                                         .tint(.red)
                                         Button { showingDetail = lista } label: {
-                                            Label("Detalhes", systemImage: "info.circle")
+                                            Label("Details", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
                                     }
                                 }
-                            } header: { RockSectionHeader(title: "Finalizadas") }
+                            } header: { RockSectionHeader(title: "Finalized") }
                         }
                     }
                     .listStyle(.insetGrouped)
@@ -142,9 +142,9 @@ struct ListasView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(AppTheme.accent.opacity(0.4))
                 .rockGlow(radius: 12)
-            Text("Nenhuma lista")
+            Text("No lists")
                 .font(.title2.weight(.heavy))
-            Text("Toque em + para criar uma lista")
+            Text("Tap + to create a list")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -177,13 +177,13 @@ private struct TemplatesView: View {
                                 ListaRow(lista: t, isTemplate: true)
                             }
                         }
-                    } header: { RockSectionHeader(title: "Padrão") }
+                    } header: { RockSectionHeader(title: "Default") }
                 }
 
                 Section {
                     if userTemplates.isEmpty {
                         Button { showNovo = true } label: {
-                            Label("Criar template", systemImage: "plus")
+                            Label("Create template", systemImage: "plus")
                                 .foregroundStyle(AppTheme.accent)
                         }
                     } else {
@@ -194,23 +194,23 @@ private struct TemplatesView: View {
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     context.delete(t)
-                                } label: { Label("Excluir", systemImage: "trash") }
+                                } label: { Label("Delete", systemImage: "trash") }
                                 .tint(.red)
                                 Button { showingDetail = t } label: {
-                                    Label("Editar", systemImage: "pencil")
+                                    Label("Edit", systemImage: "pencil")
                                 }
                                 .tint(.blue)
                             }
                         }
                     }
-                } header: { RockSectionHeader(title: "Meus templates") }
+                } header: { RockSectionHeader(title: "My templates") }
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Templates")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showNovo = true } label: {
@@ -219,7 +219,7 @@ private struct TemplatesView: View {
                 }
             }
             .sheet(isPresented: $showNovo) {
-                NovaListaView(titulo: "Novo template", isTemplate: true) { nome, data, localNome, lat, lon, modelo, templateOrigem in
+                NovaListaView(titulo: "New template", isTemplate: true) { nome, data, localNome, lat, lon, modelo, templateOrigem in
                     let novo = ListaDeCompras(nome: nome, dataMercado: data,
                                               localNome: localNome,
                                               localLatitude: lat, localLongitude: lon)
@@ -296,7 +296,7 @@ private struct ListaRow: View {
                     }
                 }
                 HStack(spacing: 6) {
-                    Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
+                    Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "items")")
                         .foregroundStyle(.secondary)
                     if let data = dataFormatada {
                         Text("·").foregroundStyle(.secondary)

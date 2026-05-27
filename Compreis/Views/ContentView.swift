@@ -47,14 +47,14 @@ struct ContentView: View {
                             Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(lista.emAndamento ? .orange : .secondary)
-                            Text("Modo mercado")
+                            Text("Market mode")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(lista.emAndamento ? .orange : .secondary)
                             Spacer()
                             Button {
                                 withAnimation(.spring(duration: 0.2)) { lista.emAndamento.toggle() }
                             } label: {
-                                Text(lista.emAndamento ? "Desativar" : "Ativar")
+                                Text(lista.emAndamento ? "Disable" : "Enable")
                                     .font(.caption.weight(.bold))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 12)
@@ -78,14 +78,14 @@ struct ContentView: View {
                                 Image(systemName: lista.emAndamento ? "cart.fill.badge.checkmark" : "cart.badge.plus")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(lista.emAndamento ? .orange : .secondary)
-                                Text("Modo mercado")
+                                Text("Market mode")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(lista.emAndamento ? .orange : .secondary)
                                 Spacer()
                                 Button {
                                     withAnimation(.spring(duration: 0.2)) { lista.emAndamento.toggle() }
                                 } label: {
-                                    Text(lista.emAndamento ? "Desativar" : "Ativar")
+                                    Text(lista.emAndamento ? "Disable" : "Enable")
                                         .font(.caption.weight(.bold))
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 12)
@@ -101,7 +101,7 @@ struct ContentView: View {
                     }
                     ForEach(grupos, id: \.categoria) { grupo in
                         Section {
-                            // Itens pendentes
+                            // Pending items
                             ForEach(grupo.pendentes) { item in
                                 ItemRow(item: item,
                                         onEdit: { editingItem = item },
@@ -118,7 +118,7 @@ struct ContentView: View {
                                 SyncService.shared.scheduleSync(context: context)
                             }
 
-                            // Mini-carrinho da categoria
+                            // Category mini-cart
                             if !grupo.pegos.isEmpty {
                                 let expandido = categoriasExpandidas.contains(grupo.categoria)
                                 Button {
@@ -133,7 +133,7 @@ struct ContentView: View {
                                     HStack(spacing: 6) {
                                         Image(systemName: "cart.badge.checkmark")
                                             .font(.caption.weight(.semibold))
-                                        Text("No carrinho · \(grupo.pegos.count)")
+                                        Text("In cart · \(grupo.pegos.count)")
                                             .font(.caption.weight(.semibold))
                                         Spacer()
                                         Image(systemName: expandido ? "chevron.up" : "chevron.down")
@@ -279,9 +279,9 @@ struct ContentView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(AppTheme.accent.opacity(0.4))
                 .rockGlow(radius: 12)
-            Text("Lista vazia")
+            Text("Empty list")
                 .font(.title2.weight(.heavy))
-            Text("Toque em + para adicionar produtos")
+            Text("Tap + to add products")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -361,7 +361,7 @@ private struct ListaTotalFooter: View {
     var body: some View {
         HStack(spacing: 12) {
             if !lista.finalizada {
-                Button("Finalizar") { onFinalizar() }
+                Button("Finalize") { onFinalizar() }
                     .font(.subheadline.weight(.heavy))
                     .foregroundStyle(.black)
                     .padding(.horizontal, 16)
@@ -390,7 +390,7 @@ private struct ListaTotalFooter: View {
             Spacer()
             if pegos.isEmpty {
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(totalItens) \(totalItens == 1 ? "item" : "itens")")
+                    Text("\(totalItens) \(totalItens == 1 ? "item" : "items")")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Text(lista.total.brl)
@@ -405,7 +405,7 @@ private struct ListaTotalFooter: View {
                             .font(.title3.weight(.heavy).monospacedDigit())
                     }
                     .foregroundStyle(AppTheme.accent)
-                    Text("de \(lista.total.brl) estimado")
+                    Text("of \(lista.total.brl) estimated")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -421,7 +421,7 @@ private struct ListaTotalFooter: View {
     }
 }
 
-// MARK: - Carrinho Sheet
+// MARK: - Cart Sheet
 
 private struct CarrinhoSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -469,7 +469,7 @@ private struct CarrinhoSheet: View {
 
                 Section {
                     HStack {
-                        Text("Total no carrinho")
+                        Text("Total in cart")
                             .font(.body.weight(.bold))
                         Spacer()
                         Text(total.brl)
@@ -479,11 +479,11 @@ private struct CarrinhoSheet: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .navigationTitle("Carrinho")
+            .navigationTitle("Cart")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fechar") { dismiss() }
+                    Button("Close") { dismiss() }
                         .tint(AppTheme.accent)
                 }
             }
@@ -491,7 +491,7 @@ private struct CarrinhoSheet: View {
     }
 }
 
-// MARK: - Confirmar preço ao colocar no carrinho
+// MARK: - Confirm price when adding to cart
 
 private struct ConfirmarPrecoSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -533,11 +533,11 @@ private struct ConfirmarPrecoSheet: View {
                     if let pm = precoMercado {
                         HStack(spacing: 6) {
                             Image(systemName: "clock.arrow.circlepath").foregroundStyle(.orange).font(.caption)
-                            Text("Última compra aqui: \(pm.brl) / \(item.unidade.rawValue)")
+                            Text("Last purchase here: \(pm.brl) / \(item.unidade.rawValue)")
                                 .font(.caption).foregroundStyle(.orange)
                         }
                     }
-                } header: { Text("Produto") }
+                } header: { Text("Product") }
 
                 Section {
                     HStack(spacing: 12) {
@@ -552,7 +552,7 @@ private struct ConfirmarPrecoSheet: View {
                                 if precoText != formatted { precoText = formatted }
                             }
                     }
-                } header: { Text(item.unidade == .kg ? "Preço por kg" : "Confirmar preço") }
+                } header: { Text(item.unidade == .kg ? "Price per kg" : "Confirm price") }
 
                 if item.unidade == .kg {
                     Section {
@@ -568,7 +568,7 @@ private struct ConfirmarPrecoSheet: View {
                                 }
                             Text("kg").foregroundStyle(.secondary)
                         }
-                    } header: { Text("Peso") }
+                    } header: { Text("Weight") }
 
                     if pesoValor > 0 {
                         Section {
@@ -602,7 +602,7 @@ private struct ConfirmarPrecoSheet: View {
                             .buttonStyle(.plain)
                         }
                         .padding(.vertical, 4)
-                    } header: { Text("Quantidade") }
+                    } header: { Text("Quantity") }
 
                     if quantidadeInt > 1 {
                         Section {
@@ -615,14 +615,14 @@ private struct ConfirmarPrecoSheet: View {
                     }
                 }
             }
-            .navigationTitle("Adicionar ao carrinho")
+            .navigationTitle("Add to cart")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Confirmar") {
+                    Button("Confirm") {
                         let novoPreco = Double(precoCentavos) / 100.0
                         let novaQuantidade = item.unidade == .kg ? pesoValor : Double(quantidadeInt)
                         onConfirmar(novoPreco, novaQuantidade)
@@ -641,7 +641,7 @@ private struct ConfirmarPrecoSheet: View {
                 } else {
                     quantidadeInt = max(1, Int(item.quantidade))
                 }
-                // buscar preço deste mercado
+                // fetch price for this market
                 if let mercado = mercadoNome {
                     let fetch = FetchDescriptor<PrecoMercado>()
                     let todos = (try? context.fetch(fetch)) ?? []
@@ -655,7 +655,7 @@ private struct ConfirmarPrecoSheet: View {
     }
 }
 
-// MARK: - Ir ao mercado mais barato
+// MARK: - Go to cheapest market
 
 private struct MercadoBaratoSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -690,14 +690,14 @@ private struct MercadoBaratoSheet: View {
                                 .font(.subheadline).foregroundStyle(.green)
                                 let economia = (item.preco - p) * item.quantidade
                                 if economia > 0 {
-                                    Text("Economia: \(economia.brl)")
+                                    Text("Savings: \(economia.brl)")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
                             }
                         }
                     }
                     .padding(.vertical, 4)
-                } header: { Text("Mercado mais barato para \"\(item.nome)\"") }
+                } header: { Text("Cheapest market for \"\(item.nome)\"") }
 
                 Section {
                     if let destino = listaDestino {
@@ -712,9 +712,9 @@ private struct MercadoBaratoSheet: View {
                                 Image(systemName: "arrow.right.doc.on.clipboard")
                                     .foregroundStyle(AppTheme.accent)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Mover para \"\(destino.nome)\"")
+                                    Text("Move to \"\(destino.nome)\"")
                                         .font(.body.weight(.semibold)).foregroundStyle(.primary)
-                                    Text("\(destino.itens.count) \(destino.itens.count == 1 ? "item" : "itens") · \(mercadoNome)")
+                                    Text("\(destino.itens.count) \(destino.itens.count == 1 ? "item" : "items") · \(mercadoNome)")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
                             }
@@ -734,21 +734,21 @@ private struct MercadoBaratoSheet: View {
                                 Image(systemName: "plus.circle.fill")
                                     .foregroundStyle(.green)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Criar lista em \"\(mercadoNome)\"")
+                                    Text("Create list at \"\(mercadoNome)\"")
                                         .font(.body.weight(.semibold)).foregroundStyle(.primary)
-                                    Text("Mover o item para a nova lista")
+                                    Text("Move item to new list")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
                             }
                         }
                     }
-                } header: { Text("Ação") }
+                } header: { Text("Action") }
             }
-            .navigationTitle("Mercado mais barato")
+            .navigationTitle("Cheapest market")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
             }
             .onAppear {
@@ -763,7 +763,7 @@ private struct MercadoBaratoSheet: View {
     }
 }
 
-// MARK: - Mover item entre listas
+// MARK: - Move item between lists
 
 private struct MoverItemSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -780,7 +780,7 @@ private struct MoverItemSheet: View {
         NavigationStack {
             List {
                 if destinos.isEmpty {
-                    Text("Nenhuma outra lista ativa")
+                    Text("No other active list")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(destinos) { lista in
@@ -795,7 +795,7 @@ private struct MoverItemSheet: View {
                                     .frame(width: 32)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(lista.nome).font(.body.weight(.semibold)).foregroundStyle(.primary)
-                                    Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "itens")")
+                                    Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "items")")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
@@ -805,14 +805,13 @@ private struct MoverItemSheet: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .navigationTitle("Mover \"\(item.nome)\" para")
+            .navigationTitle("Move \"\(item.nome)\" to")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
             }
         }
     }
 }
-

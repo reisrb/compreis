@@ -45,13 +45,13 @@ struct ItemRow: View {
                                 Image(systemName: "tag.fill")
                                     .font(.caption2)
                                     .foregroundStyle(.green)
-                                Text("Mais barato em \(alt.mercado): \(alt.preco.brl)/\(item.unidade.rawValue)")
+                                Text("Cheaper at \(alt.mercado): \(alt.preco.brl)/\(item.unidade.rawValue)")
                                     .font(.caption2)
                                     .foregroundStyle(.green)
                                 Button {
                                     onMoverParaMercadoBarato?(alt.mercado)
                                 } label: {
-                                    Text("Ir")
+                                    Text("Go")
                                         .font(.caption2.weight(.bold))
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 6)
@@ -75,12 +75,12 @@ struct ItemRow: View {
             .contextMenu {
                 if let onMover {
                     Button { onMover() } label: {
-                        Label("Mover para outra lista", systemImage: "arrow.right.doc.on.clipboard")
+                        Label("Move to another list", systemImage: "arrow.right.doc.on.clipboard")
                     }
                 }
                 if let alt = cheapestAlt, let onMoverParaMercadoBarato {
                     Button { onMoverParaMercadoBarato(alt.mercado) } label: {
-                        Label("Ir ao mercado mais barato (\(alt.mercado))", systemImage: "tag.fill")
+                        Label("Go to cheapest market (\(alt.mercado))", systemImage: "tag.fill")
                     }
                 }
             }

@@ -30,6 +30,17 @@ iOS shopping list app built with SwiftUI and SwiftData.
 - **My templates** — create, edit and delete personal templates
 - **Preview** — tap "Ver X itens incluídos" before creating a list to see all items by category
 
+### Market prices
+- **Per-market price history** — prices saved per product per market when confirming items in the cart
+- **Cheapest market chip** — items show a green hint and an "Go" button when a cheaper price exists at another market
+- **Market spending report** — finalized lists grouped by market with total spent and average per trip
+- **Basket comparison** — ranks markets by total cost for products available in ≥2 markets (crown on cheapest)
+- **Product detail** — tap a product in the catalogue to see its prices ranked by market
+
+### Categories
+- **Custom categories** — create categories with a custom name, icon (SF Symbols) and color
+- **Predefined categories** — Hortifruti, Carnes, Peixaria, Laticínios, Padaria, Bebidas, Congelados, Mercearia, Higiene, Limpeza, Outros
+
 ### Prices
 - **CONAB integration** — when a list has a location, typing a product name shows a reference price from CONAB/PROHORT (wholesale CEASA price for the list's state); covers ~48 produce and poultry items
 - **Price seeding** — prices from ProdutoHistorico are applied to template items when a list is created
@@ -74,6 +85,13 @@ Sign with your Apple ID in **Signing & Capabilities**, select your device or sim
 2. Enable **Developer Mode** on the device (Settings → Privacy & Security → Developer Mode)
 3. In Xcode → Signing & Capabilities → set Team to your personal Apple ID
 4. Select your device as the run target → ▶ Run
+
+## Localization
+
+Base language: **English** (`en.lproj/Localizable.strings`)  
+Portuguese: `pt-BR.lproj/Localizable.strings`
+
+SwiftUI `Text("key")` automatically resolves to the active locale via `LocalizedStringKey`. Add a new language by creating a `<locale>.lproj/Localizable.strings` file and registering the locale in Xcode project settings (Info → Localizations).
 
 ## License
 

@@ -30,9 +30,9 @@ struct ProdutosView: View {
             Group {
                 if produtos.isEmpty {
                     ContentUnavailableView(
-                        "Catálogo vazio",
+                        "Empty catalogue",
                         systemImage: "shippingbox",
-                        description: Text("Toque em + para cadastrar produtos")
+                        description: Text("Tap + to add products")
                     )
                 } else {
                     List {
@@ -61,7 +61,7 @@ struct ProdutosView: View {
                                         .swipeActions(edge: .trailing) {
                                             Button(role: .destructive) {
                                                 context.delete(p)
-                                            } label: { Label("Excluir", systemImage: "trash") }
+                                            } label: { Label("Delete", systemImage: "trash") }
                                         }
                                     }
                                 }
@@ -93,10 +93,10 @@ struct ProdutosView: View {
                         }
                     }
                     .listStyle(.insetGrouped)
-                    .searchable(text: $busca, prompt: "Buscar produto")
+                    .searchable(text: $busca, prompt: "Search product")
                 }
             }
-            .navigationTitle("Catálogo")
+            .navigationTitle("Catalogue")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -109,7 +109,7 @@ struct ProdutosView: View {
                             }
                         }
                     } label: {
-                        Text(todasExpandidas ? "Colapsar" : "Expandir")
+                        Text(todasExpandidas ? "Collapse" : "Expand")
                             .font(.caption.weight(.semibold))
                     }
                 }
@@ -141,7 +141,7 @@ struct ProdutosView: View {
     }
 }
 
-// MARK: - Detalhe do produto
+// MARK: - Product detail
 
 private struct ProdutoDetalheSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -179,13 +179,13 @@ private struct ProdutoDetalheSheet: View {
                         }
                     }
                     .padding(.vertical, 4)
-                } header: { Text("Produto") }
+                } header: { Text("Product") }
 
                 if precosMercado.isEmpty {
                     Section {
-                        Label("Nenhum mercado registrado ainda", systemImage: "mappin.slash")
+                        Label("No market registered yet", systemImage: "mappin.slash")
                             .font(.subheadline).foregroundStyle(.secondary)
-                    } header: { Text("Preços por mercado") }
+                    } header: { Text("Prices by market") }
                 } else {
                     Section {
                         ForEach(precosMercado.sorted { $0.preco < $1.preco }, id: \.mercado) { entry in
@@ -198,7 +198,7 @@ private struct ProdutoDetalheSheet: View {
                                         Text(entry.mercado).font(.subheadline.weight(.semibold))
                                     }
                                     if entry.mercado == mercadoMaisBarato {
-                                        Text("Mais barato")
+                                        Text("Cheapest")
                                             .font(.caption2.weight(.bold))
                                             .foregroundStyle(AppTheme.accent)
                                     }
@@ -210,18 +210,18 @@ private struct ProdutoDetalheSheet: View {
                             }
                             .padding(.vertical, 2)
                         }
-                    } header: { Text("Preços por mercado") }
+                    } header: { Text("Prices by market") }
                 }
             }
             .listStyle(.insetGrouped)
-            .navigationTitle("Detalhes")
+            .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Fechar") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Editar") {
+                    Button("Edit") {
                         dismiss()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onEditar() }
                     }
@@ -241,7 +241,7 @@ private struct ProdutoDetalheSheet: View {
     }
 }
 
-// MARK: - Novo produto
+// MARK: - New product
 
 struct NovoProdutoSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -285,7 +285,7 @@ struct NovoProdutoSheet: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "tag").foregroundStyle(AppTheme.accent).frame(width: 20)
-                        TextField("Nome do produto", text: $nome)
+                        TextField("Product name", text: $nome)
                             .autocorrectionDisabled()
                             .onChange(of: nome) { _, novo in buscarSugestoes(novo) }
                     }
@@ -311,12 +311,12 @@ struct NovoProdutoSheet: View {
                     if produtoExistente != nil {
                         HStack(spacing: 6) {
                             Image(systemName: "info.circle").foregroundStyle(.orange)
-                            Text("Produto já cadastrado no catálogo")
+                            Text("Product already in catalogue")
                                 .font(.caption).foregroundStyle(.orange)
                         }
                         .padding(.vertical, 2)
                     }
-                } header: { Text("Nome") }
+                } header: { Text("Name") }
 
                 Section {
                     HStack(spacing: 12) {
@@ -331,30 +331,30 @@ struct NovoProdutoSheet: View {
                                 if precoText != f { precoText = f }
                             }
                     }
-                } header: { Text("Preço de referência") }
+                } header: { Text("Reference price") }
 
                 Section {
-                    Picker("Unidade", selection: $unidade) {
+                    Picker("Unit", selection: $unidade) {
                         ForEach(Unidade.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented)
-                } header: { Text("Unidade") }
+                } header: { Text("Unit") }
 
                 Section {
-                    Picker("Categoria", selection: $categoria) {
+                    Picker("Category", selection: $categoria) {
                         ForEach(Categoria.allCases, id: \.self) {
                             Label($0.rawValue, systemImage: $0.icone).tag($0)
                         }
                     }
-                } header: { Text("Categoria") }
+                } header: { Text("Category") }
             }
-            .navigationTitle("Novo produto")
+            .navigationTitle("New product")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
+                    Button("Save") {
                         let nomeFinal = nome.trimmingCharacters(in: .whitespaces)
                         let preco = Double(precoCentavos) / 100.0
                         let fetch = FetchDescriptor<ProdutoHistorico>()
@@ -372,11 +372,11 @@ struct NovoProdutoSheet: View {
                     .disabled(nome.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            .alert("Produto já cadastrado", isPresented: $showDuplicadoAlert) {
-                Button("Editar existente") { /* editandoExistente already set */ }
-                Button("Cancelar", role: .cancel) { editandoExistente = nil }
+            .alert("Product already registered", isPresented: $showDuplicadoAlert) {
+                Button("Edit existing") { /* editandoExistente already set */ }
+                Button("Cancel", role: .cancel) { editandoExistente = nil }
             } message: {
-                Text("\"\(editandoExistente?.nome ?? "")\" já existe no catálogo.")
+                Text("\"\(editandoExistente?.nome ?? "")\" already exists in the catalogue.")
             }
             .sheet(item: $editandoExistente) { p in
                 ProdutoEditSheet(produto: p)
@@ -403,9 +403,9 @@ private struct ProdutoEditSheet: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "tag").foregroundStyle(AppTheme.accent).frame(width: 20)
-                        TextField("Nome", text: $nome).autocorrectionDisabled()
+                        TextField("Name", text: $nome).autocorrectionDisabled()
                     }
-                } header: { Text("Nome") }
+                } header: { Text("Name") }
 
                 Section {
                     HStack(spacing: 12) {
@@ -420,28 +420,28 @@ private struct ProdutoEditSheet: View {
                                 if precoText != formatted { precoText = formatted }
                             }
                     }
-                } header: { Text("Preço") }
+                } header: { Text("Price") }
 
                 Section {
-                    Picker("Unidade", selection: $unidade) {
+                    Picker("Unit", selection: $unidade) {
                         ForEach(Unidade.allCases, id: \.self) { u in Text(u.rawValue).tag(u) }
                     }.pickerStyle(.segmented)
-                } header: { Text("Unidade") }
+                } header: { Text("Unit") }
 
                 Section {
-                    Picker("Categoria", selection: $categoria) {
+                    Picker("Category", selection: $categoria) {
                         ForEach(Categoria.allCases, id: \.self) { cat in
                             Label(cat.rawValue, systemImage: cat.icone).tag(cat)
                         }
                     }
-                } header: { Text("Categoria") }
+                } header: { Text("Category") }
             }
-            .navigationTitle("Editar produto")
+            .navigationTitle("Edit product")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar") {
+                    Button("Save") {
                         produto.nome = nome.trimmingCharacters(in: .whitespaces)
                         produto.preco = Double(precoCentavos) / 100.0
                         produto.unidade = unidade

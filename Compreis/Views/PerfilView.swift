@@ -37,10 +37,10 @@ struct PerfilView: View {
                                         .foregroundStyle(Color.orange)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("Categorias")
+                                    Text("Categories")
                                         .font(.body.weight(.bold))
                                         .foregroundStyle(.primary)
-                                    Text("Acessar, criar e editar categorias")
+                                    Text("Access, create and edit categories")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -65,10 +65,10 @@ struct PerfilView: View {
                                         .foregroundStyle(Color.indigo)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("Produtos")
+                                    Text("Products")
                                         .font(.body.weight(.bold))
                                         .foregroundStyle(.primary)
-                                    Text("Gerenciar histórico de produtos")
+                                    Text("Manage product history")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -94,10 +94,10 @@ struct PerfilView: View {
                                         .foregroundStyle(AppTheme.accent)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("Aparência")
+                                    Text("Appearance")
                                         .font(.body.weight(.bold))
                                         .foregroundStyle(.primary)
-                                    Text("Tema, cores e estilo de fundo")
+                                    Text("Theme, colours and background style")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -120,7 +120,7 @@ struct PerfilView: View {
                     .padding(.bottom, 32)
                 }
             }
-            .navigationTitle("Perfil")
+            .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .tint(AppTheme.accent)
         }
@@ -131,7 +131,7 @@ struct PerfilView: View {
                 defer { if accessed { url.stopAccessingSecurityScopedResource() } }
                 do {
                     let (listas, itens) = try ExportService.importarJSON(url: url, context: context)
-                    importResultMessage = "\(listas) \(listas == 1 ? "lista" : "listas") e \(itens) \(itens == 1 ? "item importado" : "itens importados")"
+                    importResultMessage = "\(listas) \(listas == 1 ? "list" : "lists") and \(itens) \(itens == 1 ? "item imported" : "items imported")"
                 } catch {
                     importErrorMessage = error.localizedDescription
                     showImportError = true
@@ -141,7 +141,7 @@ struct PerfilView: View {
                 showImportError = true
             }
         }
-        .alert("Erro ao importar", isPresented: $showImportError) {
+        .alert("Import error", isPresented: $showImportError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(importErrorMessage)
@@ -194,9 +194,9 @@ struct PerfilView: View {
                 }
             } else {
                 VStack(spacing: 4) {
-                    Text("Sem conta vinculada")
+                    Text("No linked account")
                         .font(.title3.weight(.heavy))
-                    Text("Entre com Google para sincronizar")
+                    Text("Sign in with Google to sync")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -224,7 +224,7 @@ struct PerfilView: View {
                     Text("Tutorial")
                         .font(.body.weight(.bold))
                         .foregroundStyle(.primary)
-                    Text("Revisar como usar o app")
+                    Text("Review how to use the app")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -269,11 +269,11 @@ struct PerfilView: View {
                 if connecting {
                     ProgressView()
                         .tint(.white)
-                    Text("Conectando…")
+                    Text("Connecting…")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.white)
                 } else {
-                    Text("Entrar com Google")
+                    Text("Sign in with Google")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.white)
                 }
@@ -315,15 +315,15 @@ struct PerfilView: View {
                     Text("Google Sheets")
                         .font(.body.weight(.bold))
                     if sync.syncing {
-                        Text("Sincronizando…")
+                        Text("Syncing…")
                             .font(.caption).foregroundStyle(.secondary)
                     } else if let err = sync.lastError {
                         Text(err).font(.caption).foregroundStyle(.red).lineLimit(1)
                     } else if let ts = sync.lastSynced {
-                        Text("Sincronizado \(ts.formatted(.relative(presentation: .named)))")
+                        Text("Synced \(ts.formatted(.relative(presentation: .named)))")
                             .font(.caption).foregroundStyle(.secondary)
                     } else {
-                        Text("Compreis - Dados")
+                        Text("Compreis - Data")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -347,7 +347,7 @@ struct PerfilView: View {
         } label: {
             HStack {
                 Spacer()
-                Label("Desconectar conta Google", systemImage: "arrow.right.square")
+                Label("Disconnect Google account", systemImage: "arrow.right.square")
                     .font(.subheadline.weight(.medium))
                 Spacer()
             }
@@ -370,20 +370,20 @@ struct PerfilView: View {
                         .foregroundStyle(Color.purple)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Importar dados")
+                    Text("Import data")
                         .font(.body.weight(.bold))
                     if let msg = importResultMessage {
                         Text(msg)
                             .font(.caption)
                             .foregroundStyle(.green)
                     } else {
-                        Text("Importa um arquivo JSON exportado pelo app")
+                        Text("Import a JSON file exported by the app")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
-                Button(importResultMessage == nil ? "Importar" : "Importar mais") {
+                Button(importResultMessage == nil ? "Import" : "Import more") {
                     showImportPicker = true
                 }
                 .font(.subheadline.weight(.semibold))
@@ -409,7 +409,7 @@ struct PerfilView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("iCloud")
                         .font(.body.weight(.bold))
-                    Text("Backup automático — sobrevive troca de iPhone")
+                    Text("Automatic backup — survives iPhone replacement")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -435,21 +435,21 @@ struct PerfilView: View {
                         .foregroundStyle(Color.orange)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Exportar dados")
+                    Text("Export data")
                         .font(.body.weight(.bold))
-                    Text("Gera um arquivo JSON com todas as listas")
+                    Text("Generates a JSON file with all lists")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 if let url = exportURL {
                     ShareLink(item: url) {
-                        Text("Compartilhar")
+                        Text("Share")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(AppTheme.accent)
                     }
                 } else {
-                    Button("Exportar") {
+                    Button("Export") {
                         if let url = try? ExportService.exportarJSON(context: context) {
                             exportURL = url
                         } else {
@@ -464,14 +464,14 @@ struct PerfilView: View {
         }
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
         .rockBorder(cornerRadius: 14)
-        .alert("Erro ao exportar", isPresented: $showExportError) {
+        .alert("Export error", isPresented: $showExportError) {
             Button("OK", role: .cancel) {}
         }
     }
 
     private var setupCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            RockSectionHeader(title: "Como configurar")
+            RockSectionHeader(title: "How to set up")
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
                 .padding(.bottom, 10)
@@ -479,12 +479,12 @@ struct PerfilView: View {
             Divider().padding(.horizontal, 16)
 
             VStack(alignment: .leading, spacing: 10) {
-                passo(n: 1, texto: "Abra console.cloud.google.com")
-                passo(n: 2, texto: "Crie um projeto \"Compreis\"")
-                passo(n: 3, texto: "Ative Google Sheets API e Google Drive API")
-                passo(n: 4, texto: "Credenciais → OAuth 2.0 → tipo iOS")
+                passo(n: 1, texto: "Open console.cloud.google.com")
+                passo(n: 2, texto: "Create a \"Compreis\" project")
+                passo(n: 3, texto: "Enable Google Sheets API and Google Drive API")
+                passo(n: 4, texto: "Credentials → OAuth 2.0 → iOS type")
                 passo(n: 5, texto: "Bundle ID: com.rafaelreis.compreis")
-                passo(n: 6, texto: "Copie o Client ID e cole ao entrar")
+                passo(n: 6, texto: "Copy the Client ID and paste it when signing in")
             }
             .padding(16)
 
@@ -492,7 +492,7 @@ struct PerfilView: View {
 
             Link(destination: URL(string: "https://console.cloud.google.com")!) {
                 HStack {
-                    Text("Abrir Google Cloud Console")
+                    Text("Open Google Cloud Console")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.accent)
                     Spacer()
@@ -516,7 +516,7 @@ struct PerfilView: View {
     }
 
     private func nameFrom(email: String?) -> String {
-        guard let email else { return "Usuário" }
+        guard let email else { return "User" }
         let local = email.split(separator: "@").first ?? ""
         return local.split(separator: ".").map { $0.capitalized }.joined(separator: " ")
     }
@@ -554,19 +554,19 @@ private struct ClientIdSheet: View {
                         .textInputAutocapitalization(.never)
                         .font(.footnote.monospaced())
                 } header: {
-                    RockSectionHeader(title: "Client ID do Google Cloud")
+                    RockSectionHeader(title: "Google Cloud Client ID")
                 } footer: {
-                    Text("Cole o Client ID OAuth 2.0 gerado no Google Cloud Console para o bundle com.rafaelreis.compreis.")
+                    Text("Paste the OAuth 2.0 Client ID generated in Google Cloud Console for the bundle com.rafaelreis.compreis.")
                 }
             }
-            .navigationTitle("Configurar Google")
+            .navigationTitle("Set up Google")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Salvar e Entrar") { onSave(text) }
+                    Button("Save and Sign In") { onSave(text) }
                         .disabled(text.isEmpty)
                         .fontWeight(.heavy)
                         .tint(AppTheme.accent)

@@ -1,0 +1,276 @@
+/* Tab Bar */
+"Lists" = "Lists";
+"Catalogue" = "Catalogue";
+"Report" = "Report";
+"Profile" = "Profile";
+
+/* ListasView */
+"Compreis" = "Compreis";
+"Open" = "Open";
+"Finalized" = "Finalized";
+"No lists" = "No lists";
+"Tap + to create a list" = "Tap + to create a list";
+"Templates" = "Templates";
+"Delete" = "Delete";
+"Details" = "Details";
+
+/* TemplatesView */
+"Default" = "Default";
+"My templates" = "My templates";
+"Create template" = "Create template";
+"Close" = "Close";
+"New template" = "New template";
+"Edit" = "Edit";
+
+/* ListaRow */
+"item" = "item";
+"items" = "items";
+
+/* ContentView */
+"Market mode" = "Market mode";
+"Disable" = "Disable";
+"Enable" = "Enable";
+"Empty list" = "Empty list";
+"Tap + to add products" = "Tap + to add products";
+"In cart · %d" = "In cart · %d";
+"Finalize" = "Finalize";
+"of %@ estimated" = "of %@ estimated";
+
+/* CarrinhoSheet */
+"Cart" = "Cart";
+"Total in cart" = "Total in cart";
+
+/* ConfirmarPrecoSheet */
+"Product" = "Product";
+"Last purchase here: %@ / %@" = "Last purchase here: %@ / %@";
+"Price per kg" = "Price per kg";
+"Confirm price" = "Confirm price";
+"Weight" = "Weight";
+"Quantity" = "Quantity";
+"Total" = "Total";
+"Add to cart" = "Add to cart";
+"Cancel" = "Cancel";
+"Confirm" = "Confirm";
+
+/* MercadoBaratoSheet */
+"Savings: %@" = "Savings: %@";
+"Cheapest market for \"%@\"" = "Cheapest market for \"%@\"";
+"Action" = "Action";
+"Move to \"%@\"" = "Move to \"%@\"";
+"%d %@ · %@" = "%d %@ · %@";
+"Create list at \"%@\"" = "Create list at \"%@\"";
+"Move item to new list" = "Move item to new list";
+"Cheapest market" = "Cheapest market";
+
+/* MoverItemSheet */
+"No other active list" = "No other active list";
+"Move \"%@\" to" = "Move \"%@\" to";
+
+/* AddItemView */
+"Product name" = "Product name";
+"CONAB Ref. · %@ (wholesale)" = "CONAB Ref. · %@ (wholesale)";
+"Searching products…" = "Searching products…";
+"Fill in the price" = "Fill in the price";
+"Category" = "Category";
+"Price" = "Price";
+"Per unit" = "Per unit";
+"Per kg" = "Per kg";
+"Unit" = "Unit";
+"Weight — %dg" = "Weight — %dg";
+"Item total" = "Item total";
+"New item" = "New item";
+"Edit item" = "Edit item";
+"Save" = "Save";
+"Where to add?" = "Where to add?";
+"Cart (already picked)" = "Cart (already picked)";
+"List" = "List";
+"Add to cart or to list?" = "Add to cart or to list?";
+"Product already in list" = "Product already in list";
+"Add anyway" = "Add anyway";
+"\"%@\" is already in this list." = "\"%@\" is already in this list.";
+"Product in use" = "Product in use";
+"Delete and remove from lists" = "Delete and remove from lists";
+"Rename items" = "Rename items";
+"\"%@\" is in %d %@ in active lists. What do you want to do?" = "\"%@\" is in %d %@ in active lists. What do you want to do?";
+
+/* RenomearProdutoSheet */
+"New name" = "New name";
+"Rename \"%@\" to" = "Rename \"%@\" to";
+"From history" = "From history";
+"Rename product" = "Rename product";
+
+/* ProdutosView */
+"Empty catalogue" = "Empty catalogue";
+"Tap + to add products" = "Tap + to add products";
+"Collapse" = "Collapse";
+"Expand" = "Expand";
+"Search product" = "Search product";
+
+/* ProdutoDetalheSheet */
+"No market registered yet" = "No market registered yet";
+"Prices by market" = "Prices by market";
+"Cheapest" = "Cheapest";
+"Details" = "Details";
+
+/* NovoProdutoSheet */
+"Name" = "Name";
+"Product already in catalogue" = "Product already in catalogue";
+"Reference price" = "Reference price";
+"New product" = "New product";
+"Product already registered" = "Product already registered";
+"Edit existing" = "Edit existing";
+"\"%@\" already exists in the catalogue." = "\"%@\" already exists in the catalogue.";
+
+/* ProdutoEditSheet */
+"Edit product" = "Edit product";
+
+/* PerfilView */
+"Categories" = "Categories";
+"Access, create and edit categories" = "Access, create and edit categories";
+"Products" = "Products";
+"Manage product history" = "Manage product history";
+"Appearance" = "Appearance";
+"Theme, colours and background style" = "Theme, colours and background style";
+"Tutorial" = "Tutorial";
+"Review how to use the app" = "Review how to use the app";
+"No linked account" = "No linked account";
+"Sign in with Google to sync" = "Sign in with Google to sync";
+"Connecting…" = "Connecting…";
+"Sign in with Google" = "Sign in with Google";
+"Syncing…" = "Syncing…";
+"Synced %@" = "Synced %@";
+"Compreis - Data" = "Compreis - Data";
+"Disconnect Google account" = "Disconnect Google account";
+"Import data" = "Import data";
+"Import a JSON file exported by the app" = "Import a JSON file exported by the app";
+"Import" = "Import";
+"Import more" = "Import more";
+"%d %@ and %d %@ imported" = "%d %@ and %d %@ imported";
+"list" = "list";
+"lists" = "lists";
+"item imported" = "item imported";
+"items imported" = "items imported";
+"iCloud" = "iCloud";
+"Automatic backup — survives iPhone replacement" = "Automatic backup — survives iPhone replacement";
+"Export data" = "Export data";
+"Generates a JSON file with all lists" = "Generates a JSON file with all lists";
+"Export" = "Export";
+"Share" = "Share";
+"How to set up" = "How to set up";
+"Open Google Cloud Console" = "Open Google Cloud Console";
+"Import error" = "Import error";
+"Export error" = "Export error";
+"OK" = "OK";
+"Save and Sign In" = "Save and Sign In";
+"Set up Google" = "Set up Google";
+"Google Cloud Client ID" = "Google Cloud Client ID";
+
+/* CategoriasView */
+"Default categories" = "Default categories";
+"Default" = "Default";
+"My categories" = "My categories";
+"No category created" = "No category created";
+
+/* CategoriaEditSheet */
+"Category name" = "Category name";
+"Icon" = "Icon";
+"Colour" = "Colour";
+"Preview" = "Preview";
+"New category" = "New category";
+"Edit category" = "Edit category";
+
+/* TemaView */
+"Preview" = "Preview";
+"Highlight colour" = "Highlight colour";
+"Custom" = "Custom";
+"Choose colour" = "Choose colour";
+"Custom colour" = "Custom colour";
+"List background" = "List background";
+"Background style" = "Background style";
+"Sample list" = "Sample list";
+"5 items · sun 08/06" = "5 items · sun 08/06";
+
+/* NovaListaView */
+"Template" = "Template";
+"See %d included items" = "See %d included items";
+"Your templates" = "Your templates";
+"List name" = "List name";
+"Template name" = "Template name";
+"Ex: Week, BBQ…" = "Ex: Week, BBQ…";
+"Set date" = "Set date";
+"Date" = "Date";
+"When going to the market" = "When going to the market";
+"Set location" = "Set location";
+"Choose on map" = "Choose on map";
+"Search supermarket…" = "Search supermarket…";
+"Market location" = "Market location";
+"New list" = "New list";
+"Create" = "Create";
+"Model" = "Model";
+
+/* FinalizarView */
+"Calculated total" = "Calculated total";
+"Adjust real total" = "Adjust real total";
+"Difference" = "Difference";
+"Savings" = "Savings";
+"Total to register" = "Total to register";
+"Items" = "Items";
+"Summary" = "Summary";
+"Copy items to next list" = "Copy items to next list";
+"The same products appear in the next list with saved prices." = "The same products appear in the next list with saved prices.";
+"New list" = "New list";
+"Will be synced with Google Sheets" = "Will be synced with Google Sheets";
+"Cloud" = "Cloud";
+"Finalize purchase" = "Finalize purchase";
+
+/* ListaDetailView */
+"Status" = "Status";
+"Finalized" = "Finalized";
+"Open" = "Open";
+"Template created successfully" = "Template created successfully";
+"Use as template" = "Use as template";
+"Market date" = "Market date";
+"Market location" = "Market location";
+"Summary" = "Summary";
+"Template" = "Template";
+
+/* RelatorioView */
+"Last 7 days" = "Last 7 days";
+"Monthly average" = "Monthly average";
+"Average per trip" = "Average per trip";
+"Overview" = "Overview";
+"Spent by market" = "Spent by market";
+"visit" = "visit";
+"visits" = "visits";
+"average %@" = "average %@";
+"Basket comparison" = "Basket comparison";
+"Cheapest" = "Cheapest";
+"Month total" = "Month total";
+"No finalized purchases" = "No finalized purchases";
+"Finalize a purchase to see the report" = "Finalize a purchase to see the report";
+"Examples" = "Examples";
+"Your report preview" = "Your report preview";
+"See how it looks after finalizing a few purchases" = "See how it looks after finalizing a few purchases";
+
+/* ItemRow */
+"Cheaper at %@: %@/%@" = "Cheaper at %@: %@/%@";
+"Go" = "Go";
+"Move to another list" = "Move to another list";
+"Go to cheapest market (%@)" = "Go to cheapest market (%@)";
+
+/* Tutorial */
+"Welcome to Compreis!" = "Welcome to Compreis!";
+"Manage your shopping lists with price history and market mode. See how it works in a few steps." = "Manage your shopping lists with price history and market mode. See how it works in a few steps.";
+"Create a list" = "Create a list";
+"Tap the + button to create a list. You can set a name, date and market location." = "Tap the + button to create a list. You can set a name, date and market location.";
+"Add items" = "Add items";
+"Inside the list, use + to add products. The app searches your price history automatically as you type." = "Inside the list, use + to add products. The app searches your price history automatically as you type.";
+"Market mode" = "Market mode";
+"Enable market mode when you are at the supermarket. Tapping ✓ on an item confirms the price paid and moves it to the cart." = "Enable market mode when you are at the supermarket. Tapping ✓ on an item confirms the price paid and moves it to the cart.";
+"Product catalogue" = "Product catalogue";
+"The catalogue stores all products you have used with reference prices. Add, edit or remove products here." = "The catalogue stores all products you have used with reference prices. Add, edit or remove products here.";
+"All done! 🎉" = "All done! 🎉";
+"You now know the essentials of Compreis. Explore templates, reports and settings in Profile." = "You now know the essentials of Compreis. Explore templates, reports and settings in Profile.";
+"Skip" = "Skip";
+"Next" = "Next";
+"Finish" = "Finish";
