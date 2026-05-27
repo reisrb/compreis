@@ -14,11 +14,13 @@ struct CompreisApp: App {
 
     private static func makeContainer() -> ModelContainer {
         do {
-            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
+                                          Mercado.self, PrecoMercado.self, CategoriaCustom.self)
         } catch {
             wipeStore()
             do {
-                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self)
+                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
+                                              Mercado.self, PrecoMercado.self, CategoriaCustom.self)
             } catch {
                 fatalError("SwiftData: \(error)")
             }

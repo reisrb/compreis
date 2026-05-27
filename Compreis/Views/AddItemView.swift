@@ -298,7 +298,6 @@ struct AddItemView: View {
     private var isValid: Bool {
         !nome.trimmingCharacters(in: .whitespaces).isEmpty
             && Double(precoText.replacingOccurrences(of: ",", with: ".")) != nil
-            && (unidade == .unidade || pesoValor > 0)
     }
 
     private func populate() {

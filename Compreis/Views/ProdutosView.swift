@@ -6,6 +6,7 @@ struct ProdutosView: View {
     @Query(sort: \ProdutoHistorico.nome) private var produtos: [ProdutoHistorico]
 
     @State private var editando: ProdutoHistorico? = nil
+    @State private var showDetalhe: ProdutoHistorico? = nil
     @State private var showNovo = false
     @State private var busca = ""
     @State private var categoriasExpandidas: Set<Categoria> = Set(Categoria.allCases)
@@ -39,7 +40,7 @@ struct ProdutosView: View {
                             Section {
                                 if categoriasExpandidas.contains(cat) {
                                     ForEach(grupo) { p in
-                                        Button { editando = p } label: {
+                                        Button { showDetalhe = p } label: {
                                             HStack(spacing: 12) {
                                                 VStack(alignment: .leading, spacing: 3) {
                                                     Text(p.nome)
@@ -127,6 +128,9 @@ struct ProdutosView: View {
                 .padding(.trailing, 20)
                 .padding(.bottom, 20)
             }
+            .sheet(item: $showDetalhe) { p in
+                ProdutoDetalheSheet(produto: p, onEditar: { editando = p })
+            }
             .sheet(item: $editando) { p in
                 ProdutoEditSheet(produto: p)
             }
@@ -134,6 +138,106 @@ struct ProdutosView: View {
                 NovoProdutoSheet()
             }
         }
+    }
+}
+
+// MARK: - Detalhe do produto
+
+private struct ProdutoDetalheSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    let produto: ProdutoHistorico
+    var onEditar: () -> Void
+
+    @State private var precosMercado: [(mercado: String, preco: Double)] = []
+
+    private var precoMinimo: Double? { precosMercado.map { $0.preco }.min() }
+    private var mercadoMaisBarato: String? {
+        precosMercado.min(by: { $0.preco < $1.preco })?.mercado
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(produto.categoria.cor.opacity(0.12))
+                                .frame(width: 44, height: 44)
+                            Image(systemName: produto.categoria.icone)
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(produto.categoria.cor)
+                        }
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(produto.nome).font(.headline)
+                            HStack(spacing: 4) {
+                                Text(produto.preco.brl)
+                                Text("/ \(produto.unidade.rawValue)")
+                            }
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                } header: { Text("Produto") }
+
+                if precosMercado.isEmpty {
+                    Section {
+                        Label("Nenhum mercado registrado ainda", systemImage: "mappin.slash")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    } header: { Text("Preços por mercado") }
+                } else {
+                    Section {
+                        ForEach(precosMercado.sorted { $0.preco < $1.preco }, id: \.mercado) { entry in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "mappin.circle.fill")
+                                            .font(.caption)
+                                            .foregroundStyle(entry.mercado == mercadoMaisBarato ? AppTheme.accent : .secondary)
+                                        Text(entry.mercado).font(.subheadline.weight(.semibold))
+                                    }
+                                    if entry.mercado == mercadoMaisBarato {
+                                        Text("Mais barato")
+                                            .font(.caption2.weight(.bold))
+                                            .foregroundStyle(AppTheme.accent)
+                                    }
+                                }
+                                Spacer()
+                                Text("\(entry.preco.brl) / \(produto.unidade.rawValue)")
+                                    .font(.subheadline.weight(.bold).monospacedDigit())
+                                    .foregroundStyle(entry.mercado == mercadoMaisBarato ? AppTheme.accent : .primary)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    } header: { Text("Preços por mercado") }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Detalhes")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Fechar") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Editar") {
+                        dismiss()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onEditar() }
+                    }
+                    .tint(AppTheme.accent)
+                }
+            }
+            .onAppear { carregarPrecos() }
+        }
+    }
+
+    private func carregarPrecos() {
+        let fetch = FetchDescriptor<PrecoMercado>()
+        let todos = (try? context.fetch(fetch)) ?? []
+        let nomeLower = produto.nome.lowercased()
+        let filtrados = todos.filter { $0.produtoNome.lowercased() == nomeLower }
+        precosMercado = filtrados.map { ($0.mercadoNome, $0.preco) }
     }
 }
 

@@ -108,6 +108,12 @@ struct ListasView: View {
                                              localNome: localNome,
                                              localLatitude: lat, localLongitude: lon)
                     context.insert(nova)
+                    if let nomeLocal = localNome {
+                        let fetch = FetchDescriptor<Mercado>(predicate: #Predicate { $0.nome == nomeLocal })
+                        if (try? context.fetch(fetch))?.isEmpty != false {
+                            context.insert(Mercado(nome: nomeLocal, latitude: lat, longitude: lon))
+                        }
+                    }
                     if let t = templateUsuario {
                         for item in t.itens {
                             nova.itens.append(Item(nome: item.nome, preco: item.preco,
@@ -259,17 +265,25 @@ private struct ListaRow: View {
                           ? Color.orange.opacity(0.12)
                           : lista.finalizada
                               ? Color.secondary.opacity(0.12)
-                              : AppTheme.accentSubtle)
+                              : lista.emAndamento
+                                  ? Color.orange.opacity(0.12)
+                                  : AppTheme.accentSubtle)
                     .frame(width: 42, height: 42)
                     .overlay(Circle().strokeBorder(
                         isTemplate ? Color.orange.opacity(0.4)
-                            : lista.finalizada ? Color.clear : AppTheme.accentBorder,
+                            : lista.finalizada ? Color.clear
+                            : lista.emAndamento ? Color.orange.opacity(0.4)
+                            : AppTheme.accentBorder,
                         lineWidth: 0.75))
                 Image(systemName: isTemplate ? "star.fill"
-                      : lista.finalizada ? "checkmark.circle" : "cart")
+                      : lista.finalizada ? "checkmark.circle"
+                      : lista.emAndamento ? "cart.fill.badge.checkmark"
+                      : "cart")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(isTemplate ? Color.orange
-                                     : lista.finalizada ? Color.gray : AppTheme.accent)
+                                     : lista.finalizada ? Color.gray
+                                     : lista.emAndamento ? Color.orange
+                                     : AppTheme.accent)
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -278,12 +292,7 @@ private struct ListaRow: View {
                     if lista.localNome != nil {
                         Image(systemName: "mappin.circle.fill")
                             .font(.caption)
-                            .foregroundStyle(AppTheme.accent.opacity(0.7))
-                    }
-                    if lista.emAndamento {
-                        Image(systemName: "cart.fill.badge.checkmark")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(lista.emAndamento ? Color.orange.opacity(0.7) : AppTheme.accent.opacity(0.7))
                     }
                 }
                 HStack(spacing: 6) {

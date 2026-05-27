@@ -5,6 +5,8 @@ struct ItemRow: View {
     var onEdit: () -> Void = {}
     var onPegar: (() -> Void)? = nil
     var onMover: (() -> Void)? = nil
+    var cheapestAlt: (mercado: String, preco: Double)? = nil
+    var onMoverParaMercadoBarato: ((String) -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -37,6 +39,29 @@ struct ItemRow: View {
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                        if let alt = cheapestAlt, !item.pegou {
+                            HStack(spacing: 4) {
+                                Image(systemName: "tag.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.green)
+                                Text("Mais barato em \(alt.mercado): \(alt.preco.brl)/\(item.unidade.rawValue)")
+                                    .font(.caption2)
+                                    .foregroundStyle(.green)
+                                Button {
+                                    onMoverParaMercadoBarato?(alt.mercado)
+                                } label: {
+                                    Text("Ir")
+                                        .font(.caption2.weight(.bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.green, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.top, 1)
+                        }
                     }
 
                     Spacer()
@@ -51,6 +76,11 @@ struct ItemRow: View {
                 if let onMover {
                     Button { onMover() } label: {
                         Label("Mover para outra lista", systemImage: "arrow.right.doc.on.clipboard")
+                    }
+                }
+                if let alt = cheapestAlt, let onMoverParaMercadoBarato {
+                    Button { onMoverParaMercadoBarato(alt.mercado) } label: {
+                        Label("Ir ao mercado mais barato (\(alt.mercado))", systemImage: "tag.fill")
                     }
                 }
             }

@@ -4,6 +4,7 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var context
     @Bindable var lista: ListaDeCompras
+    @Query private var todosPrecosMercado: [PrecoMercado]
 
     @State private var showAdd = false
     @State private var editingItem: Item?
@@ -13,6 +14,8 @@ struct ContentView: View {
     @State private var categoriasExpandidas: Set<Categoria> = []
     @State private var pegarItem: Item? = nil
     @State private var moverItem: Item? = nil
+    @State private var mercadoBaratoItem: Item? = nil
+    @State private var mercadoBaratoDestino: String? = nil
 
     private struct GrupoCategoria {
         let categoria: Categoria
@@ -103,7 +106,12 @@ struct ContentView: View {
                                 ItemRow(item: item,
                                         onEdit: { editingItem = item },
                                         onPegar: lista.finalizada ? nil : { pegarItem = item },
-                                        onMover: lista.finalizada ? nil : { moverItem = item })
+                                        onMover: lista.finalizada ? nil : { moverItem = item },
+                                        cheapestAlt: lista.finalizada ? nil : cheapestAlt(for: item),
+                                        onMoverParaMercadoBarato: lista.finalizada ? nil : { mercado in
+                                            mercadoBaratoItem = item
+                                            mercadoBaratoDestino = mercado
+                                        })
                             }
                             .onDelete { offsets in
                                 for i in offsets { context.delete(grupo.pendentes[i]) }
@@ -203,7 +211,7 @@ struct ContentView: View {
             }
         }
         .sheet(item: $pegarItem) { item in
-            ConfirmarPrecoSheet(item: item) { novoPreco, novaQuantidade in
+            ConfirmarPrecoSheet(item: item, mercadoNome: lista.localNome) { novoPreco, novaQuantidade in
                 withAnimation(.spring(duration: 0.25)) {
                     item.pegou = true
                     if novoPreco != item.preco {
@@ -211,10 +219,16 @@ struct ContentView: View {
                         sincronizarItemGlobal(nomeOriginal: item.nome, novoNome: item.nome, preco: novoPreco, excluindo: item)
                         salvarHistorico(nome: item.nome, preco: novoPreco, unidade: item.unidade, categoria: item.categoria)
                     }
-                    if item.unidade == .kg && novaQuantidade != item.quantidade {
+                    if novaQuantidade != item.quantidade {
                         item.quantidade = novaQuantidade
                     }
+                    salvarPrecoMercado(nome: item.nome, preco: novoPreco, unidade: item.unidade)
                 }
+            }
+        }
+        .sheet(item: $mercadoBaratoItem) { item in
+            if let destino = mercadoBaratoDestino {
+                MercadoBaratoSheet(item: item, mercadoNome: destino, listaAtual: lista)
             }
         }
         .sheet(item: $moverItem) { item in
@@ -289,6 +303,32 @@ struct ContentView: View {
         for outro in todos where outro !== excluindo {
             outro.nome = novoNome
             outro.preco = preco
+        }
+    }
+
+    private func cheapestAlt(for item: Item) -> (mercado: String, preco: Double)? {
+        guard let mercadoAtual = lista.localNome else { return nil }
+        let nomeLower = item.nome.lowercased()
+        let outros = todosPrecosMercado.filter {
+            $0.produtoNome.lowercased() == nomeLower && $0.mercadoNome != mercadoAtual
+        }
+        guard let cheapest = outros.min(by: { $0.preco < $1.preco }),
+              cheapest.preco < item.preco else { return nil }
+        return (cheapest.mercadoNome, cheapest.preco)
+    }
+
+    private func salvarPrecoMercado(nome: String, preco: Double, unidade: Unidade) {
+        guard let mercado = lista.localNome else { return }
+        let fetch = FetchDescriptor<PrecoMercado>()
+        let todos = (try? context.fetch(fetch)) ?? []
+        let nomeLower = nome.lowercased()
+        if let existente = todos.first(where: {
+            $0.produtoNome.lowercased() == nomeLower && $0.mercadoNome == mercado
+        }) {
+            existente.preco = preco
+            existente.atualizadoEm = .now
+        } else {
+            context.insert(PrecoMercado(produtoNome: nome, mercadoNome: mercado, preco: preco, unidade: unidade))
         }
     }
 
@@ -455,27 +495,48 @@ private struct CarrinhoSheet: View {
 
 private struct ConfirmarPrecoSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
     let item: Item
+    var mercadoNome: String?
     var onConfirmar: (Double, Double) -> Void  // preco, quantidade
 
     @State private var precoCentavos: Int = 0
     @State private var precoText: String = "0,00"
     @State private var pesoGramas: Int = 0
     @State private var pesoDisplay: String = "0,000"
+    @State private var quantidadeInt: Int = 1
+    @State private var precoMercado: Double? = nil  // preço salvo neste mercado
 
     private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
     private var totalKg: Double { (Double(precoCentavos) / 100.0) * pesoValor }
+    private var totalUn: Double { (Double(precoCentavos) / 100.0) * Double(quantidadeInt) }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    Text(item.nome).font(.headline)
-                    HStack(spacing: 4) {
-                        Text(item.preco.brl)
-                        Text("/ \(item.unidade.rawValue)")
+                    HStack(spacing: 8) {
+                        Text(item.nome).font(.headline)
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Text(item.preco.brl)
+                            Text("/ \(item.unidade.rawValue)")
+                        }
+                        .font(.caption).foregroundStyle(.secondary)
                     }
-                    .font(.caption).foregroundStyle(.secondary)
+                    if let mercado = mercadoNome {
+                        HStack(spacing: 6) {
+                            Image(systemName: "mappin.circle.fill").foregroundStyle(AppTheme.accent).font(.caption)
+                            Text(mercado).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    if let pm = precoMercado {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.arrow.circlepath").foregroundStyle(.orange).font(.caption)
+                            Text("Última compra aqui: \(pm.brl) / \(item.unidade.rawValue)")
+                                .font(.caption).foregroundStyle(.orange)
+                        }
+                    }
                 } header: { Text("Produto") }
 
                 Section {
@@ -514,9 +575,41 @@ private struct ConfirmarPrecoSheet: View {
                             HStack {
                                 Text("Total")
                                 Spacer()
-                                Text(totalKg.brl)
-                                    .font(.headline)
-                                    .foregroundStyle(AppTheme.spend)
+                                Text(totalKg.brl).font(.headline).foregroundStyle(AppTheme.spend)
+                            }
+                        }
+                    }
+                } else {
+                    Section {
+                        HStack {
+                            Button {
+                                if quantidadeInt > 1 { quantidadeInt -= 1 }
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(quantidadeInt > 1 ? AppTheme.accent : Color.gray)
+                            }
+                            .buttonStyle(.plain)
+                            Spacer()
+                            Text("\(quantidadeInt)")
+                                .font(.title2.weight(.semibold).monospacedDigit())
+                                .frame(minWidth: 40, alignment: .center)
+                            Spacer()
+                            Button { quantidadeInt += 1 } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2).foregroundStyle(AppTheme.accent)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 4)
+                    } header: { Text("Quantidade") }
+
+                    if quantidadeInt > 1 {
+                        Section {
+                            HStack {
+                                Text("Total")
+                                Spacer()
+                                Text(totalUn.brl).font(.headline).foregroundStyle(AppTheme.spend)
                             }
                         }
                     }
@@ -531,7 +624,7 @@ private struct ConfirmarPrecoSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Confirmar") {
                         let novoPreco = Double(precoCentavos) / 100.0
-                        let novaQuantidade = item.unidade == .kg ? pesoValor : item.quantidade
+                        let novaQuantidade = item.unidade == .kg ? pesoValor : Double(quantidadeInt)
                         onConfirmar(novoPreco, novaQuantidade)
                         dismiss()
                     }
@@ -545,7 +638,126 @@ private struct ConfirmarPrecoSheet: View {
                 if item.unidade == .kg {
                     pesoGramas = Int((item.quantidade * 1000).rounded())
                     pesoDisplay = String(format: "%d,%03d", pesoGramas / 1000, pesoGramas % 1000)
+                } else {
+                    quantidadeInt = max(1, Int(item.quantidade))
                 }
+                // buscar preço deste mercado
+                if let mercado = mercadoNome {
+                    let fetch = FetchDescriptor<PrecoMercado>()
+                    let todos = (try? context.fetch(fetch)) ?? []
+                    let nomeLower = item.nome.lowercased()
+                    precoMercado = todos.first(where: {
+                        $0.produtoNome.lowercased() == nomeLower && $0.mercadoNome == mercado
+                    })?.preco
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Ir ao mercado mais barato
+
+private struct MercadoBaratoSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    let item: Item
+    let mercadoNome: String
+    let listaAtual: ListaDeCompras
+
+    @Query(filter: #Predicate<ListaDeCompras> { $0.finalizada == false && $0.isTemplate == false })
+    private var ativas: [ListaDeCompras]
+
+    private var listaDestino: ListaDeCompras? {
+        ativas.first { $0.localNome == mercadoNome && $0 !== listaAtual }
+    }
+
+    @State private var precoNesteMercado: Double? = nil
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.title3).foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(mercadoNome).font(.headline)
+                            if let p = precoNesteMercado {
+                                HStack(spacing: 4) {
+                                    Text(p.brl)
+                                    Text("/ \(item.unidade.rawValue)")
+                                }
+                                .font(.subheadline).foregroundStyle(.green)
+                                let economia = (item.preco - p) * item.quantidade
+                                if economia > 0 {
+                                    Text("Economia: \(economia.brl)")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                } header: { Text("Mercado mais barato para \"\(item.nome)\"") }
+
+                Section {
+                    if let destino = listaDestino {
+                        Button {
+                            if let idx = listaAtual.itens.firstIndex(where: { $0 === item }) {
+                                listaAtual.itens.remove(at: idx)
+                            }
+                            destino.itens.append(item)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "arrow.right.doc.on.clipboard")
+                                    .foregroundStyle(AppTheme.accent)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Mover para \"\(destino.nome)\"")
+                                        .font(.body.weight(.semibold)).foregroundStyle(.primary)
+                                    Text("\(destino.itens.count) \(destino.itens.count == 1 ? "item" : "itens") · \(mercadoNome)")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    } else {
+                        Button {
+                            let nova = ListaDeCompras(nome: mercadoNome,
+                                                     localNome: mercadoNome)
+                            context.insert(nova)
+                            if let idx = listaAtual.itens.firstIndex(where: { $0 === item }) {
+                                listaAtual.itens.remove(at: idx)
+                            }
+                            nova.itens.append(item)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(.green)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Criar lista em \"\(mercadoNome)\"")
+                                        .font(.body.weight(.semibold)).foregroundStyle(.primary)
+                                    Text("Mover o item para a nova lista")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                } header: { Text("Ação") }
+            }
+            .navigationTitle("Mercado mais barato")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancelar") { dismiss() }
+                }
+            }
+            .onAppear {
+                let fetch = FetchDescriptor<PrecoMercado>()
+                let todos = (try? context.fetch(fetch)) ?? []
+                let nomeLower = item.nome.lowercased()
+                precoNesteMercado = todos.first(where: {
+                    $0.produtoNome.lowercased() == nomeLower && $0.mercadoNome == mercadoNome
+                })?.preco
             }
         }
     }

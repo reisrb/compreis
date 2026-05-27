@@ -26,6 +26,34 @@ struct PerfilView: View {
                         } else {
                             signInCard
                         }
+                        NavigationLink(destination: CategoriasView()) {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.orange.opacity(0.12))
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "square.grid.2x2.fill")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(Color.orange)
+                                }
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Categorias")
+                                        .font(.body.weight(.bold))
+                                        .foregroundStyle(.primary)
+                                    Text("Acessar, criar e editar categorias")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(16)
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                        .buttonStyle(.plain)
                         NavigationLink(destination: ProdutosView()) {
                             HStack(spacing: 16) {
                                 ZStack {
