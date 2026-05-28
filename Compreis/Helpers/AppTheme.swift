@@ -39,7 +39,7 @@ struct RockSectionHeader: View {
                 .fill(AppTheme.accent)
                 .frame(width: 3, height: 11)
                 .cornerRadius(1.5)
-            Text(title.uppercased())
+            Text(LocalizedStringKey(title)).textCase(.uppercase)
                 .font(.caption.weight(.heavy))
                 .tracking(1.2)
                 .foregroundStyle(.secondary)

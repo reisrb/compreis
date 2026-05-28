@@ -123,37 +123,33 @@ enum ProductBase {
         .init(name: "Sabão em pó",          category: .cleaning,   unit: .each),
     ]
 
-    // MARK: - Seed (runs once on first launch)
+    // MARK: - Seed (idempotent — checks DB state, not UserDefaults)
 
     static func seed(context: ModelContext) {
-        if !UserDefaults.standard.bool(forKey: "semente_v1") {
-            let all = (try? context.fetch(FetchDescriptor<ProductHistory>())) ?? []
-            let existing = Set(all.map { $0.name.lowercased() })
-            for p in monthly where !existing.contains(p.name.lowercased()) {
-                context.insert(ProductHistory(name: p.name, price: 0,
-                                              unit: p.unit, category: p.category))
-            }
-            UserDefaults.standard.set(true, forKey: "semente_v1")
+        // Catalogue: insert any product from monthly list that doesn't exist yet
+        let allProducts = (try? context.fetch(FetchDescriptor<ProductHistory>())) ?? []
+        let existingProducts = Set(allProducts.map { $0.name.lowercased() })
+        for p in monthly where !existingProducts.contains(p.name.lowercased()) {
+            context.insert(ProductHistory(name: p.name, price: 0,
+                                          unit: p.unit, category: p.category))
         }
 
-        if !UserDefaults.standard.bool(forKey: "semente_templates_v1") {
-            let existing = (try? context.fetch(FetchDescriptor<ShoppingList>(
-                predicate: #Predicate { $0.isPredefined }
-            ))) ?? []
-            let existingNames = Set(existing.map { $0.name })
+        // Predefined templates: insert any that are missing
+        let existingTemplates = (try? context.fetch(FetchDescriptor<ShoppingList>(
+            predicate: #Predicate { $0.isPredefined }
+        ))) ?? []
+        let existingTemplateNames = Set(existingTemplates.map { $0.name })
 
-            for (name, products) in [("Essencial", essential), ("Do mês", monthly)] {
-                guard !existingNames.contains(name) else { continue }
-                let t = ShoppingList(name: name)
-                t.isTemplate = true
-                t.isPredefined = true
-                for p in products {
-                    t.items.append(Item(name: p.name, price: 0,
-                                       unit: p.unit, quantity: 1, category: p.category))
-                }
-                context.insert(t)
+        for (name, products) in [("Essencial", essential), ("Do mês", monthly)] {
+            guard !existingTemplateNames.contains(name) else { continue }
+            let t = ShoppingList(name: name)
+            t.isTemplate = true
+            t.isPredefined = true
+            for p in products {
+                t.items.append(Item(name: p.name, price: 0,
+                                    unit: p.unit, quantity: 1, category: p.category))
             }
-            UserDefaults.standard.set(true, forKey: "semente_templates_v1")
+            context.insert(t)
         }
     }
 

@@ -13,24 +13,13 @@ struct CompreisApp: App {
     }
 
     private static func makeContainer() -> ModelContainer {
+        let schema = Schema(SchemaV2.models)
+        let config = ModelConfiguration(schema: schema)
         do {
-            return try ModelContainer(for: Item.self, ProductHistory.self, ShoppingList.self,
-                                          Market.self, MarketPrice.self, CustomCategory.self)
+            return try ModelContainer(for: schema, migrationPlan: AppMigrationPlan.self,
+                                      configurations: [config])
         } catch {
-            wipeStore()
-            do {
-                return try ModelContainer(for: Item.self, ProductHistory.self, ShoppingList.self,
-                                              Market.self, MarketPrice.self, CustomCategory.self)
-            } catch {
-                fatalError("SwiftData: \(error)")
-            }
-        }
-    }
-
-    private static func wipeStore() {
-        let base = URL.applicationSupportDirectory
-        for suffix in ["", "-shm", "-wal"] {
-            try? FileManager.default.removeItem(at: base.appending(path: "default.store\(suffix)"))
+            fatalError("SwiftData store could not be opened: \(error)")
         }
     }
 

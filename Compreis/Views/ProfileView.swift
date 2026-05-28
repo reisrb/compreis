@@ -529,7 +529,7 @@ struct ProfileView: View {
                 .frame(width: 18, height: 18)
                 .background(AppTheme.accent)
                 .clipShape(Circle())
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

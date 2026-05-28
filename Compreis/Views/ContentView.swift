@@ -206,7 +206,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showAdd) {
-            AddItemView(listUF: listUF, existingNames: list.items.map { $0.name }, inProgress: list.inProgress) { name, price, unit, quantity, category, picked in
+            AddItemView(marketName: list.marketName, listUF: listUF, existingNames: list.items.map { $0.name }, inProgress: list.inProgress) { name, price, unit, quantity, category, picked in
                 addItem(name: name, price: price, unit: unit, quantity: quantity, category: category, picked: picked)
             }
         }
@@ -633,21 +633,26 @@ private struct ConfirmPriceSheet: View {
                 }
             }
             .onAppear {
-                priceCents = Int((item.price * 100).rounded())
+                var basePrice = item.price
+                if let market = marketName {
+                    let fetch = FetchDescriptor<MarketPrice>()
+                    let all = (try? context.fetch(fetch)) ?? []
+                    let nameLower = item.name.lowercased()
+                    let forProduct = all.filter { $0.productName.lowercased() == nameLower }
+                    if let mp = forProduct.first(where: { $0.marketName == market }) {
+                        marketStoredPrice = mp.price
+                        basePrice = mp.price
+                    } else if let highest = forProduct.max(by: { $0.price < $1.price }) {
+                        basePrice = highest.price
+                    }
+                }
+                priceCents = Int((basePrice * 100).rounded())
                 priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
                 if item.unit == .kg {
                     weightGrams = Int((item.quantity * 1000).rounded())
                     weightDisplay = String(format: "%d,%03d", weightGrams / 1000, weightGrams % 1000)
                 } else {
                     quantityInt = max(1, Int(item.quantity))
-                }
-                if let market = marketName {
-                    let fetch = FetchDescriptor<MarketPrice>()
-                    let all = (try? context.fetch(fetch)) ?? []
-                    let nameLower = item.name.lowercased()
-                    marketStoredPrice = all.first(where: {
-                        $0.productName.lowercased() == nameLower && $0.marketName == market
-                    })?.price
                 }
             }
         }

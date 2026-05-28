@@ -234,6 +234,23 @@
 "Summary" = "Resumo";
 "Template" = "Template";
 
+/* PerfilView — setupCard steps */
+"Open console.cloud.google.com" = "Abra console.cloud.google.com";
+"Create a \"Compreis\" project" = "Crie um projeto \"Compreis\"";
+"Enable Google Sheets API and Google Drive API" = "Ative Google Sheets API e Google Drive API";
+"Credentials → OAuth 2.0 → iOS type" = "Credenciais → OAuth 2.0 → Tipo iOS";
+"Bundle ID: com.rafaelreis.compreis" = "Bundle ID: com.rafaelreis.compreis";
+"Copy the Client ID and paste it when signing in" = "Copie o Client ID e cole ao fazer login";
+"Paste the OAuth 2.0 Client ID generated in Google Cloud Console for the bundle com.rafaelreis.compreis." = "Cole o Client ID OAuth 2.0 gerado no Google Cloud Console para o bundle com.rafaelreis.compreis.";
+
+/* PreçoMercado — CatalogueView */
+"Market price" = "Preço por mercado";
+"Market" = "Mercado";
+"Type a different name" = "Digitar outro nome";
+"Choose from list" = "Escolher da lista";
+"Add market price" = "Adicionar preço por mercado";
+"Price / %@" = "Preço / %@";
+
 /* RelatorioView */
 "Last 7 days" = "Últimos 7 dias";
 "Monthly average" = "Média mensal";

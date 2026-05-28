@@ -94,7 +94,7 @@ struct ReportView: View {
                                     }
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(entry.market).font(.body.weight(.semibold))
-                                        Text("\(entry.visits) \(entry.visits == 1 ? "visit" : "visits")")
+                                        Text(verbatim: "\(entry.visits) \(String(localized: entry.visits == 1 ? "visit" : "visits"))")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
@@ -102,7 +102,7 @@ struct ReportView: View {
                                         Text(entry.total.brl)
                                             .font(.body.weight(.heavy).monospacedDigit())
                                             .foregroundStyle(AppTheme.accent)
-                                        Text("average \((entry.total / Double(entry.visits)).brl)")
+                                        Text(verbatim: String(format: String(localized: "average %@"), (entry.total / Double(entry.visits)).brl))
                                             .font(.caption2).foregroundStyle(.secondary)
                                     }
                                 }
@@ -263,7 +263,7 @@ private struct ExamplesSheet: View {
                                     HStack {
                                         VStack(alignment: .leading, spacing: 3) {
                                             Text(list.name).font(.subheadline.weight(.semibold))
-                                            Text("\(list.date) · \(list.items) items")
+                                            Text(verbatim: "\(list.date) · \(list.items) \(String(localized: list.items == 1 ? "item" : "items"))")
                                                 .font(.caption).foregroundStyle(.secondary)
                                         }
                                         Spacer()
@@ -305,7 +305,7 @@ private struct ExamplesSheet: View {
 }
 
 private struct MetricRow: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let icon: String
     let color: Color
@@ -346,7 +346,7 @@ private struct FinalizedListRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
                 Text(list.name).font(.subheadline.weight(.semibold))
-                Text("\(formattedDate) · \(list.items.count) \(list.items.count == 1 ? "item" : "items")")
+                Text(verbatim: "\(formattedDate) · \(list.items.count) \(String(localized: list.items.count == 1 ? "item" : "items"))")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()

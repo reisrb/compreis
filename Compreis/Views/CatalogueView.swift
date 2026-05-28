@@ -149,11 +149,12 @@ private struct ProductDetailSheet: View {
     let product: ProductHistory
     var onEdit: () -> Void
 
-    @State private var marketPrices: [(market: String, price: Double)] = []
+    @State private var marketPrices: [MarketPrice] = []
+    @State private var showAddMarketPrice = false
 
     private var lowestPrice: Double? { marketPrices.map { $0.price }.min() }
     private var cheapestMarket: String? {
-        marketPrices.min(by: { $0.price < $1.price })?.market
+        marketPrices.min(by: { $0.price < $1.price })?.marketName
     }
 
     var body: some View {
@@ -181,36 +182,41 @@ private struct ProductDetailSheet: View {
                     .padding(.vertical, 4)
                 } header: { Text("Product") }
 
-                if marketPrices.isEmpty {
-                    Section {
-                        Label("No market registered yet", systemImage: "mappin.slash")
-                            .font(.subheadline).foregroundStyle(.secondary)
-                    } header: { Text("Prices by market") }
-                } else {
-                    Section {
-                        ForEach(marketPrices.sorted { $0.price < $1.price }, id: \.market) { entry in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    HStack(spacing: 5) {
-                                        Image(systemName: "mappin.circle.fill")
-                                            .font(.caption)
-                                            .foregroundStyle(entry.market == cheapestMarket ? AppTheme.accent : .secondary)
-                                        Text(entry.market).font(.subheadline.weight(.semibold))
-                                    }
-                                    if entry.market == cheapestMarket {
-                                        Text("Cheapest")
-                                            .font(.caption2.weight(.bold))
-                                            .foregroundStyle(AppTheme.accent)
-                                    }
+                Section {
+                    ForEach(marketPrices.sorted { $0.price < $1.price }) { mp in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(mp.marketName == cheapestMarket ? AppTheme.accent : .secondary)
+                                    Text(mp.marketName).font(.subheadline.weight(.semibold))
                                 }
-                                Spacer()
-                                Text("\(entry.price.brl) / \(product.unit.rawValue)")
-                                    .font(.subheadline.weight(.bold).monospacedDigit())
-                                    .foregroundStyle(entry.market == cheapestMarket ? AppTheme.accent : .primary)
+                                if mp.marketName == cheapestMarket {
+                                    Text("Cheapest")
+                                        .font(.caption2.weight(.bold))
+                                        .foregroundStyle(AppTheme.accent)
+                                }
                             }
-                            .padding(.vertical, 2)
+                            Spacer()
+                            Text("\(mp.price.brl) / \(product.unit.rawValue)")
+                                .font(.subheadline.weight(.bold).monospacedDigit())
+                                .foregroundStyle(mp.marketName == cheapestMarket ? AppTheme.accent : .primary)
                         }
-                    } header: { Text("Prices by market") }
+                        .padding(.vertical, 2)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                context.delete(mp)
+                                loadPrices()
+                            } label: { Label("Delete", systemImage: "trash") }
+                        }
+                    }
+                    Button { showAddMarketPrice = true } label: {
+                        Label("Add market price", systemImage: "plus")
+                            .foregroundStyle(AppTheme.accent)
+                    }
+                } header: {
+                    Text(marketPrices.isEmpty ? "Prices by market" : "Prices by market")
                 }
             }
             .listStyle(.insetGrouped)
@@ -229,6 +235,11 @@ private struct ProductDetailSheet: View {
                 }
             }
             .onAppear { loadPrices() }
+            .sheet(isPresented: $showAddMarketPrice) {
+                AddMarketPriceSheet(productName: product.name, unit: product.unit) {
+                    loadPrices()
+                }
+            }
         }
     }
 
@@ -236,8 +247,110 @@ private struct ProductDetailSheet: View {
         let fetch = FetchDescriptor<MarketPrice>()
         let all = (try? context.fetch(fetch)) ?? []
         let nameLower = product.name.lowercased()
-        let filtered = all.filter { $0.productName.lowercased() == nameLower }
-        marketPrices = filtered.map { ($0.marketName, $0.price) }
+        marketPrices = all.filter { $0.productName.lowercased() == nameLower }
+    }
+}
+
+// MARK: - Add market price
+
+private struct AddMarketPriceSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    let productName: String
+    let unit: ItemUnit
+    var onAdd: () -> Void
+
+    @Query(sort: \Market.name) private var markets: [Market]
+    @State private var marketName = ""
+    @State private var priceCents = 0
+    @State private var priceText = "0,00"
+    @State private var usePickerMode = true
+
+    private var isValid: Bool {
+        !marketName.trimmingCharacters(in: .whitespaces).isEmpty && priceCents > 0
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    if usePickerMode && !markets.isEmpty {
+                        Picker("Market", selection: $marketName) {
+                            ForEach(markets, id: \.name) { m in
+                                Text(m.name).tag(m.name)
+                            }
+                        }
+                        Button("Type a different name") {
+                            usePickerMode = false
+                            marketName = ""
+                        }
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.accent)
+                    } else {
+                        TextField("Market", text: $marketName)
+                            .autocorrectionDisabled()
+                        if !markets.isEmpty {
+                            Button("Choose from list") {
+                                usePickerMode = true
+                                marketName = markets.first?.name ?? ""
+                            }
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.accent)
+                        }
+                    }
+                } header: { Text("Market") }
+
+                Section {
+                    HStack {
+                        Text("R$").foregroundStyle(.secondary)
+                        TextField("0,00", text: $priceText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .onChange(of: priceText) { _, new in
+                                let digits = String(new.filter { $0.isNumber }.prefix(7))
+                                priceCents = Int(digits) ?? 0
+                                let formatted = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+                                if priceText != formatted { priceText = formatted }
+                            }
+                    }
+                } header: { Text(verbatim: String(format: String(localized: "Price / %@"), unit.rawValue)) }
+            }
+            .navigationTitle("Market price")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let market = marketName.trimmingCharacters(in: .whitespaces)
+                        let price = Double(priceCents) / 100.0
+                        let fetch = FetchDescriptor<MarketPrice>()
+                        let all = (try? context.fetch(fetch)) ?? []
+                        let nameLower = productName.lowercased()
+                        if let existing = all.first(where: {
+                            $0.productName.lowercased() == nameLower && $0.marketName == market
+                        }) {
+                            existing.price = price
+                            existing.updatedAt = .now
+                        } else {
+                            context.insert(MarketPrice(productName: productName,
+                                                       marketName: market, price: price, unit: unit))
+                        }
+                        onAdd()
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .tint(AppTheme.accent)
+                    .disabled(!isValid)
+                }
+            }
+            .onAppear {
+                if let first = markets.first {
+                    marketName = first.name
+                }
+            }
+        }
     }
 }
 

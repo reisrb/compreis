@@ -6,6 +6,7 @@ struct AddItemView: View {
     @Environment(\.modelContext) private var context
 
     var item: Item?
+    var marketName: String? = nil
     var listUF: String? = nil
     var existingNames: [String] = []
     var inProgress: Bool = false
@@ -328,7 +329,19 @@ struct AddItemView: View {
 
     private func applySuggestion(_ s: ProductHistory) {
         name = s.name
-        priceCents = Int((s.price * 100).rounded())
+        var price = s.price
+        if let market = marketName {
+            let fetch = FetchDescriptor<MarketPrice>()
+            let all = (try? context.fetch(fetch)) ?? []
+            let nameLower = s.name.lowercased()
+            let forProduct = all.filter { $0.productName.lowercased() == nameLower }
+            if let mp = forProduct.first(where: { $0.marketName == market }) {
+                price = mp.price
+            } else if let highest = forProduct.max(by: { $0.price < $1.price }) {
+                price = highest.price
+            }
+        }
+        priceCents = Int((price * 100).rounded())
         priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
         unit = s.unit
         category = s.category
