@@ -4,22 +4,30 @@ import SwiftData
 @main
 struct CompreisApp: App {
     let container: ModelContainer
+    let containerFailed: Bool
     @State private var selectedTab = 0
+    @State private var showStoreError = false
     private let tutorial = TutorialManager.shared
 
     init() {
-        container = Self.makeContainer()
+        let schema = Schema(SchemaV2.models)
+        let config = ModelConfiguration(schema: schema)
+        if let c = try? ModelContainer(for: schema, migrationPlan: AppMigrationPlan.self,
+                                       configurations: [config]) {
+            container = c
+            containerFailed = false
+        } else {
+            let memConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            container = try! ModelContainer(for: schema, configurations: [memConfig])
+            containerFailed = true
+        }
         ProductBase.seed(context: container.mainContext)
     }
 
-    private static func makeContainer() -> ModelContainer {
-        let schema = Schema(SchemaV2.models)
-        let config = ModelConfiguration(schema: schema)
-        do {
-            return try ModelContainer(for: schema, migrationPlan: AppMigrationPlan.self,
-                                      configurations: [config])
-        } catch {
-            fatalError("SwiftData store could not be opened: \(error)")
+    private static func wipeStore() {
+        let base = URL.applicationSupportDirectory
+        for suffix in ["", "-shm", "-wal"] {
+            try? FileManager.default.removeItem(at: base.appending(path: "default.store\(suffix)"))
         }
     }
 
@@ -51,11 +59,22 @@ struct CompreisApp: App {
                 }
             }
             .onAppear {
+                if containerFailed { showStoreError = true }
                 if !tutorial.completed {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                         tutorial.start(resetTab: { selectedTab = $0 })
                     }
                 }
+            }
+            .alert("Dados não puderam ser abertos", isPresented: $showStoreError) {
+                Button("Tentar novamente") { exit(0) }
+                Button("Redefinir dados", role: .destructive) {
+                    CompreisApp.wipeStore()
+                    exit(0)
+                }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("O banco de dados não pôde ser aberto. Tente novamente ou redefina os dados para continuar.")
             }
             // Sync tab when tutorial advances
             .onChange(of: tutorial.currentStep) { _, _ in

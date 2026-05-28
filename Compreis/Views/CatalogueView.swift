@@ -369,6 +369,7 @@ struct NewProductSheet: View {
     @State private var existingProduct: ProductHistory? = nil
     @State private var editingExisting: ProductHistory? = nil
     @State private var showDuplicateAlert = false
+    @State private var productForMarketPrice: ProductHistory? = nil
 
     private func loadSuggestions(_ text: String) {
         guard text.count >= 2 else { suggestions = []; existingProduct = nil; return }
@@ -486,6 +487,10 @@ struct NewProductSheet: View {
                 }
             }
             .alert("Product already registered", isPresented: $showDuplicateAlert) {
+                Button("Add market price") {
+                    productForMarketPrice = editingExisting
+                    editingExisting = nil
+                }
                 Button("Edit existing") { }
                 Button("Cancel", role: .cancel) { editingExisting = nil }
             } message: {
@@ -493,6 +498,9 @@ struct NewProductSheet: View {
             }
             .sheet(item: $editingExisting) { p in
                 ProductEditSheet(product: p)
+            }
+            .sheet(item: $productForMarketPrice) { p in
+                AddMarketPriceSheet(productName: p.name, unit: p.unit) { }
             }
         }
     }

@@ -250,6 +250,7 @@ struct ContentView: View {
                 item.category = category
                 syncItemGlobally(originalName: originalName, newName: name, price: price, excluding: item)
                 saveHistory(name: name, price: price, unit: unit, category: category)
+                if price > 0 { saveMarketPrice(name: name, price: price, unit: unit) }
                 SyncService.shared.scheduleSync(context: context)
             }
         }
@@ -294,6 +295,7 @@ struct ContentView: View {
         list.items.append(item)
         syncItemGlobally(originalName: name, newName: name, price: price, excluding: item)
         saveHistory(name: name, price: price, unit: unit, category: category)
+        if price > 0 { saveMarketPrice(name: name, price: price, unit: unit) }
         SyncService.shared.scheduleSync(context: context)
     }
 
