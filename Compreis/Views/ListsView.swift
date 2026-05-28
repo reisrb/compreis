@@ -1,39 +1,39 @@
 import SwiftUI
 import SwiftData
 
-struct ListasView: View {
+struct ListsView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \ListaDeCompras.criadaEm, order: .reverse)
-    private var listas: [ListaDeCompras]
+    @Query(sort: \ShoppingList.createdAt, order: .reverse)
+    private var lists: [ShoppingList]
 
-    @State private var showNova = false
+    @State private var showNew = false
     @State private var showTemplates = false
-    @State private var showingDetail: ListaDeCompras?
+    @State private var showingDetail: ShoppingList?
 
-    private var ativas:      [ListaDeCompras] { listas.filter { !$0.finalizada && !$0.isTemplate } }
-    private var finalizadas: [ListaDeCompras] { listas.filter {  $0.finalizada && !$0.isTemplate } }
-    private var totalAtivas: Double { ativas.reduce(0) { $0 + $1.totalCalculado } }
+    private var active:     [ShoppingList] { lists.filter { !$0.finalized && !$0.isTemplate } }
+    private var finalized:  [ShoppingList] { lists.filter {  $0.finalized && !$0.isTemplate } }
+    private var activeTotal: Double { active.reduce(0) { $0 + $1.computedTotal } }
 
     var body: some View {
         NavigationStack {
             Group {
-                if ativas.isEmpty && finalizadas.isEmpty {
+                if active.isEmpty && finalized.isEmpty {
                     emptyState
                 } else {
                     List {
-                        if !ativas.isEmpty {
+                        if !active.isEmpty {
                             Section {
-                                ForEach(ativas) { lista in
-                                    NavigationLink(destination: ContentView(lista: lista)) {
-                                        ListaRow(lista: lista)
+                                ForEach(active) { list in
+                                    NavigationLink(destination: ContentView(list: list)) {
+                                        ListRow(list: list)
                                     }
                                     .swipeActions(edge: .trailing) {
                                         Button(role: .destructive) {
-                                            context.delete(lista)
+                                            context.delete(list)
                                             SyncService.shared.scheduleSync(context: context)
                                         } label: { Label("Delete", systemImage: "trash") }
                                         .tint(.red)
-                                        Button { showingDetail = lista } label: {
+                                        Button { showingDetail = list } label: {
                                             Label("Details", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
@@ -43,8 +43,8 @@ struct ListasView: View {
                                 HStack {
                                     RockSectionHeader(title: "Open")
                                     Spacer()
-                                    if totalAtivas > 0 {
-                                        Text(totalAtivas.brl)
+                                    if activeTotal > 0 {
+                                        Text(activeTotal.brl)
                                             .font(.caption.weight(.bold).monospacedDigit())
                                             .foregroundStyle(AppTheme.accent)
                                     }
@@ -52,19 +52,19 @@ struct ListasView: View {
                             }
                         }
 
-                        if !finalizadas.isEmpty {
+                        if !finalized.isEmpty {
                             Section {
-                                ForEach(finalizadas) { lista in
-                                    NavigationLink(destination: ContentView(lista: lista)) {
-                                        ListaRow(lista: lista)
+                                ForEach(finalized) { list in
+                                    NavigationLink(destination: ContentView(list: list)) {
+                                        ListRow(list: list)
                                     }
                                     .swipeActions(edge: .trailing) {
                                         Button(role: .destructive) {
-                                            context.delete(lista)
+                                            context.delete(list)
                                             SyncService.shared.scheduleSync(context: context)
                                         } label: { Label("Delete", systemImage: "trash") }
                                         .tint(.red)
-                                        Button { showingDetail = lista } label: {
+                                        Button { showingDetail = list } label: {
                                             Label("Details", systemImage: "info.circle")
                                         }
                                         .tint(.blue)
@@ -88,7 +88,7 @@ struct ListasView: View {
             .safeAreaInset(edge: .bottom) {
                 HStack {
                     Spacer()
-                    Button { showNova = true } label: {
+                    Button { showNew = true } label: {
                         Image(systemName: "plus")
                             .font(.title2.weight(.heavy))
                             .foregroundStyle(.black)
@@ -102,26 +102,26 @@ struct ListasView: View {
                     .padding(.vertical, 16)
                 }
             }
-            .sheet(isPresented: $showNova) {
-                NovaListaView { nome, data, localNome, lat, lon, modelo, templateUsuario in
-                    let nova = ListaDeCompras(nome: nome, dataMercado: data,
-                                             localNome: localNome,
-                                             localLatitude: lat, localLongitude: lon)
+            .sheet(isPresented: $showNew) {
+                NewListView { name, date, marketName, lat, lon, template, userTemplate in
+                    let nova = ShoppingList(name: name, marketDate: date,
+                                           marketName: marketName,
+                                           latitude: lat, longitude: lon)
                     context.insert(nova)
-                    if let nomeLocal = localNome {
-                        let fetch = FetchDescriptor<Mercado>(predicate: #Predicate { $0.nome == nomeLocal })
+                    if let marketName {
+                        let fetch = FetchDescriptor<Market>(predicate: #Predicate { $0.name == marketName })
                         if (try? context.fetch(fetch))?.isEmpty != false {
-                            context.insert(Mercado(nome: nomeLocal, latitude: lat, longitude: lon))
+                            context.insert(Market(name: marketName, latitude: lat, longitude: lon))
                         }
                     }
-                    if let t = templateUsuario {
-                        for item in t.itens {
-                            nova.itens.append(Item(nome: item.nome, preco: item.preco,
-                                                   unidade: item.unidade, quantidade: item.quantidade,
-                                                   categoria: item.categoria))
+                    if let t = userTemplate {
+                        for item in t.items {
+                            nova.items.append(Item(name: item.name, price: item.price,
+                                                   unit: item.unit, quantity: item.quantity,
+                                                   category: item.category))
                         }
-                    } else if modelo != .vazia {
-                        ProdutoBase.criarItens(para: nova, modelo: modelo, context: context)
+                    } else if template != .empty {
+                        ProductBase.createItems(for: nova, template: template, context: context)
                     }
                     SyncService.shared.scheduleSync(context: context)
                 }
@@ -129,8 +129,8 @@ struct ListasView: View {
             .sheet(isPresented: $showTemplates) {
                 TemplatesView()
             }
-            .sheet(item: $showingDetail) { lista in
-                ListaDetailView(lista: lista)
+            .sheet(item: $showingDetail) { list in
+                ListDetailView(list: list)
             }
         }
         .tint(AppTheme.accent)
@@ -157,15 +157,15 @@ struct ListasView: View {
 private struct TemplatesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == true },
-           sort: \ListaDeCompras.criadaEm, order: .forward)
-    private var predefined: [ListaDeCompras]
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == false },
-           sort: \ListaDeCompras.criadaEm, order: .reverse)
-    private var userTemplates: [ListaDeCompras]
+    @Query(filter: #Predicate<ShoppingList> { $0.isTemplate == true && $0.isPredefined == true },
+           sort: \ShoppingList.createdAt, order: .forward)
+    private var predefined: [ShoppingList]
+    @Query(filter: #Predicate<ShoppingList> { $0.isTemplate == true && $0.isPredefined == false },
+           sort: \ShoppingList.createdAt, order: .reverse)
+    private var userTemplates: [ShoppingList]
 
-    @State private var showNovo = false
-    @State private var showingDetail: ListaDeCompras?
+    @State private var showNew = false
+    @State private var showingDetail: ShoppingList?
 
     var body: some View {
         NavigationStack {
@@ -173,8 +173,8 @@ private struct TemplatesView: View {
                 if !predefined.isEmpty {
                     Section {
                         ForEach(predefined) { t in
-                            NavigationLink(destination: ContentView(lista: t)) {
-                                ListaRow(lista: t, isTemplate: true)
+                            NavigationLink(destination: ContentView(list: t)) {
+                                ListRow(list: t, isTemplate: true)
                             }
                         }
                     } header: { RockSectionHeader(title: "Default") }
@@ -182,14 +182,14 @@ private struct TemplatesView: View {
 
                 Section {
                     if userTemplates.isEmpty {
-                        Button { showNovo = true } label: {
+                        Button { showNew = true } label: {
                             Label("Create template", systemImage: "plus")
                                 .foregroundStyle(AppTheme.accent)
                         }
                     } else {
                         ForEach(userTemplates) { t in
-                            NavigationLink(destination: ContentView(lista: t)) {
-                                ListaRow(lista: t, isTemplate: true)
+                            NavigationLink(destination: ContentView(list: t)) {
+                                ListRow(list: t, isTemplate: true)
                             }
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
@@ -213,31 +213,31 @@ private struct TemplatesView: View {
                     Button("Close") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showNovo = true } label: {
+                    Button { showNew = true } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $showNovo) {
-                NovaListaView(titulo: "New template", isTemplate: true) { nome, data, localNome, lat, lon, modelo, templateOrigem in
-                    let novo = ListaDeCompras(nome: nome, dataMercado: data,
-                                              localNome: localNome,
-                                              localLatitude: lat, localLongitude: lon)
+            .sheet(isPresented: $showNew) {
+                NewListView(title: "New template", isTemplate: true) { name, date, marketName, lat, lon, template, userTemplate in
+                    let novo = ShoppingList(name: name, marketDate: date,
+                                           marketName: marketName,
+                                           latitude: lat, longitude: lon)
                     novo.isTemplate = true
                     context.insert(novo)
-                    if let t = templateOrigem {
-                        for item in t.itens {
-                            novo.itens.append(Item(nome: item.nome, preco: item.preco,
-                                                   unidade: item.unidade, quantidade: item.quantidade,
-                                                   categoria: item.categoria))
+                    if let t = userTemplate {
+                        for item in t.items {
+                            novo.items.append(Item(name: item.name, price: item.price,
+                                                   unit: item.unit, quantity: item.quantity,
+                                                   category: item.category))
                         }
-                    } else if modelo != .vazia {
-                        ProdutoBase.criarItens(para: novo, modelo: modelo, context: context)
+                    } else if template != .empty {
+                        ProductBase.createItems(for: novo, template: template, context: context)
                     }
                 }
             }
             .sheet(item: $showingDetail) { t in
-                ListaDetailView(lista: t)
+                ListDetailView(list: t)
             }
         }
         .tint(AppTheme.accent)
@@ -246,15 +246,15 @@ private struct TemplatesView: View {
 
 // MARK: - Row
 
-private struct ListaRow: View {
-    let lista: ListaDeCompras
+private struct ListRow: View {
+    let list: ShoppingList
     var isTemplate: Bool = false
 
-    private var dataFormatada: String? {
-        guard let data = lista.dataMercado else { return nil }
+    private var formattedDate: String? {
+        guard let date = list.marketDate else { return nil }
         let f = DateFormatter()
         f.dateFormat = "dd/MM · HH:mm"
-        return f.string(from: data)
+        return f.string(from: date)
     }
 
     var body: some View {
@@ -263,44 +263,44 @@ private struct ListaRow: View {
                 Circle()
                     .fill(isTemplate
                           ? Color.orange.opacity(0.12)
-                          : lista.finalizada
+                          : list.finalized
                               ? Color.secondary.opacity(0.12)
-                              : lista.emAndamento
+                              : list.inProgress
                                   ? Color.orange.opacity(0.12)
                                   : AppTheme.accentSubtle)
                     .frame(width: 42, height: 42)
                     .overlay(Circle().strokeBorder(
                         isTemplate ? Color.orange.opacity(0.4)
-                            : lista.finalizada ? Color.clear
-                            : lista.emAndamento ? Color.orange.opacity(0.4)
+                            : list.finalized ? Color.clear
+                            : list.inProgress ? Color.orange.opacity(0.4)
                             : AppTheme.accentBorder,
                         lineWidth: 0.75))
                 Image(systemName: isTemplate ? "star.fill"
-                      : lista.finalizada ? "checkmark.circle"
-                      : lista.emAndamento ? "cart.fill.badge.checkmark"
+                      : list.finalized ? "checkmark.circle"
+                      : list.inProgress ? "cart.fill.badge.checkmark"
                       : "cart")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(isTemplate ? Color.orange
-                                     : lista.finalizada ? Color.gray
-                                     : lista.emAndamento ? Color.orange
+                                     : list.finalized ? Color.gray
+                                     : list.inProgress ? Color.orange
                                      : AppTheme.accent)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 4) {
-                    Text(lista.nome).font(.body.weight(.bold))
-                    if lista.localNome != nil {
+                    Text(list.name).font(.body.weight(.bold))
+                    if list.marketName != nil {
                         Image(systemName: "mappin.circle.fill")
                             .font(.caption)
-                            .foregroundStyle(lista.emAndamento ? Color.orange.opacity(0.7) : AppTheme.accent.opacity(0.7))
+                            .foregroundStyle(list.inProgress ? Color.orange.opacity(0.7) : AppTheme.accent.opacity(0.7))
                     }
                 }
                 HStack(spacing: 6) {
-                    Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "items")")
+                    Text("\(list.items.count) \(list.items.count == 1 ? "item" : "items")")
                         .foregroundStyle(.secondary)
-                    if let data = dataFormatada {
+                    if let date = formattedDate {
                         Text("·").foregroundStyle(.secondary)
-                        Text(data).foregroundStyle(.secondary)
+                        Text(date).foregroundStyle(.secondary)
                     }
                 }
                 .font(.caption)
@@ -308,11 +308,11 @@ private struct ListaRow: View {
 
             Spacer()
 
-            if !lista.itens.isEmpty {
-                Text(lista.total.brl)
+            if !list.items.isEmpty {
+                Text(list.total.brl)
                     .font(.callout.weight(.heavy).monospacedDigit())
                     .foregroundStyle(isTemplate ? Color.orange
-                                     : lista.finalizada ? Color.secondary : AppTheme.accent)
+                                     : list.finalized ? Color.secondary : AppTheme.accent)
             }
         }
         .padding(.vertical, 4)

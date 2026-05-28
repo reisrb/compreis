@@ -1,9 +1,9 @@
 import Foundation
 
-struct MLProduto: Identifiable {
+struct MLProduct: Identifiable {
     let id: String
-    let titulo: String
-    let preco: Double  // 0 quando sem histórico — usuário preenche
+    let title: String
+    let price: Double  // 0 when no history — user fills in
     let thumbnail: URL?
 }
 
@@ -15,7 +15,7 @@ enum MLService {
         return URLSession(configuration: config)
     }()
 
-    static func buscar(_ query: String) async -> [MLProduto] {
+    static func search(_ query: String) async -> [MLProduct] {
         guard !query.isEmpty,
               var comps = URLComponents(string: "https://world.openfoodfacts.org/cgi/search.pl")
         else { return [] }
@@ -39,12 +39,12 @@ enum MLService {
 
         return products.compactMap { p in
             guard let code = p["code"] as? String else { return nil }
-            let nome = (p["product_name_pt"] as? String
+            let name = (p["product_name_pt"] as? String
                         ?? p["product_name"] as? String ?? "")
                 .trimmingCharacters(in: .whitespaces)
-            guard !nome.isEmpty else { return nil }
+            guard !name.isEmpty else { return nil }
             let thumb = (p["image_front_small_url"] as? String).flatMap { URL(string: $0) }
-            return MLProduto(id: code, titulo: nome, preco: 0.0, thumbnail: thumb)
+            return MLProduct(id: code, title: name, price: 0.0, thumbnail: thumb)
         }
     }
 }

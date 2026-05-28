@@ -1,20 +1,20 @@
 import SwiftUI
 
-struct FinalizarView: View {
+struct FinalizeView: View {
     @Environment(\.dismiss) private var dismiss
-    let lista: ListaDeCompras
-    var onFinalizar: (Bool) -> Void
+    let list: ShoppingList
+    var onFinalize: (Bool) -> Void
 
-    @State private var copiarItens = true
-    @State private var ajustarTotal = false
+    @State private var copyItems = true
+    @State private var adjustTotal = false
     @State private var totalText: String = ""
     private var auth: GoogleAuth { GoogleAuth.shared }
 
-    private var totalFinal: Double {
-        if ajustarTotal, let v = Double(totalText.replacingOccurrences(of: ",", with: ".")) {
+    private var finalTotal: Double {
+        if adjustTotal, let v = Double(totalText.replacingOccurrences(of: ",", with: ".")) {
             return v
         }
-        return lista.totalCalculado
+        return list.computedTotal
     }
 
     var body: some View {
@@ -24,15 +24,15 @@ struct FinalizarView: View {
                     HStack {
                         Text("Calculated total")
                         Spacer()
-                        Text(lista.totalCalculado.brl)
+                        Text(list.computedTotal.brl)
                             .font(.body.weight(.bold).monospacedDigit())
                             .foregroundStyle(.secondary)
                     }
 
-                    Toggle("Adjust real total", isOn: $ajustarTotal)
+                    Toggle("Adjust real total", isOn: $adjustTotal)
                         .tint(AppTheme.accent)
 
-                    if ajustarTotal {
+                    if adjustTotal {
                         HStack(spacing: 12) {
                             Image(systemName: "brazilianrealsign")
                                 .foregroundStyle(AppTheme.spend)
@@ -43,7 +43,7 @@ struct FinalizarView: View {
                         }
 
                         if let v = Double(totalText.replacingOccurrences(of: ",", with: ".")) {
-                            let diff = v - lista.totalCalculado
+                            let diff = v - list.computedTotal
                             HStack {
                                 Text(diff >= 0 ? "Difference" : "Savings")
                                     .font(.caption)
@@ -60,7 +60,7 @@ struct FinalizarView: View {
                         Text("Total to register")
                             .fontWeight(.semibold)
                         Spacer()
-                        Text(totalFinal.brl)
+                        Text(finalTotal.brl)
                             .font(.body.weight(.heavy).monospacedDigit())
                             .foregroundStyle(AppTheme.spend)
                     }
@@ -68,13 +68,13 @@ struct FinalizarView: View {
                     HStack {
                         Text("Items")
                         Spacer()
-                        Text("\(lista.itens.count)")
+                        Text("\(list.items.count)")
                             .foregroundStyle(.secondary)
                     }
                 } header: { RockSectionHeader(title: "Summary") }
 
                 Section {
-                    Toggle("Copy items to next list", isOn: $copiarItens)
+                    Toggle("Copy items to next list", isOn: $copyItems)
                         .tint(AppTheme.accent)
                 } header: { RockSectionHeader(title: "New list") } footer: {
                     Text("The same products appear in the next list with saved prices.")
@@ -100,8 +100,8 @@ struct FinalizarView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Confirm") {
-                        lista.totalPago = ajustarTotal ? totalFinal : nil
-                        onFinalizar(copiarItens)
+                        list.totalPaid = adjustTotal ? finalTotal : nil
+                        onFinalize(copyItems)
                         dismiss()
                     }
                     .fontWeight(.heavy)
@@ -109,7 +109,7 @@ struct FinalizarView: View {
                 }
             }
             .onAppear {
-                totalText = String(format: "%.2f", lista.totalCalculado)
+                totalText = String(format: "%.2f", list.computedTotal)
                     .replacingOccurrences(of: ".", with: ",")
             }
         }

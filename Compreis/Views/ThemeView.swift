@@ -1,9 +1,9 @@
 import SwiftUI
 
-struct TemaView: View {
+struct ThemeView: View {
     @Environment(ThemeSettings.self) private var theme
 
-    private let colunas = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
 
     var body: some View {
         @Bindable var theme = theme
@@ -15,8 +15,8 @@ struct TemaView: View {
 
             // Presets
             Section {
-                LazyVGrid(columns: colunas, spacing: 16) {
-                    ForEach(TemaPreset.allCases.filter { $0 != .custom }, id: \.self) { p in
+                LazyVGrid(columns: columns, spacing: 16) {
+                    ForEach(ThemePreset.allCases.filter { $0 != .custom }, id: \.self) { p in
                         presetSwatch(p, theme: theme)
                     }
                 }
@@ -26,7 +26,7 @@ struct TemaView: View {
                     withAnimation(.spring(duration: 0.2)) { theme.preset = .custom }
                 } label: {
                     HStack {
-                        Image(systemName: TemaPreset.custom.icone)
+                        Image(systemName: ThemePreset.custom.icon)
                             .foregroundStyle(theme.preset == .custom ? theme.accent : .secondary)
                         Text("Custom").foregroundStyle(.primary)
                         Spacer()
@@ -45,14 +45,14 @@ struct TemaView: View {
 
             // Background
             Section {
-                Picker("Background style", selection: $theme.estiloFundo) {
-                    ForEach(EstiloFundo.allCases, id: \.self) { e in
-                        Text(e.rawValue).tag(e)
+                Picker("Background style", selection: $theme.backgroundStyle) {
+                    ForEach(BackgroundStyle.allCases, id: \.self) { style in
+                        Text(style.rawValue).tag(style)
                     }
                 }
                 .pickerStyle(.segmented)
 
-                Text(theme.estiloFundo.descricao)
+                Text(theme.backgroundStyle.description)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: { Text("List background") }
@@ -109,7 +109,7 @@ struct TemaView: View {
     // MARK: - Swatch
 
     @ViewBuilder
-    private func presetSwatch(_ preset: TemaPreset, theme: ThemeSettings) -> some View {
+    private func presetSwatch(_ preset: ThemePreset, theme: ThemeSettings) -> some View {
         Button {
             withAnimation(.spring(duration: 0.2)) { theme.preset = preset }
         } label: {
@@ -124,7 +124,7 @@ struct TemaView: View {
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.white)
                     } else {
-                        Image(systemName: preset.icone)
+                        Image(systemName: preset.icon)
                             .font(.caption2)
                             .foregroundStyle(.white.opacity(0.8))
                     }

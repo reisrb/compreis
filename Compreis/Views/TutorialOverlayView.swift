@@ -73,7 +73,7 @@ struct TutorialOverlayView: View {
             HStack {
                 ZStack {
                     Circle().fill(AppTheme.accentSubtle).frame(width: 44, height: 44)
-                    Image(systemName: step.icone)
+                    Image(systemName: step.icon)
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(AppTheme.accent)
                 }
@@ -91,10 +91,10 @@ struct TutorialOverlayView: View {
 
             // Text
             VStack(alignment: .leading, spacing: 6) {
-                Text(step.titulo)
+                Text(step.title)
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
-                Text(step.descricao)
+                Text(step.description)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

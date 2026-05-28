@@ -2,24 +2,24 @@ import SwiftUI
 import SwiftData
 import UIKit
 
-/// Categoria criada pelo usuário, complementa o enum Categoria built-in.
-/// Item.categoriaRaw armazena o nome da categoria customizada diretamente;
-/// quando Categoria(rawValue:) retorna nil, é uma categoria customizada.
+/// User-created category, complements the built-in Category enum.
+/// Item.categoryRaw stores the custom category name directly;
+/// when Category(rawValue:) returns nil, it is a custom category.
 @Model
-final class CategoriaCustom {
-    var nome: String
-    var icone: String
-    var corHex: String
-    var criadaEm: Date
+final class CustomCategory {
+    var name: String
+    var icon: String
+    var colorHex: String
+    var createdAt: Date
 
-    init(nome: String, icone: String = "tag", corHex: String = "#808080") {
-        self.nome = nome
-        self.icone = icone
-        self.corHex = corHex
-        self.criadaEm = .now
+    init(name: String, icon: String = "tag", colorHex: String = "#808080") {
+        self.name = name
+        self.icon = icon
+        self.colorHex = colorHex
+        self.createdAt = .now
     }
 
-    var cor: Color { Color(hex: corHex) ?? .gray }
+    var color: Color { Color(hex: colorHex) ?? .gray }
 }
 
 // MARK: - Color hex helpers

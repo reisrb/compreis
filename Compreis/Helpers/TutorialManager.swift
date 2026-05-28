@@ -26,9 +26,9 @@ extension View {
 // MARK: - Steps
 
 struct TutorialStep {
-    let titulo: String
-    let descricao: String
-    let icone: String
+    let title: String
+    let description: String
+    let icon: String
     let anchorID: TutorialAnchorID?
     let tab: Int
 }
@@ -40,44 +40,44 @@ struct TutorialStep {
 
     static let steps: [TutorialStep] = [
         TutorialStep(
-            titulo: "Welcome to Compreis!",
-            descricao: "Manage your shopping lists with price history and market mode. See how it works in a few steps.",
-            icone: "cart.fill",
+            title: "Welcome to Compreis!",
+            description: "Manage your shopping lists with price history and market mode. See how it works in a few steps.",
+            icon: "cart.fill",
             anchorID: nil,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Create a list",
-            descricao: "Tap the + button to create a list. You can set a name, date and market location.",
-            icone: "plus.circle.fill",
+            title: "Create a list",
+            description: "Tap the + button to create a list. You can set a name, date and market location.",
+            icon: "plus.circle.fill",
             anchorID: .novaListaFAB,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Add items",
-            descricao: "Inside the list, use + to add products. The app searches your price history automatically as you type.",
-            icone: "text.badge.plus",
+            title: "Add items",
+            description: "Inside the list, use + to add products. The app searches your price history automatically as you type.",
+            icon: "text.badge.plus",
             anchorID: .addItemFAB,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Market mode",
-            descricao: "Enable market mode when you are at the supermarket. Tapping ✓ on an item confirms the price paid and moves it to the cart.",
-            icone: "cart.fill.badge.checkmark",
+            title: "Market mode",
+            description: "Enable market mode when you are at the supermarket. Tapping ✓ on an item confirms the price paid and moves it to the cart.",
+            icon: "cart.fill.badge.checkmark",
             anchorID: .modoMercadoBanner,
             tab: 0
         ),
         TutorialStep(
-            titulo: "Product catalogue",
-            descricao: "The catalogue stores all products you have used with reference prices. Add, edit or remove products here.",
-            icone: "shippingbox.fill",
+            title: "Product catalogue",
+            description: "The catalogue stores all products you have used with reference prices. Add, edit or remove products here.",
+            icon: "shippingbox.fill",
             anchorID: .catalogoFAB,
             tab: 1
         ),
         TutorialStep(
-            titulo: "All done! 🎉",
-            descricao: "You now know the essentials of Compreis. Explore templates, reports and settings in Profile.",
-            icone: "checkmark.seal.fill",
+            title: "All done! 🎉",
+            description: "You now know the essentials of Compreis. Explore templates, reports and settings in Profile.",
+            icon: "checkmark.seal.fill",
             anchorID: nil,
             tab: 0
         ),

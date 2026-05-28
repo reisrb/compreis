@@ -2,20 +2,20 @@ import SwiftUI
 import SwiftData
 import MapKit
 
-struct ListaDetailView: View {
-    let lista: ListaDeCompras
+struct ListDetailView: View {
+    let list: ShoppingList
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 
-    @State private var nome: String = ""
-    @State private var templateCriado = false
-    @State private var usarData = false
-    @State private var dataMercado = Date()
-    @State private var usarLocal = false
-    @State private var localQuery = ""
-    @State private var localNome: String?
-    @State private var localLat: Double?
-    @State private var localLon: Double?
+    @State private var name: String = ""
+    @State private var templateCreated = false
+    @State private var useDate = false
+    @State private var marketDate = Date()
+    @State private var useLocation = false
+    @State private var locationQuery = ""
+    @State private var locationName: String?
+    @State private var locationLat: Double?
+    @State private var locationLon: Double?
     @StateObject private var completer = SearchCompleter()
     @State private var showMapPicker = false
 
@@ -27,52 +27,52 @@ struct ListaDetailView: View {
                         Image(systemName: "list.bullet")
                             .foregroundStyle(AppTheme.accent)
                             .frame(width: 20)
-                        TextField("Name", text: $nome)
+                        TextField("Name", text: $name)
                     }
                 } header: { RockSectionHeader(title: "Name") }
 
-                if !lista.itens.isEmpty {
+                if !list.items.isEmpty {
                     Section {
                         LabeledContent("Items") {
-                            Text("\(lista.itens.count) \(lista.itens.count == 1 ? "item" : "items")")
+                            Text("\(list.items.count) \(list.items.count == 1 ? "item" : "items")")
                         }
                         LabeledContent("Total") {
-                            Text(lista.total.brl)
+                            Text(list.total.brl)
                                 .foregroundStyle(AppTheme.accent)
                                 .fontWeight(.heavy)
                         }
                         LabeledContent("Status") {
-                            Text(lista.finalizada ? "Finalized" : "Open")
-                                .foregroundStyle(lista.finalizada ? .secondary : AppTheme.accent)
+                            Text(list.finalized ? "Finalized" : "Open")
+                                .foregroundStyle(list.finalized ? .secondary : AppTheme.accent)
                         }
                     } header: { RockSectionHeader(title: "Summary") }
                 }
 
-                if !lista.isTemplate {
+                if !list.isTemplate {
                     Section {
-                        if templateCriado {
+                        if templateCreated {
                             Label("Template created successfully", systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                                 .font(.subheadline)
                         } else {
                             Button {
-                                let copia = ListaDeCompras(
-                                    nome: lista.nome,
-                                    dataMercado: nil,
-                                    localNome: lista.localNome,
-                                    localLatitude: lista.localLatitude,
-                                    localLongitude: lista.localLongitude
+                                let copy = ShoppingList(
+                                    name: list.name,
+                                    marketDate: nil,
+                                    marketName: list.marketName,
+                                    latitude: list.latitude,
+                                    longitude: list.longitude
                                 )
-                                copia.isTemplate = true
-                                for item in lista.itens {
-                                    copia.itens.append(Item(
-                                        nome: item.nome, preco: item.preco,
-                                        unidade: item.unidade, quantidade: item.quantidade,
-                                        categoria: item.categoria
+                                copy.isTemplate = true
+                                for item in list.items {
+                                    copy.items.append(Item(
+                                        name: item.name, price: item.price,
+                                        unit: item.unit, quantity: item.quantity,
+                                        category: item.category
                                     ))
                                 }
-                                context.insert(copia)
-                                templateCriado = true
+                                context.insert(copy)
+                                templateCreated = true
                             } label: {
                                 Label("Use as template", systemImage: "doc.badge.plus")
                                     .foregroundStyle(AppTheme.accent)
@@ -82,20 +82,20 @@ struct ListaDetailView: View {
                 }
 
                 Section {
-                    Toggle("Set date", isOn: $usarData)
+                    Toggle("Set date", isOn: $useDate)
                         .tint(AppTheme.accent)
-                    if usarData {
-                        DatePicker("Date", selection: $dataMercado, displayedComponents: [.date, .hourAndMinute])
+                    if useDate {
+                        DatePicker("Date", selection: $marketDate, displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.graphical)
                             .tint(AppTheme.accent)
                     }
                 } header: { RockSectionHeader(title: "Market date") }
 
                 Section {
-                    Toggle("Set location", isOn: $usarLocal)
+                    Toggle("Set location", isOn: $useLocation)
                         .tint(AppTheme.accent)
-                    if usarLocal {
-                        if let pinned = localNome, let lat = localLat, let lon = localLon {
+                    if useLocation {
+                        if let pinned = locationName, let lat = locationLat, let lon = locationLon {
                             let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
                             Map(initialPosition: .region(MKCoordinateRegion(
                                 center: coord,
@@ -114,8 +114,8 @@ struct ListaDetailView: View {
                                 Text(pinned).font(.subheadline)
                                 Spacer()
                                 Button {
-                                    localNome = nil; localLat = nil; localLon = nil
-                                    localQuery = ""; completer.clear()
+                                    locationName = nil; locationLat = nil; locationLon = nil
+                                    locationQuery = ""; completer.clear()
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundStyle(.secondary)
@@ -134,8 +134,8 @@ struct ListaDetailView: View {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundStyle(.secondary)
                                     .frame(width: 20)
-                                TextField("Search supermarket…", text: $localQuery)
-                                    .onChange(of: localQuery) { _, q in completer.search(q) }
+                                TextField("Search supermarket…", text: $locationQuery)
+                                    .onChange(of: locationQuery) { _, q in completer.search(q) }
                             }
                             ForEach(completer.completions, id: \.self) { completion in
                                 Button {
@@ -161,10 +161,10 @@ struct ListaDetailView: View {
             .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showMapPicker) {
-                MapPickerView { nome, lat, lon in
-                    localNome = nome; localLat = lat; localLon = lon
-                    localQuery = nome; completer.clear()
-                    usarLocal = true
+                MapPickerView { n, lat, lon in
+                    locationName = n; locationLat = lat; locationLon = lon
+                    locationQuery = n; completer.clear()
+                    useLocation = true
                 }
             }
             .toolbar {
@@ -173,11 +173,11 @@ struct ListaDetailView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        lista.nome = nome.isEmpty ? lista.nome : nome
-                        lista.dataMercado = usarData ? dataMercado : nil
-                        lista.localNome = usarLocal ? localNome : nil
-                        lista.localLatitude = usarLocal ? localLat : nil
-                        lista.localLongitude = usarLocal ? localLon : nil
+                        list.name = name.isEmpty ? list.name : name
+                        list.marketDate = useDate ? marketDate : nil
+                        list.marketName = useLocation ? locationName : nil
+                        list.latitude = useLocation ? locationLat : nil
+                        list.longitude = useLocation ? locationLon : nil
                         dismiss()
                     }
                     .fontWeight(.heavy)
@@ -185,28 +185,28 @@ struct ListaDetailView: View {
                 }
             }
         }
-        .onAppear { loadEstado() }
+        .onAppear { loadState() }
     }
 
-    private func loadEstado() {
-        nome = lista.nome
-        if let data = lista.dataMercado {
-            usarData = true
-            dataMercado = data
+    private func loadState() {
+        name = list.name
+        if let date = list.marketDate {
+            useDate = true
+            marketDate = date
         }
-        if let nome = lista.localNome {
-            usarLocal = true
-            localNome = nome
-            localLat = lista.localLatitude
-            localLon = lista.localLongitude
-            localQuery = nome
+        if let n = list.marketName {
+            useLocation = true
+            locationName = n
+            locationLat = list.latitude
+            locationLon = list.longitude
+            locationQuery = n
         }
-        let listaNome = lista.nome
-        let desc = FetchDescriptor<ListaDeCompras>(
-            predicate: #Predicate { $0.isTemplate == true && $0.isPredefined == false && $0.nome == listaNome }
+        let listName = list.name
+        let desc = FetchDescriptor<ShoppingList>(
+            predicate: #Predicate { $0.isTemplate == true && $0.isPredefined == false && $0.name == listName }
         )
         if let count = try? context.fetchCount(desc) {
-            templateCriado = count > 0
+            templateCreated = count > 0
         }
     }
 
@@ -214,10 +214,10 @@ struct ListaDetailView: View {
         let req = MKLocalSearch.Request(completion: completion)
         guard let response = try? await MKLocalSearch(request: req).start(),
               let item = response.mapItems.first else { return }
-        localNome = item.name ?? completion.title
-        localLat = item.placemark.coordinate.latitude
-        localLon = item.placemark.coordinate.longitude
-        localQuery = item.name ?? completion.title
+        locationName = item.name ?? completion.title
+        locationLat = item.placemark.coordinate.latitude
+        locationLon = item.placemark.coordinate.longitude
+        locationQuery = item.name ?? completion.title
         completer.clear()
     }
 }

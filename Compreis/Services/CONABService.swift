@@ -5,28 +5,25 @@ actor CONABService {
     static let shared = CONABService()
     private init() {}
 
-    // prodKey (normalizado) -> uf -> preço atacado
+    // normalizedKey -> state -> wholesale price
     private var cache: [String: [String: Double]] = [:]
     private var lastFetch: Date?
     private let ttl: TimeInterval = 6 * 3600
 
-    // MARK: - API pública
+    // MARK: - Public API
 
-    func preco(nomeProduto: String, uf: String) async -> Double? {
-        await carregarSeNecessario()
-        let key = normalizar(nomeProduto)
+    func price(productName: String, state: String) async -> Double? {
+        await loadIfNeeded()
+        let key = normalize(productName)
 
-        // Match direto
-        if let precos = cache[key] {
-            return precos[uf] ?? precos.values.first
+        if let prices = cache[key] {
+            return prices[state] ?? prices.values.first
         }
-        // Match via alias
         for (alias, conabKey) in Self.aliases {
             if key.contains(alias) {
-                if let precos = cache[conabKey] { return precos[uf] ?? precos.values.first }
-                // partial: algum key do cache contém conabKey
-                for (cacheKey, precos) in cache where cacheKey.contains(conabKey) {
-                    return precos[uf] ?? precos.values.first
+                if let prices = cache[conabKey] { return prices[state] ?? prices.values.first }
+                for (cacheKey, prices) in cache where cacheKey.contains(conabKey) {
+                    return prices[state] ?? prices.values.first
                 }
             }
         }
@@ -38,17 +35,17 @@ actor CONABService {
         guard let pms = try? await geocoder.reverseGeocodeLocation(
             CLLocation(latitude: lat, longitude: lon)
         ), let admin = pms.first?.administrativeArea else { return nil }
-        return estadoUF[admin]
+        return stateCode[admin]
     }
 
     // MARK: - Fetch
 
-    private func carregarSeNecessario() async {
+    private func loadIfNeeded() async {
         guard lastFetch == nil || Date().timeIntervalSince(lastFetch!) > ttl else { return }
-        await buscarDados()
+        await fetchData()
     }
 
-    private func buscarDados() async {
+    private func fetchData() async {
         var comps = URLComponents(string: "https://pentahoportaldeinformacoes.conab.gov.br/pentaho/plugin/cda/api/doQuery")!
         comps.queryItems = [
             .init(name: "path",         value: "/home/PROHORT/precoDia.cda"),
@@ -64,49 +61,46 @@ actor CONABService {
               let resultset = json["resultset"] as? [[Any]]
         else { return }
 
-        // Mapeia colIndex → UF
-        var colUF: [Int: String] = [:]
+        var stateByCol: [Int: String] = [:]
         for col in metadata {
             guard let idx  = col["colIndex"] as? Int, idx > 0,
-                  let nome = col["colName"]  as? String else { continue }
-            let clean = nome.uppercased()
+                  let name = col["colName"]  as? String else { continue }
+            let clean = name.uppercased()
                 .replacingOccurrences(of: #"\s*\(\d{2}/\d{2}/\d{4}\)"#, with: "",
                                       options: .regularExpression)
-            for (frag, uf) in Self.ceasaUF where clean.contains(frag) {
-                colUF[idx] = uf
+            for (frag, state) in Self.ceasaStates where clean.contains(frag) {
+                stateByCol[idx] = state
                 break
             }
         }
 
-        var novo: [String: [String: Double]] = [:]
+        var updated: [String: [String: Double]] = [:]
         for row in resultset {
-            guard let rawNome = row.first as? String else { continue }
-            // "TOMATE (KG)" → "tomate"
-            let key = rawNome
+            guard let rawName = row.first as? String else { continue }
+            let key = rawName
                 .replacingOccurrences(of: #"\s*\([^)]+\)"#, with: "", options: .regularExpression)
                 .trimmingCharacters(in: .whitespaces)
-            let keyNorm = normalizar(key)
+            let normalizedKey = normalize(key)
 
-            var precos: [String: Double] = [:]
-            for (idx, uf) in colUF {
+            var prices: [String: Double] = [:]
+            for (idx, state) in stateByCol {
                 guard idx < row.count, let num = row[idx] as? NSNumber else { continue }
                 let v = num.doubleValue
-                if v > 0 { precos[uf] = v }
+                if v > 0 { prices[state] = v }
             }
-            if !precos.isEmpty { novo[keyNorm] = precos }
+            if !prices.isEmpty { updated[normalizedKey] = prices }
         }
 
-        cache = novo
+        cache = updated
         lastFetch = Date()
     }
 
-    private nonisolated func normalizar(_ s: String) -> String {
+    private nonisolated func normalize(_ s: String) -> String {
         s.lowercased().folding(options: .diacriticInsensitive, locale: .current)
     }
 
-    // MARK: - Tabelas
+    // MARK: - Tables
 
-    // nome app (normalizado) → fragmento chave CONAB normalizado
     nonisolated static let aliases: [String: String] = [
         "tomate":     "tomate",
         "batata":     "batata",
@@ -131,7 +125,7 @@ actor CONABService {
         "melao":      "melao amarelo",
     ]
 
-    nonisolated static let ceasaUF: [(String, String)] = [
+    nonisolated static let ceasaStates: [(String, String)] = [
         ("CEAGESP SAO PAULO", "SP"), ("CAMPINAS", "SP"), ("RIBEIRAO PRETO", "SP"), ("SOROCABA", "SP"),
         ("CURITIBA", "PR"),
         ("BELO HORIZONTE", "MG"), ("UBERLANDIA", "MG"),
@@ -154,7 +148,7 @@ actor CONABService {
         ("CAMPINA GRANDE", "PB"),
     ]
 
-    nonisolated static let estadoUF: [String: String] = [
+    nonisolated static let stateCode: [String: String] = [
         "Acre": "AC", "Alagoas": "AL", "Amapá": "AP", "Amazonas": "AM",
         "Bahia": "BA", "Ceará": "CE", "Distrito Federal": "DF",
         "Espírito Santo": "ES", "Goiás": "GO", "Maranhão": "MA",

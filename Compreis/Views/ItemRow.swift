@@ -3,23 +3,23 @@ import SwiftUI
 struct ItemRow: View {
     let item: Item
     var onEdit: () -> Void = {}
-    var onPegar: (() -> Void)? = nil
-    var onMover: (() -> Void)? = nil
-    var cheapestAlt: (mercado: String, preco: Double)? = nil
-    var onMoverParaMercadoBarato: ((String) -> Void)? = nil
+    var onPick: (() -> Void)? = nil
+    var onMove: (() -> Void)? = nil
+    var cheapestAlt: (market: String, price: Double)? = nil
+    var onMoveToCheapestMarket: ((String) -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
             Button {
-                if !item.pegou, let onPegar {
-                    onPegar()
+                if !item.picked, let onPick {
+                    onPick()
                 } else {
-                    withAnimation(.spring(duration: 0.25)) { item.pegou.toggle() }
+                    withAnimation(.spring(duration: 0.25)) { item.picked.toggle() }
                 }
             } label: {
-                Image(systemName: item.pegou ? "checkmark.circle.fill" : "checkmark.circle")
+                Image(systemName: item.picked ? "checkmark.circle.fill" : "checkmark.circle")
                     .font(.system(size: 28, weight: .regular))
-                    .foregroundStyle(item.pegou ? AppTheme.accent : Color.secondary.opacity(0.35))
+                    .foregroundStyle(item.picked ? AppTheme.accent : Color.secondary.opacity(0.35))
                     .frame(width: 42, height: 42)
             }
             .buttonStyle(.plain)
@@ -27,29 +27,29 @@ struct ItemRow: View {
             Button(action: onEdit) {
                 HStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(item.nome)
+                        Text(item.name)
                             .font(.body.weight(.bold))
-                            .strikethrough(item.pegou, color: .secondary)
-                            .foregroundStyle(item.pegou ? .secondary : .primary)
+                            .strikethrough(item.picked, color: .secondary)
+                            .foregroundStyle(item.picked ? .secondary : .primary)
                         HStack(spacing: 4) {
-                            Text(item.preco.brl)
-                            Text("/ \(item.unidade.rawValue)")
+                            Text(item.price.brl)
+                            Text("/ \(item.unit.rawValue)")
                             Text("·")
-                            Text("\(item.quantidade.formatted()) \(item.unidade.rawValue)")
+                            Text("\(item.quantity.formatted()) \(item.unit.rawValue)")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                        if let alt = cheapestAlt, !item.pegou {
+                        if let alt = cheapestAlt, !item.picked {
                             HStack(spacing: 4) {
                                 Image(systemName: "tag.fill")
                                     .font(.caption2)
                                     .foregroundStyle(.green)
-                                Text("Cheaper at \(alt.mercado): \(alt.preco.brl)/\(item.unidade.rawValue)")
+                                Text("Cheaper at \(alt.market): \(alt.price.brl)/\(item.unit.rawValue)")
                                     .font(.caption2)
                                     .foregroundStyle(.green)
                                 Button {
-                                    onMoverParaMercadoBarato?(alt.mercado)
+                                    onMoveToCheapestMarket?(alt.market)
                                 } label: {
                                     Text("Go")
                                         .font(.caption2.weight(.bold))
@@ -68,19 +68,19 @@ struct ItemRow: View {
 
                     Text(item.total.brl)
                         .font(.callout.weight(.heavy).monospacedDigit())
-                        .foregroundStyle(item.pegou ? .secondary : AppTheme.spend)
+                        .foregroundStyle(item.picked ? .secondary : AppTheme.spend)
                 }
             }
             .buttonStyle(.plain)
             .contextMenu {
-                if let onMover {
-                    Button { onMover() } label: {
+                if let onMove {
+                    Button { onMove() } label: {
                         Label("Move to another list", systemImage: "arrow.right.doc.on.clipboard")
                     }
                 }
-                if let alt = cheapestAlt, let onMoverParaMercadoBarato {
-                    Button { onMoverParaMercadoBarato(alt.mercado) } label: {
-                        Label("Go to cheapest market (\(alt.mercado))", systemImage: "tag.fill")
+                if let alt = cheapestAlt, let onMoveToCheapestMarket {
+                    Button { onMoveToCheapestMarket(alt.market) } label: {
+                        Label("Go to cheapest market (\(alt.market))", systemImage: "tag.fill")
                     }
                 }
             }

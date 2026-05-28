@@ -1,34 +1,34 @@
 import SwiftUI
 import SwiftData
 
-struct ProdutosView: View {
+struct CatalogueView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \ProdutoHistorico.nome) private var produtos: [ProdutoHistorico]
+    @Query(sort: \ProductHistory.name) private var products: [ProductHistory]
 
-    @State private var editando: ProdutoHistorico? = nil
-    @State private var showDetalhe: ProdutoHistorico? = nil
-    @State private var showNovo = false
-    @State private var busca = ""
-    @State private var categoriasExpandidas: Set<Categoria> = Set(Categoria.allCases)
+    @State private var editing: ProductHistory? = nil
+    @State private var showDetail: ProductHistory? = nil
+    @State private var showNew = false
+    @State private var search = ""
+    @State private var expandedCategories: Set<ItemCategory> = Set(ItemCategory.allCases)
 
-    private var filtrados: [ProdutoHistorico] {
-        busca.isEmpty ? produtos : produtos.filter { $0.nome.localizedCaseInsensitiveContains(busca) }
+    private var filtered: [ProductHistory] {
+        search.isEmpty ? products : products.filter { $0.name.localizedCaseInsensitiveContains(search) }
     }
 
-    private var porCategoria: [(Categoria, [ProdutoHistorico])] {
-        let agrupados = Dictionary(grouping: filtrados, by: { $0.categoria })
-        return Categoria.allCases.compactMap { cat in
-            guard let grupo = agrupados[cat], !grupo.isEmpty else { return nil }
-            return (cat, grupo.sorted { $0.nome < $1.nome })
+    private var byCategory: [(ItemCategory, [ProductHistory])] {
+        let grouped = Dictionary(grouping: filtered, by: { $0.category })
+        return ItemCategory.allCases.compactMap { cat in
+            guard let group = grouped[cat], !group.isEmpty else { return nil }
+            return (cat, group.sorted { $0.name < $1.name })
         }
     }
 
-    private var todasExpandidas: Bool { porCategoria.allSatisfy { categoriasExpandidas.contains($0.0) } }
+    private var allExpanded: Bool { byCategory.allSatisfy { expandedCategories.contains($0.0) } }
 
     var body: some View {
         NavigationStack {
             Group {
-                if produtos.isEmpty {
+                if products.isEmpty {
                     ContentUnavailableView(
                         "Empty catalogue",
                         systemImage: "shippingbox",
@@ -36,19 +36,19 @@ struct ProdutosView: View {
                     )
                 } else {
                     List {
-                        ForEach(porCategoria, id: \.0) { cat, grupo in
+                        ForEach(byCategory, id: \.0) { cat, group in
                             Section {
-                                if categoriasExpandidas.contains(cat) {
-                                    ForEach(grupo) { p in
-                                        Button { showDetalhe = p } label: {
+                                if expandedCategories.contains(cat) {
+                                    ForEach(group) { p in
+                                        Button { showDetail = p } label: {
                                             HStack(spacing: 12) {
                                                 VStack(alignment: .leading, spacing: 3) {
-                                                    Text(p.nome)
+                                                    Text(p.name)
                                                         .font(.body.weight(.semibold))
                                                         .foregroundStyle(.primary)
                                                     HStack(spacing: 4) {
-                                                        Text(p.preco.brl)
-                                                        Text("/ \(p.unidade.rawValue)")
+                                                        Text(p.price.brl)
+                                                        Text("/ \(p.unit.rawValue)")
                                                     }
                                                     .font(.caption).foregroundStyle(.secondary)
                                                 }
@@ -68,32 +68,32 @@ struct ProdutosView: View {
                             } header: {
                                 Button {
                                     withAnimation(.spring(duration: 0.25)) {
-                                        if categoriasExpandidas.contains(cat) {
-                                            categoriasExpandidas.remove(cat)
+                                        if expandedCategories.contains(cat) {
+                                            expandedCategories.remove(cat)
                                         } else {
-                                            categoriasExpandidas.insert(cat)
+                                            expandedCategories.insert(cat)
                                         }
                                     }
                                 } label: {
                                     HStack(spacing: 6) {
-                                        Image(systemName: cat.icone)
+                                        Image(systemName: cat.icon)
                                         Text(cat.rawValue)
-                                        Text("· \(grupo.count)")
-                                            .foregroundStyle(cat.cor.opacity(0.7))
+                                        Text("· \(group.count)")
+                                            .foregroundStyle(cat.color.opacity(0.7))
                                         Spacer()
-                                        Image(systemName: categoriasExpandidas.contains(cat) ? "chevron.up" : "chevron.down")
+                                        Image(systemName: expandedCategories.contains(cat) ? "chevron.up" : "chevron.down")
                                             .font(.caption2.weight(.bold))
-                                            .foregroundStyle(cat.cor.opacity(0.7))
+                                            .foregroundStyle(cat.color.opacity(0.7))
                                     }
                                     .font(.footnote.weight(.bold))
-                                    .foregroundStyle(cat.cor)
+                                    .foregroundStyle(cat.color)
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                     }
                     .listStyle(.insetGrouped)
-                    .searchable(text: $busca, prompt: "Search product")
+                    .searchable(text: $search, prompt: "Search product")
                 }
             }
             .navigationTitle("Catalogue")
@@ -102,20 +102,20 @@ struct ProdutosView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         withAnimation(.spring(duration: 0.25)) {
-                            if todasExpandidas {
-                                categoriasExpandidas = []
+                            if allExpanded {
+                                expandedCategories = []
                             } else {
-                                categoriasExpandidas = Set(Categoria.allCases)
+                                expandedCategories = Set(ItemCategory.allCases)
                             }
                         }
                     } label: {
-                        Text(todasExpandidas ? "Collapse" : "Expand")
+                        Text(allExpanded ? "Collapse" : "Expand")
                             .font(.caption.weight(.semibold))
                     }
                 }
             }
             .overlay(alignment: .bottomTrailing) {
-                Button { showNovo = true } label: {
+                Button { showNew = true } label: {
                     Image(systemName: "plus")
                         .font(.title3.weight(.heavy))
                         .foregroundStyle(.black)
@@ -128,14 +128,14 @@ struct ProdutosView: View {
                 .padding(.trailing, 20)
                 .padding(.bottom, 20)
             }
-            .sheet(item: $showDetalhe) { p in
-                ProdutoDetalheSheet(produto: p, onEditar: { editando = p })
+            .sheet(item: $showDetail) { p in
+                ProductDetailSheet(product: p, onEdit: { editing = p })
             }
-            .sheet(item: $editando) { p in
-                ProdutoEditSheet(produto: p)
+            .sheet(item: $editing) { p in
+                ProductEditSheet(product: p)
             }
-            .sheet(isPresented: $showNovo) {
-                NovoProdutoSheet()
+            .sheet(isPresented: $showNew) {
+                NewProductSheet()
             }
         }
     }
@@ -143,17 +143,17 @@ struct ProdutosView: View {
 
 // MARK: - Product detail
 
-private struct ProdutoDetalheSheet: View {
+private struct ProductDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    let produto: ProdutoHistorico
-    var onEditar: () -> Void
+    let product: ProductHistory
+    var onEdit: () -> Void
 
-    @State private var precosMercado: [(mercado: String, preco: Double)] = []
+    @State private var marketPrices: [(market: String, price: Double)] = []
 
-    private var precoMinimo: Double? { precosMercado.map { $0.preco }.min() }
-    private var mercadoMaisBarato: String? {
-        precosMercado.min(by: { $0.preco < $1.preco })?.mercado
+    private var lowestPrice: Double? { marketPrices.map { $0.price }.min() }
+    private var cheapestMarket: String? {
+        marketPrices.min(by: { $0.price < $1.price })?.market
     }
 
     var body: some View {
@@ -163,17 +163,17 @@ private struct ProdutoDetalheSheet: View {
                     HStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(produto.categoria.cor.opacity(0.12))
+                                .fill(product.category.color.opacity(0.12))
                                 .frame(width: 44, height: 44)
-                            Image(systemName: produto.categoria.icone)
+                            Image(systemName: product.category.icon)
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(produto.categoria.cor)
+                                .foregroundStyle(product.category.color)
                         }
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(produto.nome).font(.headline)
+                            Text(product.name).font(.headline)
                             HStack(spacing: 4) {
-                                Text(produto.preco.brl)
-                                Text("/ \(produto.unidade.rawValue)")
+                                Text(product.price.brl)
+                                Text("/ \(product.unit.rawValue)")
                             }
                             .font(.subheadline).foregroundStyle(.secondary)
                         }
@@ -181,32 +181,32 @@ private struct ProdutoDetalheSheet: View {
                     .padding(.vertical, 4)
                 } header: { Text("Product") }
 
-                if precosMercado.isEmpty {
+                if marketPrices.isEmpty {
                     Section {
                         Label("No market registered yet", systemImage: "mappin.slash")
                             .font(.subheadline).foregroundStyle(.secondary)
                     } header: { Text("Prices by market") }
                 } else {
                     Section {
-                        ForEach(precosMercado.sorted { $0.preco < $1.preco }, id: \.mercado) { entry in
+                        ForEach(marketPrices.sorted { $0.price < $1.price }, id: \.market) { entry in
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     HStack(spacing: 5) {
                                         Image(systemName: "mappin.circle.fill")
                                             .font(.caption)
-                                            .foregroundStyle(entry.mercado == mercadoMaisBarato ? AppTheme.accent : .secondary)
-                                        Text(entry.mercado).font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(entry.market == cheapestMarket ? AppTheme.accent : .secondary)
+                                        Text(entry.market).font(.subheadline.weight(.semibold))
                                     }
-                                    if entry.mercado == mercadoMaisBarato {
+                                    if entry.market == cheapestMarket {
                                         Text("Cheapest")
                                             .font(.caption2.weight(.bold))
                                             .foregroundStyle(AppTheme.accent)
                                     }
                                 }
                                 Spacer()
-                                Text("\(entry.preco.brl) / \(produto.unidade.rawValue)")
+                                Text("\(entry.price.brl) / \(product.unit.rawValue)")
                                     .font(.subheadline.weight(.bold).monospacedDigit())
-                                    .foregroundStyle(entry.mercado == mercadoMaisBarato ? AppTheme.accent : .primary)
+                                    .foregroundStyle(entry.market == cheapestMarket ? AppTheme.accent : .primary)
                             }
                             .padding(.vertical, 2)
                         }
@@ -223,60 +223,60 @@ private struct ProdutoDetalheSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Edit") {
                         dismiss()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onEditar() }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onEdit() }
                     }
                     .tint(AppTheme.accent)
                 }
             }
-            .onAppear { carregarPrecos() }
+            .onAppear { loadPrices() }
         }
     }
 
-    private func carregarPrecos() {
-        let fetch = FetchDescriptor<PrecoMercado>()
-        let todos = (try? context.fetch(fetch)) ?? []
-        let nomeLower = produto.nome.lowercased()
-        let filtrados = todos.filter { $0.produtoNome.lowercased() == nomeLower }
-        precosMercado = filtrados.map { ($0.mercadoNome, $0.preco) }
+    private func loadPrices() {
+        let fetch = FetchDescriptor<MarketPrice>()
+        let all = (try? context.fetch(fetch)) ?? []
+        let nameLower = product.name.lowercased()
+        let filtered = all.filter { $0.productName.lowercased() == nameLower }
+        marketPrices = filtered.map { ($0.marketName, $0.price) }
     }
 }
 
 // MARK: - New product
 
-struct NovoProdutoSheet: View {
+struct NewProductSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 
-    @State private var nome = ""
-    @State private var precoCentavos = 0
-    @State private var precoText = "0,00"
-    @State private var unidade: Unidade = .unidade
-    @State private var categoria: Categoria = .outros
-    @State private var sugestoes: [ProdutoHistorico] = []
-    @State private var produtoExistente: ProdutoHistorico? = nil
-    @State private var editandoExistente: ProdutoHistorico? = nil
-    @State private var showDuplicadoAlert = false
+    @State private var name = ""
+    @State private var priceCents = 0
+    @State private var priceText = "0,00"
+    @State private var unit: ItemUnit = .each
+    @State private var category: ItemCategory = .other
+    @State private var suggestions: [ProductHistory] = []
+    @State private var existingProduct: ProductHistory? = nil
+    @State private var editingExisting: ProductHistory? = nil
+    @State private var showDuplicateAlert = false
 
-    private func buscarSugestoes(_ texto: String) {
-        guard texto.count >= 2 else { sugestoes = []; produtoExistente = nil; return }
-        let fetch = FetchDescriptor<ProdutoHistorico>()
-        let todos = (try? context.fetch(fetch)) ?? []
-        sugestoes = todos
-            .filter { $0.nome.localizedCaseInsensitiveContains(texto) }
-            .sorted { $0.nome < $1.nome }
+    private func loadSuggestions(_ text: String) {
+        guard text.count >= 2 else { suggestions = []; existingProduct = nil; return }
+        let fetch = FetchDescriptor<ProductHistory>()
+        let all = (try? context.fetch(fetch)) ?? []
+        suggestions = all
+            .filter { $0.name.localizedCaseInsensitiveContains(text) }
+            .sorted { $0.name < $1.name }
             .prefix(4)
             .map { $0 }
-        produtoExistente = todos.first(where: { $0.nome.localizedCaseInsensitiveCompare(texto) == .orderedSame })
+        existingProduct = all.first(where: { $0.name.localizedCaseInsensitiveCompare(text) == .orderedSame })
     }
 
-    private func aplicar(_ p: ProdutoHistorico) {
-        nome = p.nome
-        precoCentavos = Int((p.preco * 100).rounded())
-        precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-        unidade = p.unidade
-        categoria = p.categoria
-        sugestoes = []
-        produtoExistente = p
+    private func apply(_ p: ProductHistory) {
+        name = p.name
+        priceCents = Int((p.price * 100).rounded())
+        priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+        unit = p.unit
+        category = p.category
+        suggestions = []
+        existingProduct = p
     }
 
     var body: some View {
@@ -285,19 +285,19 @@ struct NovoProdutoSheet: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "tag").foregroundStyle(AppTheme.accent).frame(width: 20)
-                        TextField("Product name", text: $nome)
+                        TextField("Product name", text: $name)
                             .autocorrectionDisabled()
-                            .onChange(of: nome) { _, novo in buscarSugestoes(novo) }
+                            .onChange(of: name) { _, newVal in loadSuggestions(newVal) }
                     }
-                    if !sugestoes.isEmpty {
-                        ForEach(sugestoes) { s in
-                            Button { aplicar(s) } label: {
+                    if !suggestions.isEmpty {
+                        ForEach(suggestions) { s in
+                            Button { apply(s) } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(s.nome).foregroundStyle(.primary)
+                                        Text(s.name).foregroundStyle(.primary)
                                         HStack(spacing: 4) {
-                                            Text(s.preco.brl)
-                                            Text("/ \(s.unidade.rawValue)")
+                                            Text(s.price.brl)
+                                            Text("/ \(s.unit.rawValue)")
                                         }
                                         .font(.caption).foregroundStyle(.secondary)
                                     }
@@ -308,7 +308,7 @@ struct NovoProdutoSheet: View {
                             }
                         }
                     }
-                    if produtoExistente != nil {
+                    if existingProduct != nil {
                         HStack(spacing: 6) {
                             Image(systemName: "info.circle").foregroundStyle(.orange)
                             Text("Product already in catalogue")
@@ -321,28 +321,28 @@ struct NovoProdutoSheet: View {
                 Section {
                     HStack(spacing: 12) {
                         Text("R$").foregroundStyle(.secondary)
-                        TextField("0,00", text: $precoText)
+                        TextField("0,00", text: $priceText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
-                            .onChange(of: precoText) { _, novo in
-                                let digits = String(novo.filter { $0.isNumber }.prefix(7))
-                                precoCentavos = Int(digits) ?? 0
-                                let f = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-                                if precoText != f { precoText = f }
+                            .onChange(of: priceText) { _, newVal in
+                                let digits = String(newVal.filter { $0.isNumber }.prefix(7))
+                                priceCents = Int(digits) ?? 0
+                                let f = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+                                if priceText != f { priceText = f }
                             }
                     }
                 } header: { Text("Reference price") }
 
                 Section {
-                    Picker("Unit", selection: $unidade) {
-                        ForEach(Unidade.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    Picker("Unit", selection: $unit) {
+                        ForEach(ItemUnit.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented)
                 } header: { Text("Unit") }
 
                 Section {
-                    Picker("Category", selection: $categoria) {
-                        ForEach(Categoria.allCases, id: \.self) {
-                            Label($0.rawValue, systemImage: $0.icone).tag($0)
+                    Picker("Category", selection: $category) {
+                        ForEach(ItemCategory.allCases, id: \.self) {
+                            Label($0.rawValue, systemImage: $0.icon).tag($0)
                         }
                     }
                 } header: { Text("Category") }
@@ -355,31 +355,31 @@ struct NovoProdutoSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let nomeFinal = nome.trimmingCharacters(in: .whitespaces)
-                        let preco = Double(precoCentavos) / 100.0
-                        let fetch = FetchDescriptor<ProdutoHistorico>()
-                        let todos = (try? context.fetch(fetch)) ?? []
-                        if let existente = todos.first(where: { $0.nome.localizedCaseInsensitiveCompare(nomeFinal) == .orderedSame }) {
-                            editandoExistente = existente
-                            showDuplicadoAlert = true
+                        let finalName = name.trimmingCharacters(in: .whitespaces)
+                        let price = Double(priceCents) / 100.0
+                        let fetch = FetchDescriptor<ProductHistory>()
+                        let all = (try? context.fetch(fetch)) ?? []
+                        if let existing = all.first(where: { $0.name.localizedCaseInsensitiveCompare(finalName) == .orderedSame }) {
+                            editingExisting = existing
+                            showDuplicateAlert = true
                         } else {
-                            context.insert(ProdutoHistorico(nome: nomeFinal, preco: preco, unidade: unidade, categoria: categoria))
+                            context.insert(ProductHistory(name: finalName, price: price, unit: unit, category: category))
                             dismiss()
                         }
                     }
                     .fontWeight(.semibold)
                     .tint(AppTheme.accent)
-                    .disabled(nome.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            .alert("Product already registered", isPresented: $showDuplicadoAlert) {
-                Button("Edit existing") { /* editandoExistente already set */ }
-                Button("Cancel", role: .cancel) { editandoExistente = nil }
+            .alert("Product already registered", isPresented: $showDuplicateAlert) {
+                Button("Edit existing") { }
+                Button("Cancel", role: .cancel) { editingExisting = nil }
             } message: {
-                Text("\"\(editandoExistente?.nome ?? "")\" already exists in the catalogue.")
+                Text("\"\(editingExisting?.name ?? "")\" already exists in the catalogue.")
             }
-            .sheet(item: $editandoExistente) { p in
-                ProdutoEditSheet(produto: p)
+            .sheet(item: $editingExisting) { p in
+                ProductEditSheet(product: p)
             }
         }
     }
@@ -387,15 +387,15 @@ struct NovoProdutoSheet: View {
 
 // MARK: - Edit sheet
 
-private struct ProdutoEditSheet: View {
+private struct ProductEditSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Bindable var produto: ProdutoHistorico
+    @Bindable var product: ProductHistory
 
-    @State private var nome: String = ""
-    @State private var precoCentavos: Int = 0
-    @State private var precoText: String = "0,00"
-    @State private var unidade: Unidade = .unidade
-    @State private var categoria: Categoria = .outros
+    @State private var name: String = ""
+    @State private var priceCents: Int = 0
+    @State private var priceText: String = "0,00"
+    @State private var unit: ItemUnit = .each
+    @State private var category: ItemCategory = .other
 
     var body: some View {
         NavigationStack {
@@ -403,35 +403,35 @@ private struct ProdutoEditSheet: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "tag").foregroundStyle(AppTheme.accent).frame(width: 20)
-                        TextField("Name", text: $nome).autocorrectionDisabled()
+                        TextField("Name", text: $name).autocorrectionDisabled()
                     }
                 } header: { Text("Name") }
 
                 Section {
                     HStack(spacing: 12) {
                         Text("R$").foregroundStyle(.secondary)
-                        TextField("0,00", text: $precoText)
+                        TextField("0,00", text: $priceText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
-                            .onChange(of: precoText) { _, novo in
-                                let digits = String(novo.filter { $0.isNumber }.prefix(7))
-                                precoCentavos = Int(digits) ?? 0
-                                let formatted = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-                                if precoText != formatted { precoText = formatted }
+                            .onChange(of: priceText) { _, newVal in
+                                let digits = String(newVal.filter { $0.isNumber }.prefix(7))
+                                priceCents = Int(digits) ?? 0
+                                let formatted = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+                                if priceText != formatted { priceText = formatted }
                             }
                     }
                 } header: { Text("Price") }
 
                 Section {
-                    Picker("Unit", selection: $unidade) {
-                        ForEach(Unidade.allCases, id: \.self) { u in Text(u.rawValue).tag(u) }
+                    Picker("Unit", selection: $unit) {
+                        ForEach(ItemUnit.allCases, id: \.self) { u in Text(u.rawValue).tag(u) }
                     }.pickerStyle(.segmented)
                 } header: { Text("Unit") }
 
                 Section {
-                    Picker("Category", selection: $categoria) {
-                        ForEach(Categoria.allCases, id: \.self) { cat in
-                            Label(cat.rawValue, systemImage: cat.icone).tag(cat)
+                    Picker("Category", selection: $category) {
+                        ForEach(ItemCategory.allCases, id: \.self) { cat in
+                            Label(cat.rawValue, systemImage: cat.icon).tag(cat)
                         }
                     }
                 } header: { Text("Category") }
@@ -442,22 +442,22 @@ private struct ProdutoEditSheet: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        produto.nome = nome.trimmingCharacters(in: .whitespaces)
-                        produto.preco = Double(precoCentavos) / 100.0
-                        produto.unidade = unidade
-                        produto.categoria = categoria
+                        product.name = name.trimmingCharacters(in: .whitespaces)
+                        product.price = Double(priceCents) / 100.0
+                        product.unit = unit
+                        product.category = category
                         dismiss()
                     }
                     .fontWeight(.semibold).tint(AppTheme.accent)
-                    .disabled(nome.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
             .onAppear {
-                nome = produto.nome
-                precoCentavos = Int((produto.preco * 100).rounded())
-                precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-                unidade = produto.unidade
-                categoria = produto.categoria
+                name = product.name
+                priceCents = Int((product.price * 100).rounded())
+                priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+                unit = product.unit
+                category = product.category
             }
         }
     }

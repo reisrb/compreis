@@ -1,25 +1,25 @@
 import SwiftUI
 import SwiftData
 
-struct CategoriasView: View {
+struct CategoriesView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \CategoriaCustom.criadaEm) private var customCats: [CategoriaCustom]
+    @Query(sort: \CustomCategory.createdAt) private var customCats: [CustomCategory]
 
-    @State private var showNova = false
-    @State private var editando: CategoriaCustom?
+    @State private var showNew = false
+    @State private var editing: CustomCategory?
 
     var body: some View {
         List {
             Section {
-                ForEach(Categoria.allCases, id: \.self) { cat in
+                ForEach(ItemCategory.allCases, id: \.self) { cat in
                     HStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(cat.cor.opacity(0.12))
+                                .fill(cat.color.opacity(0.12))
                                 .frame(width: 36, height: 36)
-                            Image(systemName: cat.icone)
+                            Image(systemName: cat.icon)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(cat.cor)
+                                .foregroundStyle(cat.color)
                         }
                         Text(cat.rawValue).font(.body)
                         Spacer()
@@ -37,17 +37,17 @@ struct CategoriasView: View {
                         .foregroundStyle(.secondary)
                 }
                 ForEach(customCats) { cat in
-                    Button { editando = cat } label: {
+                    Button { editing = cat } label: {
                         HStack(spacing: 12) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(cat.cor.opacity(0.12))
+                                    .fill(cat.color.opacity(0.12))
                                     .frame(width: 36, height: 36)
-                                Image(systemName: cat.icone)
+                                Image(systemName: cat.icon)
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(cat.cor)
+                                    .foregroundStyle(cat.color)
                             }
-                            Text(cat.nome).font(.body).foregroundStyle(.primary)
+                            Text(cat.name).font(.body).foregroundStyle(.primary)
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.semibold))
@@ -67,31 +67,31 @@ struct CategoriasView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { showNova = true } label: { Image(systemName: "plus") }
+                Button { showNew = true } label: { Image(systemName: "plus") }
             }
         }
-        .sheet(isPresented: $showNova) { CategoriaEditSheet(categoria: nil) }
-        .sheet(item: $editando) { cat in CategoriaEditSheet(categoria: cat) }
+        .sheet(isPresented: $showNew) { CategoryEditSheet(category: nil) }
+        .sheet(item: $editing) { cat in CategoryEditSheet(category: cat) }
     }
 }
 
 // MARK: - Edit sheet
 
-private let iconeOpcoes = [
+private let iconOptions = [
     "tag", "fork.knife", "carrot.fill", "fish.fill", "basket.fill",
     "cup.and.saucer.fill", "house.fill", "cart.fill", "bag.fill", "leaf.fill",
     "drop.fill", "flame.fill", "snowflake", "pills.fill", "bandage.fill",
     "sparkles", "star.fill", "heart.fill", "bolt.fill", "gift.fill"
 ]
 
-private struct CategoriaEditSheet: View {
+private struct CategoryEditSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    var categoria: CategoriaCustom?
+    var category: CustomCategory?
 
-    @State private var nome = ""
-    @State private var icone = "tag"
-    @State private var cor = Color.gray
+    @State private var name = ""
+    @State private var icon = "tag"
+    @State private var color = Color.gray
 
     var body: some View {
         NavigationStack {
@@ -99,25 +99,25 @@ private struct CategoriaEditSheet: View {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "tag").foregroundStyle(AppTheme.accent).frame(width: 20)
-                        TextField("Category name", text: $nome)
+                        TextField("Category name", text: $name)
                     }
                 } header: { Text("Name") }
 
                 Section {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
-                        ForEach(iconeOpcoes, id: \.self) { opt in
-                            Button { icone = opt } label: {
+                        ForEach(iconOptions, id: \.self) { opt in
+                            Button { icon = opt } label: {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 8)
-                                        .fill(icone == opt ? cor.opacity(0.2) : Color.secondary.opacity(0.10))
+                                        .fill(icon == opt ? color.opacity(0.2) : Color.secondary.opacity(0.10))
                                         .frame(width: 44, height: 44)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
-                                                .strokeBorder(icone == opt ? cor : Color.clear, lineWidth: 2)
+                                                .strokeBorder(icon == opt ? color : Color.clear, lineWidth: 2)
                                         )
                                     Image(systemName: opt)
                                         .font(.system(size: 20, weight: .medium))
-                                        .foregroundStyle(icone == opt ? cor : .secondary)
+                                        .foregroundStyle(icon == opt ? color : .secondary)
                                 }
                             }
                             .buttonStyle(.plain)
@@ -127,7 +127,7 @@ private struct CategoriaEditSheet: View {
                 } header: { Text("Icon") }
 
                 Section {
-                    ColorPicker("Colour", selection: $cor, supportsOpacity: false)
+                    ColorPicker("Colour", selection: $color, supportsOpacity: false)
                 } header: { Text("Colour") }
 
                 Section {
@@ -136,16 +136,16 @@ private struct CategoriaEditSheet: View {
                         VStack(spacing: 8) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(cor.opacity(0.15))
+                                    .fill(color.opacity(0.15))
                                     .frame(width: 64, height: 64)
-                                Image(systemName: icone)
+                                Image(systemName: icon)
                                     .font(.system(size: 28, weight: .semibold))
-                                    .foregroundStyle(cor)
+                                    .foregroundStyle(color)
                             }
-                            if !nome.isEmpty {
-                                Text(nome)
+                            if !name.isEmpty {
+                                Text(name)
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(cor)
+                                    .foregroundStyle(color)
                             }
                         }
                         Spacer()
@@ -153,7 +153,7 @@ private struct CategoriaEditSheet: View {
                     .padding(.vertical, 8)
                 } header: { Text("Preview") }
             }
-            .navigationTitle(categoria == nil ? "New category" : "Edit category")
+            .navigationTitle(category == nil ? "New category" : "Edit category")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -161,27 +161,27 @@ private struct CategoriaEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let nomeFinal = nome.trimmingCharacters(in: .whitespaces)
-                        let hexStr = cor.toHex()
-                        if let cat = categoria {
-                            cat.nome = nomeFinal
-                            cat.icone = icone
-                            cat.corHex = hexStr
+                        let finalName = name.trimmingCharacters(in: .whitespaces)
+                        let hexStr = color.toHex()
+                        if let cat = category {
+                            cat.name = finalName
+                            cat.icon = icon
+                            cat.colorHex = hexStr
                         } else {
-                            context.insert(CategoriaCustom(nome: nomeFinal, icone: icone, corHex: hexStr))
+                            context.insert(CustomCategory(name: finalName, icon: icon, colorHex: hexStr))
                         }
                         dismiss()
                     }
                     .fontWeight(.semibold)
                     .tint(AppTheme.accent)
-                    .disabled(nome.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
             .onAppear {
-                if let cat = categoria {
-                    nome = cat.nome
-                    icone = cat.icone
-                    cor = cat.cor
+                if let cat = category {
+                    name = cat.name
+                    icon = cat.icon
+                    color = cat.color
                 }
             }
         }

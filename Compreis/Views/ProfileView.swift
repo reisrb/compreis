@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PerfilView: View {
+struct ProfileView: View {
     @Environment(\.modelContext) private var context
     @ObservedObject private var auth = GoogleAuth.shared
     @State private var connecting = false
@@ -26,7 +26,7 @@ struct PerfilView: View {
                         } else {
                             signInCard
                         }
-                        NavigationLink(destination: CategoriasView()) {
+                        NavigationLink(destination: CategoriesView()) {
                             HStack(spacing: 16) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
@@ -54,7 +54,7 @@ struct PerfilView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                         .buttonStyle(.plain)
-                        NavigationLink(destination: ProdutosView()) {
+                        NavigationLink(destination: CatalogueView()) {
                             HStack(spacing: 16) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
@@ -83,7 +83,7 @@ struct PerfilView: View {
                         }
                         .buttonStyle(.plain)
                         tutorialCard
-                        NavigationLink(destination: TemaView()) {
+                        NavigationLink(destination: ThemeView()) {
                             HStack(spacing: 16) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
@@ -130,8 +130,8 @@ struct PerfilView: View {
                 let accessed = url.startAccessingSecurityScopedResource()
                 defer { if accessed { url.stopAccessingSecurityScopedResource() } }
                 do {
-                    let (listas, itens) = try ExportService.importarJSON(url: url, context: context)
-                    importResultMessage = "\(listas) \(listas == 1 ? "list" : "lists") and \(itens) \(itens == 1 ? "item imported" : "items imported")"
+                    let (lists, items) = try ExportService.importJSON(url: url, context: context)
+                    importResultMessage = "\(lists) \(lists == 1 ? "list" : "lists") and \(items) \(items == 1 ? "item imported" : "items imported")"
                 } catch {
                     importErrorMessage = error.localizedDescription
                     showImportError = true
@@ -289,8 +289,8 @@ struct PerfilView: View {
         .disabled(connecting)
 
         .overlay(alignment: .bottomLeading) {
-            if let erro = auth.errorMessage {
-                Text(erro)
+            if let error = auth.errorMessage {
+                Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
                     .padding(.top, 44)
@@ -450,7 +450,7 @@ struct PerfilView: View {
                     }
                 } else {
                     Button("Export") {
-                        if let url = try? ExportService.exportarJSON(context: context) {
+                        if let url = try? ExportService.exportJSON(context: context) {
                             exportURL = url
                         } else {
                             showExportError = true
@@ -479,12 +479,12 @@ struct PerfilView: View {
             Divider().padding(.horizontal, 16)
 
             VStack(alignment: .leading, spacing: 10) {
-                passo(n: 1, texto: "Open console.cloud.google.com")
-                passo(n: 2, texto: "Create a \"Compreis\" project")
-                passo(n: 3, texto: "Enable Google Sheets API and Google Drive API")
-                passo(n: 4, texto: "Credentials → OAuth 2.0 → iOS type")
-                passo(n: 5, texto: "Bundle ID: com.rafaelreis.compreis")
-                passo(n: 6, texto: "Copy the Client ID and paste it when signing in")
+                step(number:1, text:"Open console.cloud.google.com")
+                step(number:2, text:"Create a \"Compreis\" project")
+                step(number:3, text:"Enable Google Sheets API and Google Drive API")
+                step(number:4, text:"Credentials → OAuth 2.0 → iOS type")
+                step(number:5, text:"Bundle ID: com.rafaelreis.compreis")
+                step(number:6, text:"Copy the Client ID and paste it when signing in")
             }
             .padding(16)
 
@@ -521,7 +521,7 @@ struct PerfilView: View {
         return local.split(separator: ".").map { $0.capitalized }.joined(separator: " ")
     }
 
-    private func passo(n: Int, texto: String) -> some View {
+    private func step(number n: Int, text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text("\(n)")
                 .font(.caption.weight(.heavy))
@@ -529,7 +529,7 @@ struct PerfilView: View {
                 .frame(width: 18, height: 18)
                 .background(AppTheme.accent)
                 .clipShape(Circle())
-            Text(texto)
+            Text(text)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

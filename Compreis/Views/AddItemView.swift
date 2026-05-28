@@ -6,34 +6,34 @@ struct AddItemView: View {
     @Environment(\.modelContext) private var context
 
     var item: Item?
-    var listaUF: String? = nil
-    var nomesExistentes: [String] = []
-    var emAndamento: Bool = false
-    var onSave: (String, Double, Unidade, Double, Categoria, Bool) -> Void
+    var listUF: String? = nil
+    var existingNames: [String] = []
+    var inProgress: Bool = false
+    var onSave: (String, Double, ItemUnit, Double, ItemCategory, Bool) -> Void
 
-    @State private var nome: String = ""
-    @State private var precoText: String = "0,00"
-    @State private var precoCentavos: Int = 0
-    @State private var unidade: Unidade = .unidade
-    @State private var categoria: Categoria = .outros
-    @State private var quantidadeInt: Int = 1
-    @State private var pesoDisplay: String = "0,000"
-    @State private var pesoGramas: Int = 0
-    @State private var sugestoes: [ProdutoHistorico] = []
-    @State private var mlResultados: [MLProduto] = []
-    @State private var mlBuscando = false
+    @State private var name: String = ""
+    @State private var priceText: String = "0,00"
+    @State private var priceCents: Int = 0
+    @State private var unit: ItemUnit = .each
+    @State private var category: ItemCategory = .other
+    @State private var quantityInt: Int = 1
+    @State private var weightDisplay: String = "0,000"
+    @State private var weightGrams: Int = 0
+    @State private var suggestions: [ProductHistory] = []
+    @State private var mlResults: [MLProduct] = []
+    @State private var mlSearching = false
     @State private var mlTask: Task<Void, Never>?
-    @State private var conabInfo: (preco: Double, uf: String)?
+    @State private var conabInfo: (price: Double, uf: String)?
     @State private var conabTask: Task<Void, Never>?
-    @State private var confirmandoDelecao: ProdutoHistorico? = nil
-    @State private var itensEmUso: [Item] = []
+    @State private var deletingProduct: ProductHistory? = nil
+    @State private var itemsInUse: [Item] = []
     @State private var showDeleteAlert = false
-    @State private var showRenomearSheet = false
-    @State private var novoNomeRenomear = ""
-    @State private var showDuplicataAlert = false
-    @State private var showDestinoDialog = false
+    @State private var showRenameSheet = false
+    @State private var renameNewName = ""
+    @State private var showDuplicateAlert = false
+    @State private var showDestinationDialog = false
 
-    private var pesoValor: Double { Double(pesoGramas) / 1000.0 }
+    private var weightValue: Double { Double(weightGrams) / 1000.0 }
 
     var body: some View {
         NavigationStack {
@@ -43,20 +43,20 @@ struct AddItemView: View {
                         Image(systemName: "tag")
                             .foregroundStyle(AppTheme.accent)
                             .frame(width: 20)
-                        TextField("Product name", text: $nome)
-                            .onChange(of: nome) { _, novo in
-                                buscarSugestoes(novo)
-                                agendarBuscaML(novo)
-                                agendarBuscaCONAB(novo)
+                        TextField("Product name", text: $name)
+                            .onChange(of: name) { _, newVal in
+                                loadSuggestions(newVal)
+                                scheduleMLSearch(newVal)
+                                scheduleCONABSearch(newVal)
                             }
                     }
-                    if !sugestoes.isEmpty {
-                        ForEach(sugestoes) { s in
-                            Button { aplicarSugestao(s) } label: {
+                    if !suggestions.isEmpty {
+                        ForEach(suggestions) { s in
+                            Button { applySuggestion(s) } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(s.nome).foregroundStyle(.primary)
-                                        Text("\(s.preco.brl) / \(s.unidade.rawValue)")
+                                        Text(s.name).foregroundStyle(.primary)
+                                        Text("\(s.price.brl) / \(s.unit.rawValue)")
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
@@ -66,16 +66,16 @@ struct AddItemView: View {
                             }
                         }
                         .onDelete { indexSet in
-                            for idx in indexSet { tentarDeletar(sugestoes[idx]) }
+                            for idx in indexSet { attemptDelete(suggestions[idx]) }
                         }
                     }
                     if let info = conabInfo {
-                        Button { aplicarCONAB(info.preco) } label: {
+                        Button { applyCONAB(info.price) } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("CONAB Ref. · \(info.uf) (wholesale)")
                                         .font(.caption).foregroundStyle(.secondary)
-                                    Text("\(info.preco.brl) / kg")
+                                    Text("\(info.price.brl) / kg")
                                         .foregroundStyle(.primary)
                                 }
                                 Spacer()
@@ -84,16 +84,16 @@ struct AddItemView: View {
                             }
                         }
                     }
-                    if mlBuscando {
+                    if mlSearching {
                         HStack(spacing: 8) {
                             ProgressView().scaleEffect(0.8)
                             Text("Searching products…")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
-                    if !mlResultados.isEmpty {
-                        ForEach(mlResultados) { p in
-                            Button { aplicarML(p) } label: {
+                    if !mlResults.isEmpty {
+                        ForEach(mlResults) { p in
+                            Button { applyML(p) } label: {
                                 HStack(spacing: 10) {
                                     AsyncImage(url: p.thumbnail) { img in
                                         img.resizable().scaledToFill()
@@ -104,7 +104,7 @@ struct AddItemView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 6))
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(p.titulo)
+                                        Text(p.title)
                                             .font(.subheadline)
                                             .foregroundStyle(.primary)
                                             .lineLimit(2)
@@ -120,12 +120,12 @@ struct AddItemView: View {
                         }
                     }
                     HStack(spacing: 12) {
-                        Image(systemName: categoria.icone)
-                            .foregroundStyle(categoria.cor)
+                        Image(systemName: category.icon)
+                            .foregroundStyle(category.color)
                             .frame(width: 20)
-                        Picker("Category", selection: $categoria) {
-                            ForEach(Categoria.allCases, id: \.self) { cat in
-                                Label(cat.rawValue, systemImage: cat.icone).tag(cat)
+                        Picker("Category", selection: $category) {
+                            ForEach(ItemCategory.allCases, id: \.self) { cat in
+                                Label(cat.rawValue, systemImage: cat.icon).tag(cat)
                             }
                         }
                         .pickerStyle(.menu)
@@ -137,22 +137,22 @@ struct AddItemView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "brazilianrealsign")
                             .foregroundStyle(AppTheme.accent).frame(width: 20)
-                        TextField("0,00", text: $precoText)
+                        TextField("0,00", text: $priceText)
                             .keyboardType(.numberPad)
                             .monospacedDigit()
-                            .onChange(of: precoText) { _, newVal in
+                            .onChange(of: priceText) { _, newVal in
                                 let digits = String(newVal.filter { $0.isNumber }.prefix(8))
                                 let n = Int(digits) ?? 0
-                                precoCentavos = n
+                                priceCents = n
                                 let formatted = String(format: "%d,%02d", n / 100, n % 100)
-                                if precoText != formatted { precoText = formatted }
+                                if priceText != formatted { priceText = formatted }
                             }
                     }
                     HStack(spacing: 12) {
                         Image(systemName: "scalemass")
                             .foregroundStyle(AppTheme.accent).frame(width: 20)
-                        Picker("Unit", selection: $unidade) {
-                            ForEach(Unidade.allCases, id: \.self) { u in
+                        Picker("Unit", selection: $unit) {
+                            ForEach(ItemUnit.allCases, id: \.self) { u in
                                 Text(u.rawValue == "un" ? "Per unit" : "Per kg").tag(u)
                             }
                         }
@@ -162,19 +162,19 @@ struct AddItemView: View {
                 } header: { RockSectionHeader(title: "Price") }
 
                 Section {
-                    if unidade == .kg {
+                    if unit == .kg {
                         HStack(spacing: 12) {
                             Image(systemName: "scalemass.fill")
                                 .foregroundStyle(AppTheme.accent).frame(width: 20)
-                            TextField("0,000", text: $pesoDisplay)
+                            TextField("0,000", text: $weightDisplay)
                                 .keyboardType(.numberPad)
                                 .monospacedDigit()
-                                .onChange(of: pesoDisplay) { _, newVal in
+                                .onChange(of: weightDisplay) { _, newVal in
                                     let digits = String(newVal.filter { $0.isNumber }.prefix(7))
                                     let n = Int(digits) ?? 0
-                                    pesoGramas = n
+                                    weightGrams = n
                                     let formatted = String(format: "%d,%03d", n / 1000, n % 1000)
-                                    if pesoDisplay != formatted { pesoDisplay = formatted }
+                                    if weightDisplay != formatted { weightDisplay = formatted }
                                 }
                             Text("kg")
                                 .foregroundStyle(.secondary)
@@ -183,20 +183,20 @@ struct AddItemView: View {
                     } else {
                         HStack {
                             Button {
-                                if quantidadeInt > 1 { quantidadeInt -= 1 }
+                                if quantityInt > 1 { quantityInt -= 1 }
                             } label: {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.title2)
-                                    .foregroundStyle(quantidadeInt > 1 ? Color.green : Color.gray)
+                                    .foregroundStyle(quantityInt > 1 ? Color.green : Color.gray)
                             }
                             .buttonStyle(.plain)
                             Spacer()
-                            Text("\(quantidadeInt)")
+                            Text("\(quantityInt)")
                                 .font(.title2.weight(.semibold).monospacedDigit())
                                 .frame(minWidth: 40, alignment: .center)
                             Spacer()
                             Button {
-                                quantidadeInt += 1
+                                quantityInt += 1
                             } label: {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.title2).foregroundStyle(Color.green)
@@ -205,16 +205,16 @@ struct AddItemView: View {
                         }
                         .padding(.vertical, 4)
                     }
-                } header: { Text(unidade == .kg ? "Weight — \(pesoGramas)g" : "Quantity") }
+                } header: { Text(unit == .kg ? "Weight — \(weightGrams)g" : "Quantity") }
 
                 if isValid {
                     Section {
                         HStack {
                             Text("Item total").foregroundStyle(.secondary)
                             Spacer()
-                            let preco = Double(precoCentavos) / 100.0
-                            let qtd = unidade == .kg ? pesoValor : Double(quantidadeInt)
-                            Text((preco * qtd).brl)
+                            let price = Double(priceCents) / 100.0
+                            let qty = unit == .kg ? weightValue : Double(quantityInt)
+                            Text((price * qty).brl)
                                 .font(.body.weight(.bold).monospacedDigit())
                                 .foregroundStyle(AppTheme.accent)
                         }
@@ -234,61 +234,61 @@ struct AddItemView: View {
                 }
             }
             .onAppear { populate() }
-            .confirmationDialog("Where to add?", isPresented: $showDestinoDialog) {
-                Button("Cart (already picked)") { confirmarSave(pegou: true) }
-                Button("List") { confirmarSave(pegou: false) }
+            .confirmationDialog("Where to add?", isPresented: $showDestinationDialog) {
+                Button("Cart (already picked)") { confirmSave(picked: true) }
+                Button("List") { confirmSave(picked: false) }
                 Button("Cancel", role: .cancel) {}
             } message: { Text("Add to cart or to list?") }
-            .alert("Product already in list", isPresented: $showDuplicataAlert) {
-                Button("Add anyway") { confirmarSave(pegou: false) }
+            .alert("Product already in list", isPresented: $showDuplicateAlert) {
+                Button("Add anyway") { confirmSave(picked: false) }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("\"\(nome.trimmingCharacters(in: .whitespaces))\" is already in this list.")
+                Text("\"\(name.trimmingCharacters(in: .whitespaces))\" is already in this list.")
             }
-            .alert("Product in use", isPresented: $showDeleteAlert, presenting: confirmandoDelecao) { hist in
+            .alert("Product in use", isPresented: $showDeleteAlert, presenting: deletingProduct) { hist in
                 Button("Delete and remove from lists", role: .destructive) {
-                    for item in itensEmUso { context.delete(item) }
+                    for i in itemsInUse { context.delete(i) }
                     context.delete(hist)
-                    sugestoes.removeAll { $0.nome == hist.nome }
-                    confirmandoDelecao = nil; itensEmUso = []
+                    suggestions.removeAll { $0.name == hist.name }
+                    deletingProduct = nil; itemsInUse = []
                 }
                 Button("Rename items") {
-                    novoNomeRenomear = hist.nome
-                    showRenomearSheet = true
+                    renameNewName = hist.name
+                    showRenameSheet = true
                 }
                 Button("Cancel", role: .cancel) {
-                    confirmandoDelecao = nil; itensEmUso = []
+                    deletingProduct = nil; itemsInUse = []
                 }
             } message: { hist in
-                let n = itensEmUso.count
-                Text("\"\(hist.nome)\" is in \(n) \(n == 1 ? "item" : "items") in active lists. What do you want to do?")
+                let n = itemsInUse.count
+                Text("\"\(hist.name)\" is in \(n) \(n == 1 ? "item" : "items") in active lists. What do you want to do?")
             }
-            .sheet(isPresented: $showRenomearSheet) {
-                RenomearProdutoSheet(
-                    nomeAtual: confirmandoDelecao?.nome ?? "",
-                    onConfirmar: { novoNome in
-                        if let hist = confirmandoDelecao {
-                            let nomeAntigo = hist.nome
-                            for item in itensEmUso { item.nome = novoNome }
-                            let descH = FetchDescriptor<ProdutoHistorico>(predicate: #Predicate { $0.nome == novoNome })
-                            let existeNovo = ((try? context.fetch(descH))?.first) != nil
-                            if !existeNovo, let primeiro = itensEmUso.first {
-                                context.insert(ProdutoHistorico(
-                                    nome: novoNome, preco: primeiro.preco,
-                                    unidade: primeiro.unidade, categoria: primeiro.categoria
+            .sheet(isPresented: $showRenameSheet) {
+                RenameProductSheet(
+                    currentName: deletingProduct?.name ?? "",
+                    onConfirm: { newName in
+                        if let hist = deletingProduct {
+                            let oldName = hist.name
+                            for i in itemsInUse { i.name = newName }
+                            let descH = FetchDescriptor<ProductHistory>(predicate: #Predicate { $0.name == newName })
+                            let newExists = ((try? context.fetch(descH))?.first) != nil
+                            if !newExists, let first = itemsInUse.first {
+                                context.insert(ProductHistory(
+                                    name: newName, price: first.price,
+                                    unit: first.unit, category: first.category
                                 ))
                             }
                             context.delete(hist)
-                            if nome.localizedCaseInsensitiveCompare(nomeAntigo) == .orderedSame {
-                                nome = novoNome
+                            if name.localizedCaseInsensitiveCompare(oldName) == .orderedSame {
+                                name = newName
                             }
-                            sugestoes.removeAll { $0.nome == nomeAntigo }
-                            buscarSugestoes(nome)
-                            confirmandoDelecao = nil; itensEmUso = []
+                            suggestions.removeAll { $0.name == oldName }
+                            loadSuggestions(name)
+                            deletingProduct = nil; itemsInUse = []
                         }
                     },
-                    onCancelar: {
-                        confirmandoDelecao = nil; itensEmUso = []
+                    onCancel: {
+                        deletingProduct = nil; itemsInUse = []
                     }
                 )
             }
@@ -296,176 +296,175 @@ struct AddItemView: View {
     }
 
     private var isValid: Bool {
-        !nome.trimmingCharacters(in: .whitespaces).isEmpty
-            && Double(precoText.replacingOccurrences(of: ",", with: ".")) != nil
+        !name.trimmingCharacters(in: .whitespaces).isEmpty
+            && Double(priceText.replacingOccurrences(of: ",", with: ".")) != nil
     }
 
     private func populate() {
         guard let item else { return }
-        nome = item.nome
-        precoCentavos = Int((item.preco * 100).rounded())
-        precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-        unidade = item.unidade
-        categoria = item.categoria
-        if item.unidade == .unidade {
-            quantidadeInt = Int(item.quantidade)
+        name = item.name
+        priceCents = Int((item.price * 100).rounded())
+        priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+        unit = item.unit
+        category = item.category
+        if item.unit == .each {
+            quantityInt = Int(item.quantity)
         } else {
-            pesoGramas = Int((item.quantidade * 1000).rounded())
-            pesoDisplay = String(format: "%d,%03d", pesoGramas / 1000, pesoGramas % 1000)
+            weightGrams = Int((item.quantity * 1000).rounded())
+            weightDisplay = String(format: "%d,%03d", weightGrams / 1000, weightGrams % 1000)
         }
     }
 
-    private func buscarSugestoes(_ texto: String) {
-        guard texto.count >= 2 else { sugestoes = []; return }
-        let fetch = FetchDescriptor<ProdutoHistorico>()
-        let todos = (try? context.fetch(fetch)) ?? []
-        sugestoes = todos
-            .filter { $0.nome.localizedCaseInsensitiveContains(texto) }
-            .sorted { $0.nome < $1.nome }
+    private func loadSuggestions(_ text: String) {
+        guard text.count >= 2 else { suggestions = []; return }
+        let fetch = FetchDescriptor<ProductHistory>()
+        let all = (try? context.fetch(fetch)) ?? []
+        suggestions = all
+            .filter { $0.name.localizedCaseInsensitiveContains(text) }
+            .sorted { $0.name < $1.name }
             .prefix(4)
             .map { $0 }
     }
 
-    private func aplicarSugestao(_ s: ProdutoHistorico) {
-        nome = s.nome
-        precoCentavos = Int((s.preco * 100).rounded())
-        precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-        unidade = s.unidade
-        categoria = s.categoria
-        quantidadeInt = 1
-        pesoGramas = 0
-        pesoDisplay = "0,000"
-        sugestoes = []
+    private func applySuggestion(_ s: ProductHistory) {
+        name = s.name
+        priceCents = Int((s.price * 100).rounded())
+        priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+        unit = s.unit
+        category = s.category
+        quantityInt = 1
+        weightGrams = 0
+        weightDisplay = "0,000"
+        suggestions = []
     }
 
-    private func agendarBuscaML(_ texto: String) {
+    private func scheduleMLSearch(_ text: String) {
         mlTask?.cancel()
-        mlResultados = []
-        guard texto.count >= 3 else { mlBuscando = false; return }
+        mlResults = []
+        guard text.count >= 3 else { mlSearching = false; return }
         mlTask = Task {
             try? await Task.sleep(for: .milliseconds(500))
             guard !Task.isCancelled else { return }
-            await MainActor.run { mlBuscando = true }
-            let resultados = await MLService.buscar(texto)
+            await MainActor.run { mlSearching = true }
+            let results = await MLService.search(text)
             await MainActor.run {
-                mlResultados = resultados
-                mlBuscando = false
+                mlResults = results
+                mlSearching = false
             }
         }
     }
 
-    private func aplicarML(_ p: MLProduto) {
-        nome = p.titulo
-        // Search saved price in history for this product
-        let fetch = FetchDescriptor<ProdutoHistorico>()
+    private func applyML(_ p: MLProduct) {
+        name = p.title
+        let fetch = FetchDescriptor<ProductHistory>()
         let hist = (try? context.fetch(fetch)) ?? []
-        if let match = hist.first(where: { $0.nome.localizedCaseInsensitiveContains(p.titulo) ||
-                                           p.titulo.localizedCaseInsensitiveContains($0.nome) }),
-           match.preco > 0 {
-            precoCentavos = Int((match.preco * 100).rounded())
-            precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-            unidade = match.unidade
-            categoria = match.categoria
+        if let match = hist.first(where: { $0.name.localizedCaseInsensitiveContains(p.title) ||
+                                           p.title.localizedCaseInsensitiveContains($0.name) }),
+           match.price > 0 {
+            priceCents = Int((match.price * 100).rounded())
+            priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+            unit = match.unit
+            category = match.category
         } else {
-            precoCentavos = 0
-            precoText = "0,00"
+            priceCents = 0
+            priceText = "0,00"
         }
-        quantidadeInt = 1
-        mlResultados = []
-        sugestoes = []
+        quantityInt = 1
+        mlResults = []
+        suggestions = []
     }
 
-    private func agendarBuscaCONAB(_ texto: String) {
+    private func scheduleCONABSearch(_ text: String) {
         conabTask?.cancel()
         conabInfo = nil
-        guard let uf = listaUF, texto.count >= 3 else { return }
+        guard let uf = listUF, text.count >= 3 else { return }
         conabTask = Task {
             try? await Task.sleep(for: .milliseconds(700))
             guard !Task.isCancelled else { return }
-            let preco = await CONABService.shared.preco(nomeProduto: texto, uf: uf)
+            let price = await CONABService.shared.price(productName: text, state: uf)
             await MainActor.run {
-                if let p = preco { conabInfo = (p, uf) }
+                if let p = price { conabInfo = (p, uf) }
             }
         }
     }
 
-    private func aplicarCONAB(_ preco: Double) {
-        precoCentavos = Int((preco * 100).rounded())
-        precoText = String(format: "%d,%02d", precoCentavos / 100, precoCentavos % 100)
-        unidade = .kg
+    private func applyCONAB(_ price: Double) {
+        priceCents = Int((price * 100).rounded())
+        priceText = String(format: "%d,%02d", priceCents / 100, priceCents % 100)
+        unit = .kg
         conabInfo = nil
     }
 
-    private func tentarDeletar(_ historico: ProdutoHistorico) {
-        let nomeH = historico.nome
-        let desc = FetchDescriptor<Item>(predicate: #Predicate { $0.nome == nomeH })
-        let usados = (try? context.fetch(desc)) ?? []
-        confirmandoDelecao = historico
-        itensEmUso = usados
-        if usados.isEmpty {
-            context.delete(historico)
-            sugestoes.removeAll { $0.nome == nomeH }
-            confirmandoDelecao = nil
+    private func attemptDelete(_ history: ProductHistory) {
+        let histName = history.name
+        let desc = FetchDescriptor<Item>(predicate: #Predicate { $0.name == histName })
+        let used = (try? context.fetch(desc)) ?? []
+        deletingProduct = history
+        itemsInUse = used
+        if used.isEmpty {
+            context.delete(history)
+            suggestions.removeAll { $0.name == histName }
+            deletingProduct = nil
         } else {
             showDeleteAlert = true
         }
     }
 
     private func save() {
-        let nomeFinal = nome.trimmingCharacters(in: .whitespaces)
-        let jaExiste = item == nil && nomesExistentes.contains { $0.localizedCaseInsensitiveCompare(nomeFinal) == .orderedSame }
-        if jaExiste {
-            showDuplicataAlert = true
+        let finalName = name.trimmingCharacters(in: .whitespaces)
+        let alreadyExists = item == nil && existingNames.contains { $0.localizedCaseInsensitiveCompare(finalName) == .orderedSame }
+        if alreadyExists {
+            showDuplicateAlert = true
             return
         }
-        if emAndamento && item == nil {
-            showDestinoDialog = true
+        if inProgress && item == nil {
+            showDestinationDialog = true
             return
         }
-        confirmarSave(pegou: item?.pegou ?? false)
+        confirmSave(picked: item?.picked ?? false)
     }
 
-    private func confirmarSave(pegou: Bool) {
-        let preco = Double(precoCentavos) / 100.0
-        let quantidade = unidade == .kg ? pesoValor : Double(quantidadeInt)
-        onSave(nome.trimmingCharacters(in: .whitespaces), preco, unidade, quantidade, categoria, pegou)
+    private func confirmSave(picked: Bool) {
+        let price = Double(priceCents) / 100.0
+        let quantity = unit == .kg ? weightValue : Double(quantityInt)
+        onSave(name.trimmingCharacters(in: .whitespaces), price, unit, quantity, category, picked)
         dismiss()
     }
 }
 
 // MARK: - Rename sheet
 
-private struct RenomearProdutoSheet: View {
+private struct RenameProductSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 
-    let nomeAtual: String
-    let onConfirmar: (String) -> Void
-    let onCancelar: () -> Void
+    let currentName: String
+    let onConfirm: (String) -> Void
+    let onCancel: () -> Void
 
-    @State private var novoNome: String = ""
-    @State private var historico: [ProdutoHistorico] = []
+    @State private var newName: String = ""
+    @State private var history: [ProductHistory] = []
 
-    private var sugestoes: [ProdutoHistorico] {
-        historico.filter { $0.nome != nomeAtual && (novoNome.isEmpty || $0.nome.localizedCaseInsensitiveContains(novoNome)) }
+    private var suggestions: [ProductHistory] {
+        history.filter { $0.name != currentName && (newName.isEmpty || $0.name.localizedCaseInsensitiveContains(newName)) }
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("New name", text: $novoNome)
+                    TextField("New name", text: $newName)
                         .autocorrectionDisabled()
-                } header: { Text("Rename \"\(nomeAtual)\" to") }
+                } header: { Text("Rename \"\(currentName)\" to") }
 
-                if !sugestoes.isEmpty {
+                if !suggestions.isEmpty {
                     Section {
-                        ForEach(sugestoes) { s in
-                            Button { novoNome = s.nome } label: {
+                        ForEach(suggestions) { s in
+                            Button { newName = s.name } label: {
                                 HStack {
-                                    Text(s.nome).foregroundStyle(.primary)
+                                    Text(s.name).foregroundStyle(.primary)
                                     Spacer()
-                                    if novoNome == s.nome {
+                                    if newName == s.name {
                                         Image(systemName: "checkmark").foregroundStyle(AppTheme.accent)
                                     }
                                 }
@@ -478,22 +477,22 @@ private struct RenomearProdutoSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { onCancelar(); dismiss() }
+                    Button("Cancel") { onCancel(); dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Confirm") {
-                        onConfirmar(novoNome.trimmingCharacters(in: .whitespaces))
+                        onConfirm(newName.trimmingCharacters(in: .whitespaces))
                         dismiss()
                     }
                     .fontWeight(.semibold)
                     .tint(AppTheme.accent)
-                    .disabled(novoNome.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
             .onAppear {
-                novoNome = ""
-                let fetch = FetchDescriptor<ProdutoHistorico>(sortBy: [SortDescriptor(\.nome)])
-                historico = (try? context.fetch(fetch)) ?? []
+                newName = ""
+                let fetch = FetchDescriptor<ProductHistory>(sortBy: [SortDescriptor(\.name)])
+                history = (try? context.fetch(fetch)) ?? []
             }
         }
     }

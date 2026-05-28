@@ -9,18 +9,18 @@ struct CompreisApp: App {
 
     init() {
         container = Self.makeContainer()
-        ProdutoBase.sementar(context: container.mainContext)
+        ProductBase.seed(context: container.mainContext)
     }
 
     private static func makeContainer() -> ModelContainer {
         do {
-            return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
-                                          Mercado.self, PrecoMercado.self, CategoriaCustom.self)
+            return try ModelContainer(for: Item.self, ProductHistory.self, ShoppingList.self,
+                                          Market.self, MarketPrice.self, CustomCategory.self)
         } catch {
             wipeStore()
             do {
-                return try ModelContainer(for: Item.self, ProdutoHistorico.self, ListaDeCompras.self,
-                                              Mercado.self, PrecoMercado.self, CategoriaCustom.self)
+                return try ModelContainer(for: Item.self, ProductHistory.self, ShoppingList.self,
+                                              Market.self, MarketPrice.self, CustomCategory.self)
             } catch {
                 fatalError("SwiftData: \(error)")
             }
@@ -37,16 +37,16 @@ struct CompreisApp: App {
     var body: some Scene {
         WindowGroup {
             TabView(selection: $selectedTab) {
-                ListasView()
+                ListsView()
                     .tabItem { Label("Lists", systemImage: "cart.fill") }
                     .tag(0)
-                ProdutosView()
+                CatalogueView()
                     .tabItem { Label("Catalogue", systemImage: "shippingbox.fill") }
                     .tag(1)
-                RelatorioView()
+                ReportView()
                     .tabItem { Label("Report", systemImage: "chart.bar.fill") }
                     .tag(2)
-                PerfilView()
+                ProfileView()
                     .tabItem { Label("Profile", systemImage: "person.fill") }
                     .tag(3)
             }

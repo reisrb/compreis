@@ -8,80 +8,75 @@ enum SheetsService {
 
     // MARK: - Public
 
-    static func exportar(_ lista: ListaDeCompras, auth: GoogleAuth) async throws {
+    static func export(_ list: ShoppingList, auth: GoogleAuth) async throws {
         let token = try await auth.getToken()
-        let folderId = try await garantirPasta(token: token)
-        let sheetId  = try await garantirPlanilha(folderId: folderId, token: token)
-        let mesAba   = lista.mesAno
-        try await garantirAba(spreadsheetId: sheetId, nome: mesAba, token: token)
-        try await appendLinha(spreadsheetId: sheetId, aba: mesAba, lista: lista, token: token)
+        let folderId = try await ensureFolder(token: token)
+        let sheetId  = try await ensureSpreadsheet(folderId: folderId, token: token)
+        let tab      = list.monthYear
+        try await ensureTab(spreadsheetId: sheetId, name: tab, token: token)
+        try await appendRow(spreadsheetId: sheetId, tab: tab, list: list, token: token)
     }
 
-    // MARK: - Drive: pasta
+    // MARK: - Drive: folder
 
-    private static func garantirPasta(token: String) async throws -> String {
+    private static func ensureFolder(token: String) async throws -> String {
         if let id = UserDefaults.standard.string(forKey: folderIdKey) { return id }
 
-        // Busca pasta existente
         var comps = URLComponents(string: "\(driveBase)/files")!
         comps.queryItems = [
             .init(name: "q", value: "name='Compreis' and mimeType='application/vnd.google-apps.folder' and trashed=false"),
             .init(name: "fields", value: "files(id)")
         ]
-        let lista = try await get(comps.url!, token: token) as? [String: Any]
-        if let files = lista?["files"] as? [[String: Any]],
+        let resp = try await get(comps.url!, token: token) as? [String: Any]
+        if let files = resp?["files"] as? [[String: Any]],
            let id = files.first?["id"] as? String {
             UserDefaults.standard.set(id, forKey: folderIdKey)
             return id
         }
 
-        // Cria pasta
         let body: [String: Any] = [
             "name": "Compreis",
             "mimeType": "application/vnd.google-apps.folder"
         ]
-        let resp = try await post("\(driveBase)/files", body: body, token: token) as? [String: Any]
-        guard let id = resp?["id"] as? String else { throw SheetsError.api("Falha ao criar pasta") }
+        let created = try await post("\(driveBase)/files", body: body, token: token) as? [String: Any]
+        guard let id = created?["id"] as? String else { throw SheetsError.api("Failed to create folder") }
         UserDefaults.standard.set(id, forKey: folderIdKey)
         return id
     }
 
-    // MARK: - Sheets: planilha
+    // MARK: - Sheets: spreadsheet
 
-    private static func garantirPlanilha(folderId: String, token: String) async throws -> String {
+    private static func ensureSpreadsheet(folderId: String, token: String) async throws -> String {
         if let id = UserDefaults.standard.string(forKey: spreadsheetIdKey) { return id }
 
-        // Busca planilha existente
         var comps = URLComponents(string: "\(driveBase)/files")!
         comps.queryItems = [
             .init(name: "q", value: "name='Compreis - Histórico' and '\(folderId)' in parents and trashed=false"),
             .init(name: "fields", value: "files(id)")
         ]
-        let lista = try await get(comps.url!, token: token) as? [String: Any]
-        if let files = lista?["files"] as? [[String: Any]],
+        let resp = try await get(comps.url!, token: token) as? [String: Any]
+        if let files = resp?["files"] as? [[String: Any]],
            let id = files.first?["id"] as? String {
             UserDefaults.standard.set(id, forKey: spreadsheetIdKey)
             return id
         }
 
-        // Cria planilha
         let body: [String: Any] = [
             "properties": ["title": "Compreis - Histórico"],
             "sheets": [[
-                "properties": ["title": "Geral"],
+                "properties": ["title": "General"],
                 "data": [[
                     "rowData": [[
-                        "values": cabecalho().map { ["userEnteredValue": ["stringValue": $0]] }
+                        "values": headerRow().map { ["userEnteredValue": ["stringValue": $0]] }
                     ]]
                 ]]
             ]]
         ]
-        let resp = try await post(sheetsBase, body: body, token: token) as? [String: Any]
-        guard let id = resp?["spreadsheetId"] as? String else {
-            throw SheetsError.api("Falha ao criar planilha")
+        let created = try await post(sheetsBase, body: body, token: token) as? [String: Any]
+        guard let id = created?["spreadsheetId"] as? String else {
+            throw SheetsError.api("Failed to create spreadsheet")
         }
 
-        // Move para a pasta Compreis
         var moveComps = URLComponents(string: "\(driveBase)/files/\(id)")!
         moveComps.queryItems = [
             .init(name: "addParents", value: folderId),
@@ -96,59 +91,52 @@ enum SheetsService {
         return id
     }
 
-    // MARK: - Sheets: aba do mês
+    // MARK: - Sheets: month tab
 
-    private static func garantirAba(spreadsheetId: String, nome: String, token: String) async throws {
+    private static func ensureTab(spreadsheetId: String, name: String, token: String) async throws {
         let info = try await get(URL(string: "\(sheetsBase)/\(spreadsheetId)?fields=sheets.properties.title")!, token: token) as? [String: Any]
-        let abas = (info?["sheets"] as? [[String: Any]])?.compactMap {
+        let tabs = (info?["sheets"] as? [[String: Any]])?.compactMap {
             ($0["properties"] as? [String: Any])?["title"] as? String
         } ?? []
 
-        if abas.contains(nome) { return }
+        if tabs.contains(name) { return }
 
-        var requests: [[String: Any]] = [
-            ["addSheet": ["properties": ["title": nome]]]
-        ]
-        // Cabeçalho na nova aba
-        requests.append(contentsOf: [])
-
-        let body: [String: Any] = ["requests": requests]
+        let body: [String: Any] = ["requests": [["addSheet": ["properties": ["title": name]]]]]
         _ = try await post("\(sheetsBase)/\(spreadsheetId):batchUpdate", body: body, token: token)
 
-        // Insere cabeçalho
-        let cabBody: [String: Any] = [
-            "values": [cabecalho()],
+        let headerBody: [String: Any] = [
+            "values": [headerRow()],
             "majorDimension": "ROWS"
         ]
-        let range = "\(nome.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? nome)!A1"
-        _ = try await put("\(sheetsBase)/\(spreadsheetId)/values/\(range)?valueInputOption=RAW", body: cabBody, token: token)
+        let range = "\(name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)!A1"
+        _ = try await put("\(sheetsBase)/\(spreadsheetId)/values/\(range)?valueInputOption=RAW", body: headerBody, token: token)
     }
 
-    // MARK: - Append linha
+    // MARK: - Append row
 
-    private static func appendLinha(spreadsheetId: String, aba: String, lista: ListaDeCompras, token: String) async throws {
+    private static func appendRow(spreadsheetId: String, tab: String, list: ShoppingList, token: String) async throws {
         let df = DateFormatter()
         df.dateFormat = "dd/MM/yyyy HH:mm"
-        let data = df.string(from: lista.finalizadaEm ?? .now)
-        let produtos = lista.itens.map { "\($0.nome) (\($0.total.brl))" }.joined(separator: ", ")
+        let date = df.string(from: list.finalizedAt ?? .now)
+        let products = list.items.map { "\($0.name) (\($0.total.brl))" }.joined(separator: ", ")
 
         let row: [Any] = [
-            data,
-            lista.nome,
-            lista.itens.count,
-            lista.totalCalculado,
-            lista.total,
-            lista.localNome ?? "",
-            produtos
+            date,
+            list.name,
+            list.items.count,
+            list.computedTotal,
+            list.total,
+            list.marketName ?? "",
+            products
         ]
 
         let body: [String: Any] = ["values": [row], "majorDimension": "ROWS"]
-        let range = "\(aba.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? aba)!A:G"
+        let range = "\(tab.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tab)!A:G"
         let url = "\(sheetsBase)/\(spreadsheetId)/values/\(range):append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS"
         _ = try await post(url, body: body, token: token)
     }
 
-    // MARK: - Helpers HTTP
+    // MARK: - HTTP helpers
 
     private static func get(_ url: URL, token: String) async throws -> Any? {
         var req = URLRequest(url: url)
@@ -177,8 +165,8 @@ enum SheetsService {
         return try JSONSerialization.jsonObject(with: data)
     }
 
-    private static func cabecalho() -> [String] {
-        ["Data", "Lista", "Itens", "Total Calculado", "Total Pago", "Local", "Produtos"]
+    private static func headerRow() -> [String] {
+        ["Date", "List", "Items", "Computed Total", "Total Paid", "Market", "Products"]
     }
 
     enum SheetsError: Error, LocalizedError {

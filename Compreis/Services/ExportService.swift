@@ -8,31 +8,31 @@ enum ExportService {
         return f
     }()
 
-    static func exportarJSON(context: ModelContext) throws -> URL {
-        let listas = (try? context.fetch(FetchDescriptor<ListaDeCompras>(
-            sortBy: [SortDescriptor(\.criadaEm, order: .reverse)]
+    static func exportJSON(context: ModelContext) throws -> URL {
+        let lists = (try? context.fetch(FetchDescriptor<ShoppingList>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         ))) ?? []
 
-        let payload: [[String: Any]] = listas.map { lista in
+        let payload: [[String: Any]] = lists.map { list in
             [
-                "nome": lista.nome,
-                "criada_em": df.string(from: lista.criadaEm),
-                "finalizada": lista.finalizada,
-                "finalizada_em": lista.finalizadaEm.map { df.string(from: $0) } ?? NSNull(),
-                "data_mercado": lista.dataMercado.map { df.string(from: $0) } ?? NSNull(),
-                "is_template": lista.isTemplate,
-                "local": lista.localNome ?? NSNull(),
-                "local_latitude": lista.localLatitude ?? NSNull(),
-                "local_longitude": lista.localLongitude ?? NSNull(),
-                "total_pago": lista.totalPago ?? NSNull(),
-                "itens": lista.itens.map { item in
+                "nome": list.name,
+                "criada_em": df.string(from: list.createdAt),
+                "finalizada": list.finalized,
+                "finalizada_em": list.finalizedAt.map { df.string(from: $0) } ?? NSNull(),
+                "data_mercado": list.marketDate.map { df.string(from: $0) } ?? NSNull(),
+                "is_template": list.isTemplate,
+                "local": list.marketName ?? NSNull(),
+                "local_latitude": list.latitude ?? NSNull(),
+                "local_longitude": list.longitude ?? NSNull(),
+                "total_pago": list.totalPaid ?? NSNull(),
+                "itens": list.items.map { item in
                     [
-                        "nome": item.nome,
-                        "preco": item.preco,
-                        "unidade": item.unidade.rawValue,
-                        "quantidade": item.quantidade,
-                        "categoria": item.categoria.rawValue,
-                        "pegou": item.pegou
+                        "nome": item.name,
+                        "preco": item.price,
+                        "unidade": item.unit.rawValue,
+                        "quantidade": item.quantity,
+                        "categoria": item.category.rawValue,
+                        "pegou": item.picked
                     ] as [String: Any]
                 }
             ]
@@ -45,56 +45,56 @@ enum ExportService {
         return url
     }
 
-    static func importarJSON(url: URL, context: ModelContext) throws -> (listas: Int, itens: Int) {
+    static func importJSON(url: URL, context: ModelContext) throws -> (lists: Int, items: Int) {
         let data = try Data(contentsOf: url)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
-            throw ImportError.formatoInvalido
+            throw ImportError.invalidFormat
         }
 
-        var totalListas = 0
-        var totalItens = 0
+        var totalLists = 0
+        var totalItems = 0
 
         for dict in json {
-            guard let nome = dict["nome"] as? String else { continue }
+            guard let name = dict["nome"] as? String else { continue }
 
-            let lista = ListaDeCompras(
-                nome: nome,
-                dataMercado: (dict["data_mercado"] as? String).flatMap { df.date(from: $0) },
-                localNome: dict["local"] as? String,
-                localLatitude: dict["local_latitude"] as? Double,
-                localLongitude: dict["local_longitude"] as? Double
+            let list = ShoppingList(
+                name: name,
+                marketDate: (dict["data_mercado"] as? String).flatMap { df.date(from: $0) },
+                marketName: dict["local"] as? String,
+                latitude: dict["local_latitude"] as? Double,
+                longitude: dict["local_longitude"] as? Double
             )
-            if let criadaEm = (dict["criada_em"] as? String).flatMap({ df.date(from: $0) }) {
-                lista.criadaEm = criadaEm
+            if let createdAt = (dict["criada_em"] as? String).flatMap({ df.date(from: $0) }) {
+                list.createdAt = createdAt
             }
-            lista.finalizada = dict["finalizada"] as? Bool ?? false
-            lista.finalizadaEm = (dict["finalizada_em"] as? String).flatMap { df.date(from: $0) }
-            lista.isTemplate = dict["is_template"] as? Bool ?? false
-            lista.totalPago = dict["total_pago"] as? Double
+            list.finalized = dict["finalizada"] as? Bool ?? false
+            list.finalizedAt = (dict["finalizada_em"] as? String).flatMap { df.date(from: $0) }
+            list.isTemplate = dict["is_template"] as? Bool ?? false
+            list.totalPaid = dict["total_pago"] as? Double
 
             for itemDict in (dict["itens"] as? [[String: Any]] ?? []) {
-                guard let itemNome = itemDict["nome"] as? String else { continue }
+                guard let itemName = itemDict["nome"] as? String else { continue }
                 let item = Item(
-                    nome: itemNome,
-                    preco: itemDict["preco"] as? Double ?? 0,
-                    unidade: Unidade(rawValue: itemDict["unidade"] as? String ?? "") ?? .unidade,
-                    quantidade: itemDict["quantidade"] as? Double ?? 1,
-                    categoria: Categoria(rawValue: itemDict["categoria"] as? String ?? "") ?? .outros
+                    name: itemName,
+                    price: itemDict["preco"] as? Double ?? 0,
+                    unit: ItemUnit(rawValue: itemDict["unidade"] as? String ?? "") ?? .each,
+                    quantity: itemDict["quantidade"] as? Double ?? 1,
+                    category: ItemCategory(rawValue: itemDict["categoria"] as? String ?? "") ?? .other
                 )
-                item.pegou = itemDict["pegou"] as? Bool ?? false
-                lista.itens.append(item)
-                totalItens += 1
+                item.picked = itemDict["pegou"] as? Bool ?? false
+                list.items.append(item)
+                totalItems += 1
             }
 
-            context.insert(lista)
-            totalListas += 1
+            context.insert(list)
+            totalLists += 1
         }
 
-        return (totalListas, totalItens)
+        return (totalLists, totalItems)
     }
 }
 
 enum ImportError: LocalizedError {
-    case formatoInvalido
-    var errorDescription: String? { "Arquivo JSON inválido ou fora do formato esperado." }
+    case invalidFormat
+    var errorDescription: String? { "Invalid JSON file or unexpected format." }
 }

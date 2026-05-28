@@ -3,52 +3,52 @@ import UIKit
 
 // MARK: - Preset
 
-enum TemaPreset: String, CaseIterable {
-    case padrao   = "Padrão"
-    case azul     = "Azul"
-    case roxo     = "Roxo"
-    case verde    = "Verde"
-    case laranja  = "Laranja"
-    case vermelho = "Vermelho"
+enum ThemePreset: String, CaseIterable {
+    case standard = "Padrão"
+    case blue     = "Azul"
+    case purple   = "Roxo"
+    case green    = "Verde"
+    case orange   = "Laranja"
+    case red      = "Vermelho"
     case custom   = "Personalizado"
 
     var color: Color {
         switch self {
-        case .padrao:   return Color(red: 0.13, green: 0.55, blue: 0.25)
-        case .azul:     return Color(red: 0.00, green: 0.48, blue: 1.00)
-        case .roxo:     return Color(red: 0.69, green: 0.32, blue: 0.87)
-        case .verde:    return Color(red: 0.07, green: 0.68, blue: 0.55)
-        case .laranja:  return Color(red: 1.00, green: 0.58, blue: 0.00)
-        case .vermelho: return Color(red: 1.00, green: 0.23, blue: 0.19)
+        case .standard: return Color(red: 0.13, green: 0.55, blue: 0.25)
+        case .blue:     return Color(red: 0.00, green: 0.48, blue: 1.00)
+        case .purple:   return Color(red: 0.69, green: 0.32, blue: 0.87)
+        case .green:    return Color(red: 0.07, green: 0.68, blue: 0.55)
+        case .orange:   return Color(red: 1.00, green: 0.58, blue: 0.00)
+        case .red:      return Color(red: 1.00, green: 0.23, blue: 0.19)
         case .custom:   return .clear
         }
     }
 
-    var icone: String {
+    var icon: String {
         switch self {
-        case .padrao:   return "leaf.fill"
-        case .azul:     return "drop.fill"
-        case .roxo:     return "sparkles"
-        case .verde:    return "waveform.path.ecg"
-        case .laranja:  return "sun.max.fill"
-        case .vermelho: return "heart.fill"
+        case .standard: return "leaf.fill"
+        case .blue:     return "drop.fill"
+        case .purple:   return "sparkles"
+        case .green:    return "waveform.path.ecg"
+        case .orange:   return "sun.max.fill"
+        case .red:      return "heart.fill"
         case .custom:   return "paintpalette.fill"
         }
     }
 }
 
-// MARK: - Estilo de fundo
+// MARK: - Background style
 
-enum EstiloFundo: String, CaseIterable {
-    case neutro  = "Neutro"
-    case suave   = "Suave"
-    case solido  = "Sólido"
+enum BackgroundStyle: String, CaseIterable {
+    case neutral = "Neutro"
+    case soft    = "Suave"
+    case solid   = "Sólido"
 
-    var descricao: String {
+    var description: String {
         switch self {
-        case .neutro:  return "Fundo padrão do sistema iOS."
-        case .suave:   return "Leve toque da cor nos itens das listas."
-        case .solido:  return "Cor mais presente no fundo dos itens."
+        case .neutral: return "Default iOS system background."
+        case .soft:    return "Subtle accent colour on list items."
+        case .solid:   return "Stronger accent colour on item backgrounds."
         }
     }
 }
@@ -58,7 +58,7 @@ enum EstiloFundo: String, CaseIterable {
 @Observable final class ThemeSettings {
     nonisolated(unsafe) static let shared = ThemeSettings()
 
-    var preset: TemaPreset = .padrao {
+    var preset: ThemePreset = .standard {
         didSet { UserDefaults.standard.set(preset.rawValue, forKey: "tema_preset") }
     }
 
@@ -66,16 +66,16 @@ enum EstiloFundo: String, CaseIterable {
         didSet { persistCustomColor() }
     }
 
-    var estiloFundo: EstiloFundo = .neutro {
-        didSet { UserDefaults.standard.set(estiloFundo.rawValue, forKey: "tema_fundo") }
+    var backgroundStyle: BackgroundStyle = .neutral {
+        didSet { UserDefaults.standard.set(backgroundStyle.rawValue, forKey: "tema_fundo") }
     }
 
     init() {
         let ud = UserDefaults.standard
         if let raw = ud.string(forKey: "tema_preset"),
-           let p = TemaPreset(rawValue: raw) { preset = p }
+           let p = ThemePreset(rawValue: raw) { preset = p }
         if let raw = ud.string(forKey: "tema_fundo"),
-           let f = EstiloFundo(rawValue: raw) { estiloFundo = f }
+           let f = BackgroundStyle(rawValue: raw) { backgroundStyle = f }
         let r = ud.double(forKey: "tema_cr")
         let g = ud.double(forKey: "tema_cg")
         let b = ud.double(forKey: "tema_cb")
@@ -87,10 +87,10 @@ enum EstiloFundo: String, CaseIterable {
     var accentBorder: Color { accent.opacity(0.25) }
 
     var rowBackground: Color {
-        switch estiloFundo {
-        case .neutro: return Color(.secondarySystemGroupedBackground)
-        case .suave:  return accent.opacity(0.07)
-        case .solido: return accent.opacity(0.15)
+        switch backgroundStyle {
+        case .neutral: return Color(.secondarySystemGroupedBackground)
+        case .soft:    return accent.opacity(0.07)
+        case .solid:   return accent.opacity(0.15)
         }
     }
 

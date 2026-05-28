@@ -29,63 +29,63 @@ final class SearchCompleter: NSObject, ObservableObject, @preconcurrency MKLocal
     }
 }
 
-struct NovaListaView: View {
+struct NewListView: View {
     @Environment(\.dismiss) private var dismiss
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == false })
-    private var templates: [ListaDeCompras]
-    @Query(filter: #Predicate<ListaDeCompras> { $0.isTemplate == true && $0.isPredefined == true })
-    private var predefinedTemplates: [ListaDeCompras]
+    @Query(filter: #Predicate<ShoppingList> { $0.isTemplate == true && $0.isPredefined == false })
+    private var userTemplates: [ShoppingList]
+    @Query(filter: #Predicate<ShoppingList> { $0.isTemplate == true && $0.isPredefined == true })
+    private var predefinedTemplates: [ShoppingList]
 
-    var titulo: String = "New list"
+    var title: String = "New list"
     var isTemplate: Bool = false
-    var onCreate: (String, Date?, String?, Double?, Double?, ListaModelo, ListaDeCompras?) -> Void
+    var onCreate: (String, Date?, String?, Double?, Double?, ListTemplate, ShoppingList?) -> Void
 
-    @State private var nome: String = ""
-    @State private var usarData = false
-    @State private var dataMercado = Date()
-    @State private var usarLocal = false
-    @State private var localQuery = ""
-    @State private var localNome: String?
-    @State private var localLat: Double?
-    @State private var localLon: Double?
+    @State private var name: String = ""
+    @State private var useDate = false
+    @State private var marketDate = Date()
+    @State private var useLocation = false
+    @State private var locationQuery = ""
+    @State private var locationName: String?
+    @State private var locationLat: Double?
+    @State private var locationLon: Double?
     @StateObject private var completer = SearchCompleter()
     @State private var showMapPicker = false
-    @State private var modeloSelecionado: ListaModelo = .vazia
-    @State private var templateUsuario: ListaDeCompras?
+    @State private var selectedTemplate: ListTemplate = .empty
+    @State private var selectedUserTemplate: ShoppingList?
     @State private var showPreview = false
 
     var body: some View {
         NavigationStack {
             Form {
-                // MARK: Static model
+                // MARK: Static template model
                 Section {
                     HStack(spacing: 8) {
-                        ForEach(ListaModelo.allCases, id: \.self) { modelo in
-                            let sel = modeloSelecionado == modelo && templateUsuario == nil
+                        ForEach(ListTemplate.allCases, id: \.self) { template in
+                            let selected = selectedTemplate == template && selectedUserTemplate == nil
                             Button {
-                                modeloSelecionado = modelo
-                                templateUsuario = nil
+                                selectedTemplate = template
+                                selectedUserTemplate = nil
                             } label: {
                                 VStack(spacing: 6) {
-                                    Image(systemName: modelo.icone)
+                                    Image(systemName: template.icon)
                                         .font(.title2.weight(.semibold))
-                                        .foregroundStyle(sel ? AppTheme.accent : .secondary)
-                                    Text(modelo.rawValue)
+                                        .foregroundStyle(selected ? AppTheme.accent : .secondary)
+                                    Text(template.rawValue)
                                         .font(.caption.weight(.bold))
-                                        .foregroundStyle(sel ? AppTheme.accent : .primary)
-                                    Text(modelo.detalhe)
+                                        .foregroundStyle(selected ? AppTheme.accent : .primary)
+                                    Text(template.detail)
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(sel
+                                .background(selected
                                     ? AppTheme.accentSubtle
                                     : Color.secondary.opacity(0.07),
                                     in: RoundedRectangle(cornerRadius: 10))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .strokeBorder(sel ? AppTheme.accent : Color.clear, lineWidth: 1.5)
+                                        .strokeBorder(selected ? AppTheme.accent : Color.clear, lineWidth: 1.5)
                                 )
                             }
                             .buttonStyle(.plain)
@@ -93,14 +93,14 @@ struct NovaListaView: View {
                     }
                     .padding(.vertical, 4)
 
-                    let previewDisponivel = (modeloSelecionado != .vazia && templateUsuario == nil)
-                        || templateUsuario != nil
-                    if previewDisponivel {
+                    let previewAvailable = (selectedTemplate != .empty && selectedUserTemplate == nil)
+                        || selectedUserTemplate != nil
+                    if previewAvailable {
                         Button { showPreview = true } label: {
                             HStack {
                                 Image(systemName: "eye")
-                                let count = templateUsuario.map { $0.itens.count }
-                                    ?? modeloSelecionado.produtos.count
+                                let count = selectedUserTemplate.map { $0.items.count }
+                                    ?? selectedTemplate.products.count
                                 Text("See \(count) included items")
                                 Spacer()
                                 Image(systemName: "chevron.right")
@@ -114,37 +114,37 @@ struct NovaListaView: View {
                 } header: { Text("Model") }
 
                 // MARK: User templates
-                if !templates.isEmpty {
+                if !userTemplates.isEmpty {
                     Section {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 10) {
-                                ForEach(templates) { t in
-                                    let sel = templateUsuario?.id == t.id
+                                ForEach(userTemplates) { t in
+                                    let selected = selectedUserTemplate?.id == t.id
                                     Button {
-                                        templateUsuario = t
-                                        modeloSelecionado = .vazia
+                                        selectedUserTemplate = t
+                                        selectedTemplate = .empty
                                     } label: {
                                         VStack(spacing: 6) {
                                             Image(systemName: "star.fill")
                                                 .font(.title2.weight(.semibold))
-                                                .foregroundStyle(sel ? AppTheme.accent : .secondary)
-                                            Text(t.nome)
+                                                .foregroundStyle(selected ? AppTheme.accent : .secondary)
+                                            Text(t.name)
                                                 .font(.caption.weight(.bold))
-                                                .foregroundStyle(sel ? AppTheme.accent : .primary)
+                                                .foregroundStyle(selected ? AppTheme.accent : .primary)
                                                 .lineLimit(1)
-                                            Text("\(t.itens.count) \(t.itens.count == 1 ? "item" : "items")")
+                                            Text("\(t.items.count) \(t.items.count == 1 ? "item" : "items")")
                                                 .font(.caption2)
                                                 .foregroundStyle(.secondary)
                                         }
                                         .frame(width: 110)
                                         .padding(.vertical, 12)
-                                        .background(sel
+                                        .background(selected
                                             ? AppTheme.accentSubtle
                                             : Color.secondary.opacity(0.07),
                                             in: RoundedRectangle(cornerRadius: 10))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
-                                                .strokeBorder(sel ? AppTheme.accent : Color.clear, lineWidth: 1.5)
+                                                .strokeBorder(selected ? AppTheme.accent : Color.clear, lineWidth: 1.5)
                                         )
                                     }
                                     .buttonStyle(.plain)
@@ -164,30 +164,30 @@ struct NovaListaView: View {
                         Image(systemName: "list.bullet")
                             .foregroundStyle(AppTheme.accent)
                             .frame(width: 20)
-                        TextField("Ex: Week, BBQ…", text: $nome)
+                        TextField("Ex: Week, BBQ…", text: $name)
                     }
                 } header: { Text(isTemplate ? "Template name" : "List name") }
 
                 // MARK: Date
                 if !isTemplate {
                 Section {
-                    Toggle("Set date", isOn: $usarData)
+                    Toggle("Set date", isOn: $useDate)
                         .tint(AppTheme.accent)
-                    if usarData {
-                        DatePicker("Date", selection: $dataMercado, displayedComponents: [.date, .hourAndMinute])
+                    if useDate {
+                        DatePicker("Date", selection: $marketDate, displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.graphical)
                             .tint(AppTheme.accent)
                     }
                 } header: { Text("When going to the market") }
-                } // if !isTemplate
+                }
 
                 // MARK: Location
                 if !isTemplate {
                 Section {
-                    Toggle("Set location", isOn: $usarLocal)
+                    Toggle("Set location", isOn: $useLocation)
                         .tint(AppTheme.accent)
-                    if usarLocal {
-                        if let pinned = localNome, let lat = localLat, let lon = localLon {
+                    if useLocation {
+                        if let pinned = locationName, let lat = locationLat, let lon = locationLon {
                             let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
                             Map(initialPosition: .region(MKCoordinateRegion(
                                 center: coord,
@@ -204,8 +204,8 @@ struct NovaListaView: View {
                                 Text(pinned).font(.subheadline)
                                 Spacer()
                                 Button {
-                                    localNome = nil; localLat = nil; localLon = nil
-                                    localQuery = ""; completer.clear()
+                                    locationName = nil; locationLat = nil; locationLon = nil
+                                    locationQuery = ""; completer.clear()
                                 } label: {
                                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                                 }
@@ -219,8 +219,8 @@ struct NovaListaView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundStyle(.secondary).frame(width: 20)
-                                TextField("Search supermarket…", text: $localQuery)
-                                    .onChange(of: localQuery) { _, q in completer.search(q) }
+                                TextField("Search supermarket…", text: $locationQuery)
+                                    .onChange(of: locationQuery) { _, q in completer.search(q) }
                             }
                             ForEach(completer.completions, id: \.self) { completion in
                                 Button { Task { await resolve(completion) } } label: {
@@ -236,28 +236,28 @@ struct NovaListaView: View {
                         }
                     }
                 } header: { Text("Market location") }
-                } // if !isTemplate
+                }
             }
-            .navigationTitle(titulo)
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showPreview) {
-                if let t = templateUsuario {
-                    TemplatePreviewSheet(nome: t.nome, itens: t.itens.map {
-                        ProdutoSemente(nome: $0.nome, categoria: $0.categoria, unidade: $0.unidade)
+                if let t = selectedUserTemplate {
+                    TemplatePreviewSheet(name: t.name, seeds: t.items.map {
+                        ProductSeed(name: $0.name, category: $0.category, unit: $0.unit)
                     })
-                } else if let stored = predefinedTemplates.first(where: { $0.nome == modeloSelecionado.rawValue }) {
-                    TemplatePreviewSheet(nome: stored.nome, itens: stored.itens.map {
-                        ProdutoSemente(nome: $0.nome, categoria: $0.categoria, unidade: $0.unidade)
+                } else if let stored = predefinedTemplates.first(where: { $0.name == selectedTemplate.rawValue }) {
+                    TemplatePreviewSheet(name: stored.name, seeds: stored.items.map {
+                        ProductSeed(name: $0.name, category: $0.category, unit: $0.unit)
                     })
                 } else {
-                    TemplatePreviewSheet(nome: modeloSelecionado.rawValue,
-                                         itens: modeloSelecionado.produtos)
+                    TemplatePreviewSheet(name: selectedTemplate.rawValue,
+                                        seeds: selectedTemplate.products)
                 }
             }
             .sheet(isPresented: $showMapPicker) {
-                MapPickerView { nome, lat, lon in
-                    localNome = nome; localLat = lat; localLon = lon
-                    localQuery = nome; completer.clear(); usarLocal = true
+                MapPickerView { n, lat, lon in
+                    locationName = n; locationLat = lat; locationLon = lon
+                    locationQuery = n; completer.clear(); useLocation = true
                 }
             }
             .toolbar {
@@ -267,13 +267,13 @@ struct NovaListaView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
                         onCreate(
-                            nome.isEmpty ? "List" : nome,
-                            usarData ? dataMercado : nil,
-                            usarLocal ? localNome : nil,
-                            usarLocal ? localLat : nil,
-                            usarLocal ? localLon : nil,
-                            modeloSelecionado,
-                            templateUsuario
+                            name.isEmpty ? "List" : name,
+                            useDate ? marketDate : nil,
+                            useLocation ? locationName : nil,
+                            useLocation ? locationLat : nil,
+                            useLocation ? locationLon : nil,
+                            selectedTemplate,
+                            selectedUserTemplate
                         )
                         dismiss()
                     }
@@ -288,57 +288,57 @@ struct NovaListaView: View {
         let req = MKLocalSearch.Request(completion: completion)
         guard let response = try? await MKLocalSearch(request: req).start(),
               let item = response.mapItems.first else { return }
-        localNome = item.name ?? completion.title
-        localLat = item.placemark.coordinate.latitude
-        localLon = item.placemark.coordinate.longitude
-        localQuery = item.name ?? completion.title
+        locationName = item.name ?? completion.title
+        locationLat = item.placemark.coordinate.latitude
+        locationLon = item.placemark.coordinate.longitude
+        locationQuery = item.name ?? completion.title
         completer.clear()
     }
 }
 
-// MARK: - Preview sheet
+// MARK: - Template preview sheet
 
 private struct TemplatePreviewSheet: View {
     @Environment(\.dismiss) private var dismiss
-    let nome: String
-    let itens: [ProdutoSemente]
+    let name: String
+    let seeds: [ProductSeed]
 
-    private var porCategoria: [(Categoria, [ProdutoSemente])] {
-        let agrupados = Dictionary(grouping: itens, by: { $0.categoria })
-        return Categoria.allCases.compactMap { cat in
-            guard let grupo = agrupados[cat], !grupo.isEmpty else { return nil }
-            return (cat, grupo.sorted { $0.nome < $1.nome })
+    private var byCategory: [(ItemCategory, [ProductSeed])] {
+        let grouped = Dictionary(grouping: seeds, by: { $0.category })
+        return ItemCategory.allCases.compactMap { cat in
+            guard let group = grouped[cat], !group.isEmpty else { return nil }
+            return (cat, group.sorted { $0.name < $1.name })
         }
     }
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(porCategoria, id: \.0) { cat, produtos in
+                ForEach(byCategory, id: \.0) { cat, products in
                     Section {
-                        ForEach(produtos, id: \.nome) { p in
+                        ForEach(products, id: \.name) { p in
                             HStack(spacing: 10) {
-                                Image(systemName: cat.icone)
+                                Image(systemName: cat.icon)
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(cat.cor)
+                                    .foregroundStyle(cat.color)
                                     .frame(width: 20)
-                                Text(p.nome)
+                                Text(p.name)
                                     .font(.subheadline)
                                 Spacer()
-                                Text(p.unidade.rawValue)
+                                Text(p.unit.rawValue)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                         }
                     } header: {
-                        Label(cat.rawValue, systemImage: cat.icone)
+                        Label(cat.rawValue, systemImage: cat.icon)
                             .font(.footnote.weight(.bold))
-                            .foregroundStyle(cat.cor)
+                            .foregroundStyle(cat.color)
                     }
                 }
             }
             .listStyle(.insetGrouped)
-            .navigationTitle(nome)
+            .navigationTitle(name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

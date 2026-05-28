@@ -1,14 +1,14 @@
 import Foundation
 import SwiftData
 
-// Sincroniza TUDO com o Google Sheets em tempo real.
-// Estrutura da planilha:
-//   - Aba "Listas"   → uma linha por lista (ativa ou finalizada)
-//   - Aba "Itens"    → uma linha por item de cada lista
-//   - Aba "Produtos" → histórico de produtos cadastrados (ProdutoHistorico)
+// Syncs everything with Google Sheets in real time.
+// Sheet structure:
+//   - "Lists" tab   → one row per list (active or finalized)
+//   - "Items" tab   → one row per item in each list
+//   - "Products" tab → product history (ProductHistory)
 //
-// Estratégia: reescreve a aba inteira a cada sync (simples, sem conflitos).
-// Debounce de 3 s para não spammar a API a cada keystroke.
+// Strategy: rewrites the entire tab on each sync (simple, no conflicts).
+// 3-second debounce to avoid spamming the API on every keystroke.
 
 @MainActor
 final class SyncService: ObservableObject {
@@ -24,7 +24,6 @@ final class SyncService: ObservableObject {
 
     private init() {}
 
-    // Chama depois de qualquer mutação no ModelContext
     func scheduleSync(context: ModelContext) {
         guard GoogleAuth.shared.isConnected else { return }
         pendingTask?.cancel()
@@ -41,31 +40,31 @@ final class SyncService: ObservableObject {
         lastError = nil
         do {
             let token = try await GoogleAuth.shared.getToken()
-            let folderId = try await garantirPasta(token: token)
-            let sheetId  = try await garantirPlanilha(folderId: folderId, token: token)
+            let folderId = try await ensureFolder(token: token)
+            let sheetId  = try await ensureSpreadsheet(folderId: folderId, token: token)
 
-            let listas   = (try? context.fetch(FetchDescriptor<ListaDeCompras>(sortBy: [SortDescriptor(\.criadaEm)]))) ?? []
-            let historico = (try? context.fetch(FetchDescriptor<ProdutoHistorico>(sortBy: [SortDescriptor(\.nome)]))) ?? []
+            let lists   = (try? context.fetch(FetchDescriptor<ShoppingList>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
+            let history = (try? context.fetch(FetchDescriptor<ProductHistory>(sortBy: [SortDescriptor(\.name)]))) ?? []
 
-            try await reescreverAba(spreadsheetId: sheetId, nome: "Listas",
-                                    cabecalho: ["Nome", "Status", "Criada em", "Finalizada em", "Itens", "Total Calculado", "Total Pago", "Local"],
-                                    linhas: listas.map { linhaLista($0) },
-                                    token: token)
+            try await rewriteSheet(spreadsheetId: sheetId, name: "Lists",
+                                   header: ["Name", "Status", "Created At", "Finalized At", "Items", "Computed Total", "Total Paid", "Market"],
+                                   rows: lists.map { rowForList($0) },
+                                   token: token)
 
-            let itensTodos = listas.flatMap { lista in lista.itens.map { (lista, $0) } }
-            try await reescreverAba(spreadsheetId: sheetId, nome: "Itens",
-                                    cabecalho: ["Lista", "Produto", "Preço", "Unidade", "Quantidade", "Total"],
-                                    linhas: itensTodos.map { linhaItem(lista: $0.0, item: $0.1) },
-                                    token: token)
+            let allItems = lists.flatMap { list in list.items.map { (list, $0) } }
+            try await rewriteSheet(spreadsheetId: sheetId, name: "Items",
+                                   header: ["List", "Product", "Price", "Unit", "Quantity", "Total"],
+                                   rows: allItems.map { rowForItem(list: $0.0, item: $0.1) },
+                                   token: token)
 
-            try await reescreverAba(spreadsheetId: sheetId, nome: "Produtos",
-                                    cabecalho: ["Produto", "Último Preço", "Unidade"],
-                                    linhas: historico.map { [
-                                        $0.nome,
-                                        $0.preco,
-                                        $0.unidade.rawValue
-                                    ]},
-                                    token: token)
+            try await rewriteSheet(spreadsheetId: sheetId, name: "Products",
+                                   header: ["Product", "Last Price", "Unit"],
+                                   rows: history.map { [
+                                       $0.name,
+                                       $0.price,
+                                       $0.unit.rawValue
+                                   ]},
+                                   token: token)
 
             lastSynced = .now
         } catch {
@@ -76,27 +75,27 @@ final class SyncService: ObservableObject {
 
     // MARK: - Row builders
 
-    private func linhaLista(_ l: ListaDeCompras) -> [Any] {
+    private func rowForList(_ l: ShoppingList) -> [Any] {
         let df = DateFormatter(); df.dateFormat = "dd/MM/yyyy HH:mm"
         return [
-            l.nome,
-            l.finalizada ? "Finalizada" : "Em aberto",
-            df.string(from: l.criadaEm),
-            l.finalizadaEm.map { df.string(from: $0) } ?? "",
-            l.itens.count,
-            l.totalCalculado,
-            l.totalPago ?? l.totalCalculado,
-            l.localNome ?? ""
+            l.name,
+            l.finalized ? "Finalized" : "Open",
+            df.string(from: l.createdAt),
+            l.finalizedAt.map { df.string(from: $0) } ?? "",
+            l.items.count,
+            l.computedTotal,
+            l.totalPaid ?? l.computedTotal,
+            l.marketName ?? ""
         ]
     }
 
-    private func linhaItem(lista: ListaDeCompras, item: Item) -> [Any] {
-        [lista.nome, item.nome, item.preco, item.unidade.rawValue, item.quantidade, item.total]
+    private func rowForItem(list: ShoppingList, item: Item) -> [Any] {
+        [list.name, item.name, item.price, item.unit.rawValue, item.quantity, item.total]
     }
 
     // MARK: - Drive / Sheets helpers
 
-    private func garantirPasta(token: String) async throws -> String {
+    private func ensureFolder(token: String) async throws -> String {
         if let id = UserDefaults.standard.string(forKey: folderIdKey) { return id }
         var comps = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
         comps.queryItems = [
@@ -110,11 +109,11 @@ final class SyncService: ObservableObject {
         let created = try await apiPost("https://www.googleapis.com/drive/v3/files",
                                         body: ["name": "Compreis", "mimeType": "application/vnd.google-apps.folder"],
                                         token: token) as? [String: Any]
-        guard let id = created?["id"] as? String else { throw SyncError.api("pasta") }
+        guard let id = created?["id"] as? String else { throw SyncError.api("folder") }
         UserDefaults.standard.set(id, forKey: folderIdKey); return id
     }
 
-    private func garantirPlanilha(folderId: String, token: String) async throws -> String {
+    private func ensureSpreadsheet(folderId: String, token: String) async throws -> String {
         if let id = UserDefaults.standard.string(forKey: spreadsheetIdKey) { return id }
         var comps = URLComponents(string: "https://www.googleapis.com/drive/v3/files")!
         comps.queryItems = [
@@ -127,14 +126,13 @@ final class SyncService: ObservableObject {
         }
         let body: [String: Any] = [
             "properties": ["title": "Compreis - Dados"],
-            "sheets": [["properties": ["title": "Listas"]],
-                       ["properties": ["title": "Itens"]],
-                       ["properties": ["title": "Produtos"]]]
+            "sheets": [["properties": ["title": "Lists"]],
+                       ["properties": ["title": "Items"]],
+                       ["properties": ["title": "Products"]]]
         ]
         let created = try await apiPost("https://sheets.googleapis.com/v4/spreadsheets",
                                         body: body, token: token) as? [String: Any]
-        guard let id = created?["spreadsheetId"] as? String else { throw SyncError.api("planilha") }
-        // Move para pasta
+        guard let id = created?["spreadsheetId"] as? String else { throw SyncError.api("spreadsheet") }
         var mv = URLRequest(url: URL(string: "https://www.googleapis.com/drive/v3/files/\(id)?addParents=\(folderId)&fields=id")!)
         mv.httpMethod = "PATCH"
         mv.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -142,23 +140,21 @@ final class SyncService: ObservableObject {
         UserDefaults.standard.set(id, forKey: spreadsheetIdKey); return id
     }
 
-    private func reescreverAba(spreadsheetId: String, nome: String, cabecalho: [String], linhas: [[Any]], token: String) async throws {
-        // Garante que a aba existe
+    private func rewriteSheet(spreadsheetId: String, name: String, header: [String], rows: [[Any]], token: String) async throws {
         let info = try await apiGet(URL(string: "https://sheets.googleapis.com/v4/spreadsheets/\(spreadsheetId)?fields=sheets.properties.title")!, token: token) as? [String: Any]
-        let abas = (info?["sheets"] as? [[String: Any]])?.compactMap { ($0["properties"] as? [String: Any])?["title"] as? String } ?? []
-        if !abas.contains(nome) {
+        let tabs = (info?["sheets"] as? [[String: Any]])?.compactMap { ($0["properties"] as? [String: Any])?["title"] as? String } ?? []
+        if !tabs.contains(name) {
             _ = try await apiPost("https://sheets.googleapis.com/v4/spreadsheets/\(spreadsheetId):batchUpdate",
-                                  body: ["requests": [["addSheet": ["properties": ["title": nome]]]]], token: token)
+                                  body: ["requests": [["addSheet": ["properties": ["title": name]]]]], token: token)
         }
-        // Limpa e reescreve
-        let encodedNome = nome.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? nome
-        let range = "\(encodedNome)!A1:Z10000"
+        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
+        let range = "\(encodedName)!A1:Z10000"
         var clearReq = URLRequest(url: URL(string: "https://sheets.googleapis.com/v4/spreadsheets/\(spreadsheetId)/values/\(range):clear")!)
         clearReq.httpMethod = "POST"
         clearReq.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         _ = try? await URLSession.shared.data(for: clearReq)
 
-        let values: [[Any]] = [cabecalho] + linhas
+        let values: [[Any]] = [header] + rows
         let writeBody: [String: Any] = ["values": values, "majorDimension": "ROWS"]
         _ = try await apiPut("https://sheets.googleapis.com/v4/spreadsheets/\(spreadsheetId)/values/\(range)?valueInputOption=USER_ENTERED",
                               body: writeBody, token: token)
@@ -195,6 +191,6 @@ final class SyncService: ObservableObject {
 
     enum SyncError: Error, LocalizedError {
         case api(String)
-        var errorDescription: String? { if case .api(let m) = self { "Erro API: \(m)" } else { nil } }
+        var errorDescription: String? { if case .api(let m) = self { "API Error: \(m)" } else { nil } }
     }
 }
