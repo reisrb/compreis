@@ -3,7 +3,7 @@ import SwiftData
 // MARK: - Schema V2  (current — English class names, introduced after Portuguese→English rename)
 
 enum SchemaV2: VersionedSchema {
-    static var versionIdentifier = Schema.Version(2, 0, 0)
+    nonisolated(unsafe) static var versionIdentifier = Schema.Version(2, 0, 0)
     static var models: [any PersistentModel.Type] {
         [Item.self, ProductHistory.self, ShoppingList.self,
          Market.self, MarketPrice.self, CustomCategory.self]
